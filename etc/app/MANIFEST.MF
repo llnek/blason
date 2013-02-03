@@ -1,0 +1,4 @@
+Implementation-Version: 0.0.1-SNAPSHOT
+Main-Class: @@APPDOMAIN@@.AppMain
+
+

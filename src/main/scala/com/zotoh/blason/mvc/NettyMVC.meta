@@ -1,0 +1,12 @@
+[info]
+block-type=com.zotoh.blason.mvc.NettyMVC
+version=0.0.1
+name=NettyMVC
+
+[conf]
+host=localhost
+port=8000
+serverkey-file=/home/secret/x.p12
+keypasswd=secret
+handler=
+

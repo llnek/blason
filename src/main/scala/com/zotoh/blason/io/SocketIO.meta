@@ -1,0 +1,9 @@
+[info]
+block-type=com.zotoh.blason.io.SocketIO
+version=0.0.1
+name=SocketIO
+
+[conf]
+host=localhost
+port=8080
+handler=

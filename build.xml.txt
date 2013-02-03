@@ -1,0 +1,140 @@
+<project name="blason" basedir="." default="release" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <property name="PID"     value="${ant.project.name}"/>
+  <property name="PID-DISTRO"     value="${PID}-distro"/>
+  <property name="PID-QOS"     value="M1"/>
+  <property name="DEBUG"     value="true"/>
+  <property name="revision" value="1.0.0" />
+  <property name="version.string" value="${revision}.${PID-QOS}" />
+
+  <include file="${basedir}/common.xml"/>
+
+    <!-- paths used for compilation and run  -->
+  <path id="compile.path.id">
+    <fileset dir="${scala.lib.dir}"/>
+    <fileset dir="${lib.dir}/libjar" />
+    <fileset dir="${lib.dir}/thirdparty" />
+  </path>
+
+  <path id="test.path.id">
+    <fileset dir="${scala.lib.dir}"/>
+    <path location="${build.dir}" />
+    <path location="${build.test.dir}" />
+    <fileset dir="${lib.dir}/test" />
+  </path>
+
+
+  <target name="compile_and_jar">
+
+    <javac sourcepath="" srcdir="${src.dir}" destdir="${build.dir}"
+      includeantruntime="false" excludes=""
+      debug="${DEBUG}" debuglevel="lines,vars,source" classpathref="compile.path.id">
+      <compilerarg line="-Xlint:deprecation -Xlint:unchecked"/>
+      <include name="**/*.java"/>
+    </javac>
+
+    <scalac srcdir="${src.dir}" destdir="${build.dir}" classpathref="compile.path.id">
+      <include name="**/*.scala"/>
+    </scalac>
+
+  </target>
+
+  <target name="compile_test_code" >
+
+    <mkdir dir="${report.test.dir}"/>
+    <mkdir dir="${build.test.dir}"/>
+
+    <scalac srcdir="${test.dir}"  destdir="${build.test.dir}" classpathref="test.path.id">
+      <include name="**/*.scala"/>
+    </scalac>
+
+  </target>
+
+
+  <target name="run_test_code" >
+
+    <taskdef name="scalatest" classname="org.scalatest.tools.ScalaTestAntTask">
+      <classpath refid="test.path.id"/>
+    </taskdef>
+
+    <scalatest haltonfailure="true" fork="true" maxmemory="888M">
+      <reporter type="file"          filename="${report.test.dir}/test-fwrk.txt"/>
+      <reporter type="stderr"/>
+      <wildcard package="com.zotoh.frwk"/>
+      <runpath>
+        <pathelement path="${build.test.dir}"/>
+      </runpath>
+    </scalatest>
+
+    <scalatest haltonfailure="true" fork="true" maxmemory="888M">
+      <reporter type="file"          filename="${report.test.dir}/test-blason.txt"/>
+      <reporter type="stderr"/>
+      <wildcard package="com.zotoh.blason"/>
+      <runpath>
+        <pathelement path="${build.test.dir}"/>
+      </runpath>
+    </scalatest>
+
+  </target>
+
+  <target name="pack_all_docs">
+    <taskdef name="scaladoc" classname="scala.tools.ant.Scaladoc" classpathref="scala.path.id"/>
+    <mkdir dir="${pack.dir}/docs/api"/>
+    <scaladoc
+        srcdir="${src.dir}"
+        destdir="${pack.dir}/docs/api"
+        deprecation="yes" unchecked="yes"
+        doctitle="&lt;div&gt;Blason&lt;/div&gt;"
+        classpathref="compile.path.id">
+        <include name="**/*.scala" />
+        <include name="**/*.java" />
+    </scaladoc>
+    <copy todir="${pack.dir}/docs">
+      <fileset dir="${basedir}/docs">
+          <exclude name="dummy.txt"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="pack_all_libs">
+    <copy todir="${pack.dir}/lib" flatten="true">
+      <fileset dir="${lib.dir}/libjar" />
+    </copy>
+    <copy todir="${pack.dir}/thirdparty" flatten="true">
+      <fileset dir="${lib.dir}/thirdparty" />
+    </copy>
+  </target>
+
+  <target name="pack_bin_scripts">
+    <copy todir="${pack.dir}/bin" flatten="true">
+      <fileset dir="${basedir}/bin">
+                <exclude name=".svn"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="pack_all_lics">
+    <copy todir="${pack.dir}/lics" flatten="true">
+      <fileset dir="${basedir}/lics">
+                <exclude name=".svn"/>
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="pack_source_code" >
+    <copy todir="${pack.dir}/src/main/scala">
+      <fileset dir="${src.dir}">
+      </fileset>
+    </copy>
+  </target>
+
+
+  <target name="release" depends="common.pub-distro"/>
+  <target name="jar" depends="common.pub-jar"/>
+  <target name="test" depends="common.test-build"/>
+
+  <target name="clean4distro">
+    <delete dir="${myivycache}/com.zotoh/${ant.project.name}" quiet="true"/>
+  </target>
+
+</project>
