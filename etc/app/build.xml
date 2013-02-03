@@ -36,8 +36,10 @@
     <echo level="info" message="#############################################"/>
     <antcall target="compile_and_jar"/>
     <antcall target="compile_coffee"/>
+    <antcall target="compile_less"/>
     <antcall target="yui_css"/>
     <antcall target="yui_js"/>
+    <antcall target="final_phase"/>
   </target>
 
   <!-- target: test-build ================================= -->
@@ -152,48 +154,72 @@
     </exec>
   </target>
 
-  <target name="yui_js">
-    <for param="fp">
-      <path>
-        <fileset dir="${src.dir}/resources/js"/>
-      </path>
-      <sequential>
-        <var name="fname" value="" unset="true"/>
-        <basename property="fname" file="@{fp}"/>
-        <java jar="${blason.home}/lib/yuicompressor-2.4.7.jar"
-          dir="${src.dir}/resources/js"
-          fork="true" failonerror="true" maxmemory="1024m">
-          <arg value="--charset"/>
-          <arg value="utf-8"/>
-          <arg value="-o"/>
-          <arg value="${fname}-min.js"/>
-          <arg value="@{fp}"/>
-        </java>
-      </sequential>
-    </for>
-  </target>
-
   <target name="yui_css">
-    <for param="fp">
-      <path>
-        <fileset dir="${src.dir}/resources/less"/>
-      </path>
-      <sequential>
-        <var name="fname" value="" unset="true"/>
-        <basename property="fname" file="@{fp}"/>
-        <java jar="${blason.home}/lib/yuicompressor-2.4.7.jar"
-          dir="${src.dir}/resources/less"
-          fork="true" failonerror="true" maxmemory="1024m">
-          <arg value="--charset"/>
-          <arg value="utf-8"/>
-          <arg value="-o"/>
-          <arg value="${fname}-min.css"/>
-          <arg value="@{fp}"/>
-        </java>
-      </sequential>
-    </for>
+    <apply executable="java" parallel="false">
+      <fileset dir="${src.dir}/resources/less">
+        <exclude name="*.min.css"/>
+        <include name="*.css"/>
+      </fileset>
+        <arg line="-jar" />
+        <arg path="${blason.home}/lib/yuicompressor-2.4.7.jar" />
+        <srcfile/>
+        <arg line="-o"/>
+        <chainedmapper>
+          <mapper type="glob" from="*.css" to="*.min.css"/>
+          <globmapper from="*" to="${src.dir}/resources/less/*"/>
+        </chainedmapper>
+        <targetfile/>
+      </apply>
   </target>
 
+  <target name="yui_js">
+    <apply executable="java" parallel="false">
+      <fileset dir="${src.dir}/resources/js">
+        <exclude name="*.min.js"/>
+        <include name="*.js"/>
+      </fileset>
+        <arg line="-jar" />
+        <arg path="${blason.home}/lib/yuicompressor-2.4.7.jar" />
+        <srcfile/>
+        <arg line="-o"/>
+        <chainedmapper>
+          <mapper type="glob" from="*.js" to="*.min.js"/>
+          <globmapper from="*" to="${src.dir}/resources/js/*"/>
+        </chainedmapper>
+        <targetfile/>
+      </apply>
+  </target>
+
+  <target name="compile_less">
+    <apply executable="lessc" parallel="false">
+      <fileset dir="${src.dir}/resources/less">
+        <include name="*.less"/>
+      </fileset>
+        <srcfile/>
+        <chainedmapper>
+          <mapper type="glob" from="*.less" to="*.css"/>
+          <globmapper from="*" to="${src.dir}/resources/less/*"/>
+        </chainedmapper>
+        <targetfile/>
+      </apply>
+  </target>
+
+  <target name="final_phase">
+    <copy todir="${basedir}/public/scripts">
+      <fileset dir="${src.dir}/resources/coffee">
+        <include name="*.min.js"/>
+        <include name="*.js"/>
+      </fileset>
+      <fileset dir="${src.dir}/resources/js">
+        <include name="*.min.js"/>
+      </fileset>
+    </copy>
+    <copy todir="${basedir}/public/styles">
+      <fileset dir="${src.dir}/resources/less">
+        <include name="*.min.css"/>
+      </fileset>
+    </copy>
+  </target>
 
   <!--
        public TARGETS
@@ -203,6 +229,7 @@
   <target name="test" depends="test-build"/>
 
 </project>
+
 
 
 
