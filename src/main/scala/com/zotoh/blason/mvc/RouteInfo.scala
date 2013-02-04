@@ -30,7 +30,7 @@ import com.zotoh.frwk.util.INIConf
 import java.io.File
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
-import java.util.regex.{Matcher,Pattern}
+import jregex.{Matcher,Pattern}
 import java.util.StringTokenizer
 
 /**
@@ -89,14 +89,16 @@ private val _pipe:String) {
     val tknz = new StringTokenizer(_path, DELIM, true)
     val buff= new StringBuilder(512)
     var t=""
+    var gn= ""
     var cg=0
     while (tknz.hasMoreTokens ) {
       t=tknz.nextToken()
       if (t == DELIM) { buff.append(DELIM) } else {
         if (t.startsWith(":")) {
           cg += 1
-          _placeholders.add( ( cg , t.substring(1) ) )
-          t = "([^/]+)"
+          gn= t.substring(1)
+          _placeholders.add( ( cg , gn ) )
+          t = "({" + gn + "}[^/]+)"
         } else {
           val c= STU.countMatches(t, "(")
           if (c > 0) {
@@ -108,7 +110,7 @@ private val _pipe:String) {
     }
     tlog.debug("Route added: {}\ncanonicalized to: {}{}", _path, buff,"")
     _path=buff.toString
-    _regex= Pattern.compile(_path)    
+    _regex= new Pattern(_path)    
   }
   
   def setStatic(b:Boolean): this.type = {
@@ -134,9 +136,10 @@ private val _pipe:String) {
     val rc= mutable.HashMap[String,String]()
     val gc = mc.groupCount()
     _placeholders.foreach { (t) =>
-      if (t._1 <= gc) {
-        rc.put( t._2, mc.group(t._1) )
-      }
+      rc.put( t._2, nsb ( mc.group(t._2) ) )
+//      if (t._1 <= gc) {
+//        rc.put( t._2, mc.group(t._1) )
+//      }
     }
     rc.toMap
   }

@@ -25,7 +25,7 @@ package mvc
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import java.io.IOException
-import java.util.regex._
+import jregex._
 import org.jboss.netty.channel.Channel
 import org.jboss.netty.channel.{ChannelHandlerContext=>CHContext}
 import org.jboss.netty.channel.ChannelStateEvent
@@ -152,7 +152,7 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
     val appDir= _src.container.appDir
     val uri= evt.uri()
     var mp= STU.replace( ri.mountPoint, "${app.dir}",  niceFPath(appDir))
-    for ( i <- 1 to mc.groupCount ) {
+    for ( i <- 1 until mc.groupCount ) {
       mp= STU.replace(mp, "{}", mc.group(i), 1)
     }
     // serve all static assets from *public folder*

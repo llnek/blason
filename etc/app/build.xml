@@ -173,6 +173,9 @@
   </target>
 
   <target name="yui_js">
+    <copy todir="${src.dir}/resources/js">
+      <fileset dir="${src.dir}/resources/coffee"><include name="*.js"/></fileset>
+    </copy>
     <apply executable="java" parallel="false">
       <fileset dir="${src.dir}/resources/js">
         <exclude name="*.min.js"/>
@@ -208,7 +211,6 @@
     <copy todir="${basedir}/public/scripts">
       <fileset dir="${src.dir}/resources/coffee">
         <include name="*.min.js"/>
-        <include name="*.js"/>
       </fileset>
       <fileset dir="${src.dir}/resources/js">
         <include name="*.min.js"/>

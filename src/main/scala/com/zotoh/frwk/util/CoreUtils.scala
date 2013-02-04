@@ -803,7 +803,7 @@ sealed class CoreUtils {}
 
 
 object BTest {
-import java.util.regex._
+import jregex._
   private def t1(args:Array[String]) {
     val ini:INIConf= new INIConf("/tmp/test.ini")
     if (ini != null) ini.sections.foreach { (s) =>
@@ -853,11 +853,20 @@ ii=java.lang.Integer
   }
   
   private def t3(args:Array[String]) {
-    val pp = Pattern.compile("/test/hello/[a|b](c*)/([^/]+)/([^/]+)")
+    val pp = new Pattern("/test/hello/(a|b)(c*)/({p1}[^/]+)/({p2}[^/]+)")
     val mc=pp.matcher("/test/hello/a/poo/head")
-    if ( mc.matches()) for ( i <- 0 to mc.groupCount() ) {
+    if ( mc.matches()) for ( i <- 0 until mc.groupCount() ) {
       println( "i=" + i + ") " + mc.group(i) )
     }
+   println( mc.group("p1") )
+   println( mc.group("p2") )
+  }
+  private def t4(args:Array[String]) {
+    val pp = new Pattern("/test/?")
+    val mc=pp.matcher("/testff")
+    if ( mc.matches()) {
+      println("ok")
+    } else { println("NOK")}
   }
   
   def main(args:Array[String] ) {
