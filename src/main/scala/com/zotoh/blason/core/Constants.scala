@@ -87,6 +87,7 @@ trait Constants {
   val PF_JMXMGM="jmx-management"
   val PF_HOMEDIR="blason.home"
   val PF_PROPS="blason.conf"
+  val PF_ROUTE_INFO="route.info"
   val PF_CLISH="cli-shell"
   val PF_COMPS="components"
   val PF_REGS="registries"
@@ -114,6 +115,7 @@ trait Constants {
   val K_LOCALE="locale"
   val K_LANG="lang"
 
+  val K_META="meta"
 
 
   

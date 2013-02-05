@@ -164,6 +164,14 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   }
 
   def attrs() = _attrs.toMap
+  def attr(p:String) = {
+    if ( STU.isEmpty(p)) None else _attrs.find { (t) =>
+      t._1.eqic(p)
+    } match {
+      case Some(x) => Some(x._2)
+      case _ => None
+    }
+  }
 
   def setProtocol(p:String) { _protocol= nsb(p) }
   def protocol() = _protocol

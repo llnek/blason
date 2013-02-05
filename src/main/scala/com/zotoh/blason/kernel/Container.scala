@@ -36,6 +36,7 @@ import com.zotoh.blason.core.Disposable
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.MetaUtils._
+import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.blason.core.Contextualizable
 import com.zotoh.blason.core.Context
 import com.zotoh.blason.core.Configurable
@@ -75,6 +76,7 @@ import freemarker.template.Template
 import java.io.Writer
 import java.io.OutputStreamWriter
 import java.io.StringWriter
+import com.zotoh.frwk.io.XData
 
 
 
@@ -206,8 +208,16 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
     tlog.info("Configured app: {}" , name )
   }
   
+  def processTemplate(ri:RouteInfo, model:JMap[_,_]): (XData, String)  = {
+    val s= if ( STU.isEmpty( ri.template) ) "" else {
+      resolveTemplate( ri.template, model).toString()
+    }
+    ( new XData(s), "text/html" )    
+  }
+  
   def resolveTemplate(tpl:String, model:JMap[_,_]): Writer = {
-    val t=_ftlCfg.getTemplate( tpl)
+    tlog.debug("Resolve template: {}", tpl)
+    val t= getTemplate( tpl)
     val out = new StringWriter()
     t.process( model, out)
     out.flush()
@@ -215,11 +225,20 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
   }
   
   def getTemplate(tpl:String) = {
-    _ftlCfg.getTemplate( tpl)
+    val s =join( List( if (tpl.startsWith("/")) { "" } else  { "/" } , tpl , 
+        if ( tpl.endsWith(".ftl")) { "" } else { ".ftl" } ) , "" ) 
+    _ftlCfg.getTemplate( s)
   }
   
   def getAppKey() = {
     _appConf.getString("key","")
+  }
+  
+  def getAppMeta(): Configuration = {
+    _appConf.getChild("meta") match {
+      case Some(m) => m
+      case _ => new DefaultConfiguration(null, null)
+    }
   }
   
   def isEnabled() = {

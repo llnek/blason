@@ -22,7 +22,7 @@
 package com.zotoh.blason
 package core
 
-import java.util.{Date=>JDate}
+import java.util.{Date=>JDate, Map=>JMap}
 
 
 /**
@@ -44,6 +44,8 @@ trait Configuration {
 
   def getKeys(): Seq[String]
 
+  def asJHM: JMap[_,_]
+  
 }
 
 

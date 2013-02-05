@@ -56,6 +56,7 @@ object RouteInfo {
   }
 
   private def mkRoute(stat:Boolean, key:String, flds:Map[String,String]) = {
+    val tpl=flds.getOrElse("template","")    
     val verb=flds.getOrElse("verb","")
     val pipe=flds.getOrElse("pipe","")    
     val rc=new RouteInfo(key, verb, pipe)
@@ -66,6 +67,9 @@ object RouteInfo {
     } else {
       tstEStrArg("http method for route", verb)
       tstEStrArg("pipeline for route", pipe)
+    }
+    if (!STU.isEmpty(tpl)) {
+      rc.template = tpl
     }
     rc.initialize()
     rc
@@ -84,7 +88,8 @@ private val _pipe:String) {
   private var _regex:Pattern= null
   private var _staticFile = false
   private var _mountPt=""
-  
+  private var _tpl=""
+    
   private def initialize() {
     val tknz = new StringTokenizer(_path, DELIM, true)
     val buff= new StringBuilder(512)
@@ -126,6 +131,9 @@ private val _pipe:String) {
   
   def mountPoint_=(s:String) {   _mountPt = nsb(s) }
   def mountPoint = _mountPt
+  
+  def template_=(s:String) {   _tpl = nsb(s) }
+  def template = _tpl
   
   def pattern() = _regex
   def pipeline() = _pipe

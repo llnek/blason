@@ -230,6 +230,15 @@
   <target name="release" depends="build"/>
   <target name="test" depends="test-build"/>
 
+  <target name="c4git">
+    <delete includeemptydirs="true">
+      <fileset erroronmissingdir="false" dir="${basedir}/src/main/resources/less" includes="*.min.css"/>
+      <fileset erroronmissingdir="false" dir="${basedir}/src/main/resources/js" includes="*.min.js"/>
+      <fileset erroronmissingdir="false" dir="${basedir}/public/styles" includes="*.min.css"/>
+      <fileset erroronmissingdir="false" dir="${basedir}/public/scripts" includes="*.min.js"/>
+    </delete> 
+  </target>
+
 </project>
 
 

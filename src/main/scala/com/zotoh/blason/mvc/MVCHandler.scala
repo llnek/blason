@@ -169,8 +169,9 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   private def serveRoute(ri:RouteInfo, mc:Matcher, ctx:CHContext, evt:HTTPEvent) {
     val w= new AsyncWaitEvent( evt, new NettyTrigger(evt, ctx.getChannel) )
     val pms = ri.resolveMatched(mc)
-    pms.foreach { (en) =>      evt.addAttr(en._1, en._2) }    
+    pms.foreach { (en) =>      evt.addParam(en._1, en._2) }    
     w.timeoutMillis( _src.waitMillis)
+    evt.addAttr( PF_ROUTE_INFO, ri)
     evt.routerClass = ri.pipeline()
     _src.hold(w)
     _src.dispatch(evt)

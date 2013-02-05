@@ -34,6 +34,10 @@ import com.zotoh.frwk.util.CoreUtils._
  */
 class PropsConfiguration(private val _props:JMap[_,_]) extends Configuration {
 
+  def asJHM = {
+    _props
+  }
+  
   def getString(name:String,dft:String) = {
     if (_props.containsKey(name)) {
       nsb( _props.get(name))

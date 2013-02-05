@@ -1,9 +1,9 @@
 <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-<meta charset="${app.encoding!"utf-8"}"/>
-<title>${app.title!"HelloWorld"}</title>
+<meta charset="${meta.encoding!"utf-8"}"/>
+<title>${meta.title!"HelloWorld"}</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<meta name="description" content="${app.desc!""}"/>
-<#if app.author??><meta name="author" content="${app.author}"/></#if>
+<meta name="description" content="${meta.desc!""}"/>
+<#if meta.author??><meta name="author" content="${meta.author}"/></#if>
 
 <link rel="shortcut icon" type="image/png" href="/public/images/favicon.png"/>
 

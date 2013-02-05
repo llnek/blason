@@ -47,9 +47,17 @@ class DefaultConfiguration(private var _node:JMap[_,_],p:Configuration=null) ext
     iniz(cfgUrl)
   }
 
+  def this() {
+    this(null,null)
+  }
+  
   def contains(n:String) = _node.containsKey(n)
   def size() = _node.size()
 
+  def asJHM() = {
+    _node
+  }
+  
   def initialize() {
   }
 

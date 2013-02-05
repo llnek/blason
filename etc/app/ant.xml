@@ -263,6 +263,11 @@
     </target>
 
     <target name="create-app">
+      <antcall target="create-app-common"/>
+      <antcall target="post-create-app"/>
+    </target>
+
+    <target name="create-app-common">
       <mkdir dir="${app.dir}"/>
       <mkdir dir="${app.dir}/POD-INF/classes"/>
       <mkdir dir="${app.dir}/POD-INF/patch"/>
@@ -301,24 +306,20 @@
         token="@@BLASONHOME@@" value="${blason.home}"/>
       <replace file="${app.dir}/build.xml" token="@@APPID@@" value="${blason.appid}"/>
 
-      <replace file="${app.dir}/src/main/scala/${app.domain.path}/AppMain.scala" 
-        token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
-      <replace file="${app.dir}/src/main/scala/${app.domain.path}/Handler.scala" 
-        token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
-      <replace file="${app.dir}/conf/env.conf" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
     </target>
 
     <target name="create-jetty">
-      <antcall target="create-app"/>
+      <antcall target="create-app-common"/>
       <antcall target="create-web-common"/>
       <mkdir dir="${app.dir}/WEB-INF/classes"/>
       <mkdir dir="${app.dir}/WEB-INF/lib"/>
       <copy tofile="${app.dir}/conf/env.conf" file="${blason.home}/etc/jetty/jetty.conf" overwrite="true"/>
       <copy todir="${app.dir}/WEB-INF" file="${blason.home}/etc/jetty/web.xml"/>
+      <antcall target="post-create-app"/>
     </target>
 
     <target name="create-web">
-      <antcall target="create-app"/>
+      <antcall target="create-app-common"/>
       <antcall target="create-web-common"/>
       <copy todir="${app.dir}/conf" overwrite="true">
         <fileset dir="${blason.home}/etc/netty">
@@ -337,16 +338,19 @@
       </copy>
       <copy todir="${app.dir}/pages/views" >
         <fileset dir="${blason.home}/etc/netty">
+          <exclude name="index.html"/>
           <include name="*.html"/>
         </fileset>
       </copy>
-      <copy todir="${app.dir}/src/resources/less" file="${blason.home}/etc/netty/main.less"/>
       <copy todir="${app.dir}/public" file="${blason.home}/etc/netty/index.html"/>
       <mkdir dir="${app.dir}/src/main/resources/coffee"/>
       <mkdir dir="${app.dir}/src/main/resources/js"/>
       <mkdir dir="${app.dir}/src/main/resources/less"/>
+      <copy todir="${app.dir}/src/main/resources/less" file="${blason.home}/etc/netty/main.less"/>
       <replace file="${app.dir}/conf/routes.conf" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
-      <replace file="${app.dir}/conf/env.conf" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
+      <copy todir="${app.dir}/src/main/scala/${app.domain.path}" 
+        file="${blason.home}/etc/netty/Handler.scala" overwrite="true"/>
+      <antcall target="post-create-app"/>
     </target>
 
     <target name="create-web-common">
@@ -357,12 +361,17 @@
       <copy todir="${app.dir}/public/images" file="${blason.home}/etc/web/favicon.png"/>
       <copy todir="${app.dir}/src/main/scala/${app.domain.path}" 
         file="${blason.home}/etc/web/Handler.scala" overwrite="true"/>
-      <replace file="${app.dir}/src/main/scala/${app.domain.path}/Handler.scala" 
-        token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
       <copy todir="${app.dir}/public">
         <fileset dir="${blason.home}/etc/weblibs"/>
       </copy>
+    </target>
 
+    <target name="post-create-app">
+      <replace file="${app.dir}/src/main/scala/${app.domain.path}/AppMain.scala" 
+        token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
+      <replace file="${app.dir}/src/main/scala/${app.domain.path}/Handler.scala" 
+        token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
+      <replace file="${app.dir}/conf/env.conf" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
     </target>
 
     <target name="build-app" if="blason.appid">
