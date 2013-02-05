@@ -277,6 +277,7 @@
       <copy todir="${app.dir}/conf" file="${blason.home}/etc/app/app.conf"/>
       <copy todir="${app.dir}/conf" file="${blason.home}/etc/app/env.conf"/>
       <replace file="${app.dir}/conf/app.conf" token="@@APPKEY@@" value="${uuid}"/>
+      <replace file="${app.dir}/conf/app.conf" token="@@USER@@" value="${user.name}"/>
       <mkdir dir="${app.dir}/src/main/scala/${app.domain.path}"/>
       <mkdir dir="${app.dir}/src/main/java"/>
       <mkdir dir="${app.dir}/src/main/resources"/>
@@ -331,11 +332,15 @@
       <mkdir dir="${app.dir}/pages/views"/>
       <copy todir="${app.dir}/pages/templates" >
         <fileset dir="${blason.home}/etc/netty">
-          <include name="index.html"/>
+          <include name="*.ftl"/>
+        </fileset>
+      </copy>
+      <copy todir="${app.dir}/pages/views" >
+        <fileset dir="${blason.home}/etc/netty">
           <include name="*.html"/>
         </fileset>
       </copy>
-      <copy todir="${app.dir}/public/styles" file="${blason.home}/etc/netty/main.css"/>
+      <copy todir="${app.dir}/src/resources/less" file="${blason.home}/etc/netty/main.less"/>
       <copy todir="${app.dir}/public" file="${blason.home}/etc/netty/index.html"/>
       <mkdir dir="${app.dir}/src/main/resources/coffee"/>
       <mkdir dir="${app.dir}/src/main/resources/js"/>

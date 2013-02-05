@@ -26,7 +26,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import java.util.{Properties=>JPS,Map=>JMap}
 import java.net.URL
-import java.io.File
+import java.util.{Map=>JMap,HashMap=>JHMap}
 import com.zotoh.blason.loaders.RootClassLoader
 import com.zotoh.blason.loaders.AppClassLoader
 import com.zotoh.blason.impl.PropsConfiguration
@@ -69,6 +69,12 @@ import com.zotoh.frwk.util.AsyncProc
 import org.apache.commons.lang3.{StringUtils=>STU}
 import com.zotoh.blason.mvc.RouteInfo
 import com.zotoh.blason.mvc.WebPage
+import freemarker.template.{Configuration=>FTLCfg}
+import freemarker.template.DefaultObjectWrapper
+import freemarker.template.Template
+import java.io.Writer
+import java.io.OutputStreamWriter
+import java.io.StringWriter
 
 
 
@@ -123,6 +129,8 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
   private var _jc:JobCreator=null
   private var _appDir:File=null
 
+  private var _ftlCfg:FTLCfg=null
+  
   private var _mainCZ:Class[_] = null
   private var _mainObj:Any= null
 
@@ -191,7 +199,23 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
     WebPage.setup(new File(appDir))
     maybeLoadRoutes(cfgDir)
     
+    _ftlCfg = new FTLCfg()
+    _ftlCfg.setDirectoryForTemplateLoading( new File(_appDir, DN_PAGES+"/"+DN_TEMPLATES))
+    _ftlCfg.setObjectWrapper(new DefaultObjectWrapper())  
+    
     tlog.info("Configured app: {}" , name )
+  }
+  
+  def resolveTemplate(tpl:String, model:JMap[_,_]): Writer = {
+    val t=_ftlCfg.getTemplate( tpl)
+    val out = new StringWriter()
+    t.process( model, out)
+    out.flush()
+    out
+  }
+  
+  def getTemplate(tpl:String) = {
+    _ftlCfg.getTemplate( tpl)
   }
   
   def getAppKey() = {

@@ -26,6 +26,7 @@ package etc
 import java.util.{Properties=>JPS}
 import java.io.File
 import java.io.InputStream
+import java.io.OutputStreamWriter
 
 
 /**
@@ -36,6 +37,25 @@ import java.io.InputStream
 object AntStart {
 
   def main(args:Array[String]) {
+    
+    import freemarker.template._
+    val cfg = new Configuration()
+    cfg.setDirectoryForTemplateLoading(
+        new File("/tmp"))
+    cfg.setObjectWrapper(new DefaultObjectWrapper())  
+    val temp = cfg.getTemplate("test.ftl")
+    
+    val out = new OutputStreamWriter(System.out)
+    val root= new java.util.HashMap[Object,Object]()
+    var m= new java.util.HashMap[Object,Object]()
+    root.put("user", "kenl")
+    root.put("app", m)
+    m.put("encoding", "latin-1")
+    m.put("author", "kenken")
+    temp.process(root, out)
+    out.flush()  
+    
   }
-
-}
+  
+  
+}    
