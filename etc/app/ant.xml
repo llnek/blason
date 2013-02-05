@@ -269,9 +269,9 @@
 
     <target name="create-app-common">
       <mkdir dir="${app.dir}"/>
-      <mkdir dir="${app.dir}/POD-INF/classes"/>
-      <mkdir dir="${app.dir}/POD-INF/patch"/>
-      <mkdir dir="${app.dir}/POD-INF/lib"/>
+      <touch file="${app.dir}/POD-INF/classes/dummy.txt" mkdirs="true"/>
+      <touch file="${app.dir}/POD-INF/patch/dummy.txt" mkdirs="true"/>
+      <touch file="${app.dir}/POD-INF/lib/dummy.txt" mkdirs="true"/>
       <mkdir dir="${app.dir}/META-INF"/>
       <copy todir="${app.dir}/META-INF" file="${blason.home}/etc/app/MANIFEST.MF"/>
       <touch file="${app.dir}/META-INF/RELEASE-NOTES.txt" />

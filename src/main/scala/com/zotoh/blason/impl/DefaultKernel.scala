@@ -139,7 +139,7 @@ with Initializable with Contextualizable with Startable with Loggable with Const
     tstArg( isDirWR(new File(des, POD_LIB)), "\"lib\" sub-dir")
 
     tstArg( isDirWR(new File(des, META_INF)), "\"META-INF\" sub-dir")
-    tstArg( isFileWR(new File(des, MN_README)), "\"readme\" file")
+//    tstArg( isFileWR(new File(des, MN_README)), "\"readme\" file")
     tstArg( isFileWR(new File(des, MN_NOTES)), "\"notes\" file")
     tstArg( isFileWR(new File(des, MN_LIC)), "\"license\" file")
     tstArg( isFileWR(new File(des, MN_RNOTES)), "\"release-notes\" file")
