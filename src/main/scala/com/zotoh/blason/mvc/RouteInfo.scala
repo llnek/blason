@@ -90,6 +90,7 @@ private val _pipe:String) extends CoreImplicits {
   private var _staticFile = false
   private var _mountPt=""
   private var _tpl=""
+  private val _verbArr= STU.split(_verb, ",;|").map { (s) => s.trim().uc }
 
   private def initialize() {
     val tknz = new StringTokenizer(_path, DELIM, true)
@@ -128,7 +129,7 @@ private val _pipe:String) extends CoreImplicits {
   def resemble(mtd:String, path:String): Option[Matcher] = {
     val m=_regex.matcher(path)
     if (m.matches() &&
-      ( _verb.lc == mtd.lc || _verb == "*" ) ) {
+      _verbArr.find { (s) =>s=="*" || s == mtd.uc }.isDefined ) {
       Some(m)
     } else {
       None

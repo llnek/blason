@@ -24,7 +24,6 @@ package util
 
 import scala.language.implicitConversions
 import scala.language.reflectiveCalls
-
 import org.apache.commons.lang3.text.{StrSubstitutor=>STS}
 import scala.collection.mutable
 import org.slf4j._
@@ -56,6 +55,7 @@ import com.zotoh.frwk.util.ByteUtils._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.IOUtils._
 import java.io.FileInputStream
+import java.net.InetAddress
 
 
 class ZString(str:String) {
@@ -868,9 +868,15 @@ ii=java.lang.Integer
       println("ok")
     } else { println("NOK")}
   }
-  
+  private def t5(args:Array[String]) {
+//    val h=InetAddress.getLocalHost()
+    val h = InetAddress.getByName("localhost")
+    println( h.getCanonicalHostName() )
+    println( h.getHostAddress())
+    println(h.getHostName())
+  }
   def main(args:Array[String] ) {
-    t3(args)
+    t5(args)
   }
 
 }
