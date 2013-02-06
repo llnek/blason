@@ -28,6 +28,7 @@ import org.apache.commons.lang3.{StringUtils=>STU}
 import org.slf4j._
 import com.zotoh.frwk.util.INIConf
 import java.io.File
+import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import jregex.{Matcher,Pattern}
@@ -56,9 +57,9 @@ object RouteInfo {
   }
 
   private def mkRoute(stat:Boolean, key:String, flds:Map[String,String]) = {
-    val tpl=flds.getOrElse("template","")    
+    val tpl=flds.getOrElse("template","")
     val verb=flds.getOrElse("verb","")
-    val pipe=flds.getOrElse("pipe","")    
+    val pipe=flds.getOrElse("pipe","")
     val rc=new RouteInfo(key, verb, pipe)
     if (stat) {
       rc.mountPoint = flds.getOrElse("mount","")
@@ -82,14 +83,14 @@ object RouteInfo {
  * @author kenl
  */
 class RouteInfo(private var _path:String, private val _verb:String,
-private val _pipe:String) {
+private val _pipe:String) extends CoreImplicits {
   import RouteInfo._
   private val _placeholders= mutable.ArrayBuffer[ (Int,String) ]()
   private var _regex:Pattern= null
   private var _staticFile = false
   private var _mountPt=""
   private var _tpl=""
-    
+
   private def initialize() {
     val tknz = new StringTokenizer(_path, DELIM, true)
     val buff= new StringBuilder(512)
@@ -108,33 +109,38 @@ private val _pipe:String) {
           val c= STU.countMatches(t, "(")
           if (c > 0) {
             cg += c
-          }             
+          }
         }
         buff.append(t)
       }
     }
     tlog.debug("Route added: {}\ncanonicalized to: {}{}", _path, buff,"")
     _path=buff.toString
-    _regex= new Pattern(_path)    
+    _regex= new Pattern(_path)
   }
-  
+
   def setStatic(b:Boolean): this.type = {
     _staticFile=b
     this
   }
   def isStatic() = _staticFile
-  
-  def resemble(path:String): Option[Matcher] = {
+
+  def resemble(mtd:String, path:String): Option[Matcher] = {
     val m=_regex.matcher(path)
-    if (m.matches() ) Some(m) else None
+    if (m.matches() &&
+      ( _verb.lc == mtd.lc || _verb == "*" ) ) {
+      Some(m)
+    } else {
+      None
+    }
   }
-  
+
   def mountPoint_=(s:String) {   _mountPt = nsb(s) }
   def mountPoint = _mountPt
-  
+
   def template_=(s:String) {   _tpl = nsb(s) }
   def template = _tpl
-  
+
   def pattern() = _regex
   def pipeline() = _pipe
   def path() = _path
@@ -151,7 +157,7 @@ private val _pipe:String) {
     }
     rc.toMap
   }
-  
+
   /*
    *  path can be /host.com/abc/:id1/gg/:id2
    */

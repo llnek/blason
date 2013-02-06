@@ -83,9 +83,9 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   private var _wsHandShaker: WSHandshaker = null
   import HttpHeaders._
   import MVCHplr._
-  
+
   def tlog() = MVCHandler._log
-  
+
   override def messageReceived(ctx:CHContext, ev:MessageEvent) {
     //val c= ctx.getChannel()
     ev.getMessage() match {
@@ -105,13 +105,13 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   }
 
   private def precond(ctx:CHContext, req:HttpRequest) {
-    
+
     if  ( ! req.getUri().startsWith( _src.getContextPath() ) ) {
       serve403(ctx)
     }
-    
+
   }
-  
+
   private def handleRequest(ctx:CHContext, ev:MessageEvent, req:HttpRequest) {
     precond(ctx, req)
     val evt= extract(_src, ctx, req)
@@ -123,11 +123,11 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
       tlog.debug("Matched one Route: {}", rc._2.path )
       if (rc._2.isStatic) { serveStatic(rc._2, rc._3, ctx, req,evt) } else {
         serveRoute(rc._2, rc._3, ctx, evt)
-      }              
-    } else {    
+      }
+    } else {
       serveWelcomeFile(req) match {
         case Some(fp) =>
-          handleStatic( _src, ctx, req, fp)          
+          handleStatic( _src, ctx, req, fp)
         case _ =>
           tlog.debug("Failed to match Uri: {}", req.getUri )
           serve404(ctx)
@@ -136,17 +136,17 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   }
 
   private def serveWelcomeFile(req:HttpRequest) = {
-    if ( ! req.getUri().matches("/?")) None else { 
+    if ( ! req.getUri().matches("/?")) None else {
       _src.getWelcomeFiles.find { (fn) =>
         val f= new File(_src.container.appDir, DN_PUBLIC +"/"+fn )
-        f.exists && f.canRead                  
+        f.exists && f.canRead
       } match {
         case Some(fn) =>Some(new File(_src.container.appDir, DN_PUBLIC +"/"+fn ))
         case _ =>None
       }
-    }    
+    }
   }
-  
+
   private def serveStatic(ri:RouteInfo, mc:Matcher, ctx:CHContext,
       req:HttpRequest, evt:HTTPEvent) {
     val appDir= _src.container.appDir
@@ -169,7 +169,7 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   private def serveRoute(ri:RouteInfo, mc:Matcher, ctx:CHContext, evt:HTTPEvent) {
     val w= new AsyncWaitEvent( evt, new NettyTrigger(evt, ctx.getChannel) )
     val pms = ri.resolveMatched(mc)
-    pms.foreach { (en) =>      evt.addParam(en._1, en._2) }    
+    pms.foreach { (en) =>      evt.addParam(en._1, en._2) }
     w.timeoutMillis( _src.waitMillis)
     evt.addAttr( PF_ROUTE_INFO, ri)
     evt.routerClass = ri.pipeline()
@@ -184,38 +184,38 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   private def serve403(ctx:CHContext) {
     trap403(ctx)
   }
-  
+
   private def routeCracker(evt:HTTPEvent)  = {
     var rc: (Boolean, RouteInfo,Matcher,String) = (false, null,null, "")
     val cpath= evt.contextPath()
     val uri= evt.uri()
     _src.container().getRoutes().find { (r) =>
-      r.resemble(uri) match {
+      r.resemble(evt.method, uri) match {
         case Some(m) => rc=(true, r,m, ""); true
         case _ => false
       }
     }
-        
+
     if (!rc._1 && !uri.endsWith("/") ) {
       val u= uri+"/"
-      if (maybeRedirect(u)) {
+      if (maybeRedirect(evt.method, u)) {
         rc = (true,null,null, u )
       }
     }
-    
+
     rc
   }
-  
-  private def maybeRedirect(uri:String) = {
+
+  private def maybeRedirect(mtd:String, uri:String) = {
     _src.container().getRoutes().find { (r) =>
-      r.resemble(uri) match {
-        case Some(m) =>true  
+      r.resemble(mtd, uri) match {
+        case Some(m) =>true
         case _ => false
       }
     } match {
       case Some(s) => true
       case _ => false
-    }    
+    }
 
   }
 
@@ -228,7 +228,7 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   override def childChannelOpen(ctx:CHContext, e:ChildChannelStateEvent) {
     super.childChannelOpen(ctx, e)
     _src.pushOneChannel(gCH(ctx,e))
-    lg("ChildChannelOpen", ctx)    
+    lg("ChildChannelOpen", ctx)
   }
 
   private def gCH(ctx:CHContext, e:ChannelEvent) = {
