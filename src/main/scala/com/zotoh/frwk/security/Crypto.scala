@@ -79,7 +79,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.SecretKeySpec
 import javax.security.auth.x500.X500Principal
 import org.apache.commons.codec.binary.Base64
-
+import org.apache.commons.codec.binary.Hex
 
 
 sealed class SigningStyle() {}
@@ -120,7 +120,8 @@ object Crypto {
     val mac= Mac.getInstance(algo, Crypto.provider )
     mac.init(new SecretKeySpec(key, algo) )
     mac.update( data.getBytes("utf-8"))    
-    bytesToHexString(mac.doFinal )
+    Hex.encodeHexString(mac.doFinal )
+//    bytesToHexString(mac.doFinal )
   }
   
   def genHash(data:String, algo:String= "SHA-512") {  

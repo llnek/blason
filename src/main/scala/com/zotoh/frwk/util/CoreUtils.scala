@@ -56,6 +56,8 @@ import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.IOUtils._
 import java.io.FileInputStream
 import java.net.InetAddress
+import java.net.URLEncoder
+import java.net.URLDecoder
 
 
 class ZString(str:String) {
@@ -869,11 +871,16 @@ ii=java.lang.Integer
     } else { println("NOK")}
   }
   private def t5(args:Array[String]) {
-//    val h=InetAddress.getLocalHost()
-    val h = InetAddress.getByName("localhost")
-    println( h.getCanonicalHostName() )
-    println( h.getHostAddress())
-    println(h.getHostName())
+    var ss = STU.split( "\u0000abc\u0000zzzz", "\u0000")
+    ss=null
+    var s= URLEncoder.encode("\u0000abc:xxx\u0000zzz:hhh", "utf-8")
+    println(s)
+    s= URLDecoder.decode(s, "utf-8")
+    println(s)
+    ss = STU.split( s, "\u0000")
+    s=null
+    ss= STU.split(":", ":")
+    s=null
   }
   def main(args:Array[String] ) {
     t5(args)

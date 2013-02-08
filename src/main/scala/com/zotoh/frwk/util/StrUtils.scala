@@ -36,6 +36,12 @@ import com.zotoh.frwk.io.IOUtils._
  */
 object StrUtils extends CoreImplicits {
 
+  def same(a: String, b: String) = {
+    if (a.length != b.length) false else {
+      Arrays.equals(a.toCharArray, b.toCharArray )
+    }
+  }
+  
   /**
    * Append to a string-builder, optionally inserting a delimiter if the buffer is not
    * empty.

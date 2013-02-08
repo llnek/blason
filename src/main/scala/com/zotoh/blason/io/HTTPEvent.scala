@@ -31,6 +31,7 @@ import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.util.{StrArr}
 import java.net.HttpCookie
+import org.jboss.netty.handler.codec.http.Cookie
 
 
 @SerialVersionUID(4177245480803037339L)
@@ -39,7 +40,7 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private val _params= mutable.HashMap[String,StrArr]()
   private val _hdrs= mutable.HashMap[String,StrArr]()
   private val _attrs= mutable.HashMap[String,Any]()
-
+  private var _session:Any = null
   private var _servletPath=""
   private var _url=""
   private var _uri= ""
@@ -65,18 +66,24 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private var _data:XData=null
   private var _cLen=0L
   
-  private var _cookies:Map[String,HttpCookie] = null
+  private var _cookies:Map[String,Cookie] = null
   private var _keepAlive= false
 
-  def setCookies(c:Map[String,HttpCookie]) {
+  def bindSession(session:Any) {
+    _session =session
+  }
+  
+  def getSession() = _session
+  
+  def setCookies(c:Map[String,Cookie]) {
     _cookies = c
   }
   
-  def getCookies(): Map[String,HttpCookie] = {
+  def getCookies(): Map[String,Cookie] = {
     if (_cookies == null) Map() else _cookies
   }
   
-  def getCookie(name:String): Option[HttpCookie] = {
+  def getCookie(name:String): Option[Cookie] = {
     if (_cookies==null || STU.isEmpty(name)) None else _cookies.get(name)
   }
   

@@ -47,12 +47,15 @@ import com.zotoh.frwk.io.XData
 import org.apache.commons.io.{IOUtils=>IOU}
 import org.jboss.netty.handler.codec.http.CookieDecoder
 import java.net.HttpCookie
+import org.jboss.netty.handler.codec.http.Cookie
 
 
 /**
  * @author kenl
  */
 object MVCHplr {
+  
+  import MVCSession._
   
   def extract ( src:NettyMVC, ctx:CHContext, req:HttpRequest): HTTPEvent = {
     val (cType, enc) = parseContentType( req.getHeader(Names.CONTENT_TYPE) )
@@ -116,7 +119,7 @@ object MVCHplr {
         x
     }
 
-    evt
+    resurrect( evt)
   }
   
   def sendRedirect(ctx:CHContext, perm:Boolean, targetUrl:String) = {
@@ -270,16 +273,9 @@ object MVCHplr {
       case s if !STU.isEmpty(s) =>new CookieDecoder().decode(s )
       case _ =>null
     }
-    val rc= mutable.HashMap[String, HttpCookie]()
+    val rc= mutable.HashMap[String, Cookie]()
     if (cs != null) cs.foreach { (c) =>
-      val k = new HttpCookie(c.getName, c.getValue)
-      k.setHttpOnly( c.isHttpOnly )
-      k.setSecure( c.isSecure )
-      k.setPath(c.getPath )
-      k.setDomain( c.getDomain )
-      k.setMaxAge( c.getMaxAge )
-      k.setSecure( c.isSecure )
-      rc.put (k.getName, k)
+      rc.put (c.getName, c)      
     }
     rc.toMap
   }

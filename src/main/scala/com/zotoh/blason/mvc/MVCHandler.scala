@@ -83,7 +83,8 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
   private var _wsHandShaker: WSHandshaker = null
   import HttpHeaders._
   import MVCHplr._
-
+  import MVCSession._
+  
   def tlog() = MVCHandler._log
 
   override def messageReceived(ctx:CHContext, ev:MessageEvent) {

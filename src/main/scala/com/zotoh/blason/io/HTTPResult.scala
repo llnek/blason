@@ -24,15 +24,13 @@ package io
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-
 import org.apache.commons.lang3.{StringUtils=>STU}
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
-
 import java.io.IOException
-
 import com.zotoh.frwk.io.{XData}
 import com.zotoh.frwk.net.HTTPStatus
+import org.jboss.netty.handler.codec.http.Cookie
 
 
 /**
@@ -43,6 +41,7 @@ import com.zotoh.frwk.net.HTTPStatus
 class HTTPResult extends AbstractResult() {
 
   private val _headers= mutable.HashMap[String,String]()
+  private val _cookies= mutable.HashMap[String,Cookie]()
   private var _data:XData= null
   private var _text:String= "OK"
   private var _code= 200
@@ -52,6 +51,10 @@ class HTTPResult extends AbstractResult() {
     setStatus(s)
   }
 
+  def setCookie() {
+    
+  }
+  
   def setData(data:String) { setData( new XData(data)) }
   def setData(d:XData) { _data=d }
   def data() = {
