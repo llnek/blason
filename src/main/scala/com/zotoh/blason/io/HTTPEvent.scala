@@ -24,13 +24,13 @@ package io
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-
 import org.apache.commons.lang3.{StringUtils=>STU}
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.util.{StrArr}
+import java.net.HttpCookie
 
 
 @SerialVersionUID(4177245480803037339L)
@@ -65,8 +65,21 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private var _data:XData=null
   private var _cLen=0L
   
+  private var _cookies:Map[String,HttpCookie] = null
   private var _keepAlive= false
 
+  def setCookies(c:Map[String,HttpCookie]) {
+    _cookies = c
+  }
+  
+  def getCookies(): Map[String,HttpCookie] = {
+    if (_cookies == null) Map() else _cookies
+  }
+  
+  def getCookie(name:String): Option[HttpCookie] = {
+    if (_cookies==null || STU.isEmpty(name)) None else _cookies.get(name)
+  }
+  
   def setData(s:String): this.type = {
     _data=new XData(s)
     this

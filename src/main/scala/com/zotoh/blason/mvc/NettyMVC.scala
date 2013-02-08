@@ -43,20 +43,6 @@ class NettyMVC extends NettyIO(null, "") {
   private var _maxAge=3600L
   
   def getWelcomeFiles(): Set[String] = _wfiles.toSet
-
-  def resolveTemplateEx(id:String) = {
-    id match {
-      case "404" =>""
-      case _ => ""       
-    }    
-  }
-  
-  def resolveTemplate(id:String) = {
-    id match {
-      case "404" => ""
-      case _ => ""       
-    }    
-  }
   
   def getCacheMaxAgeSecs() = _maxAge
 

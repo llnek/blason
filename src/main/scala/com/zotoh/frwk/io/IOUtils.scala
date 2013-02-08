@@ -51,8 +51,8 @@ import java.nio.charset.Charset
  */
 object IOUtils {
 
+  private val HEX_CHS = Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' )
   private var READ_STREAM_LIMIT=1024*1024*8 // if > 8M switch to file
-
   private val _log= LoggerFactory.getLogger(classOf[IOUtils])
   def tlog() = _log
 
@@ -62,6 +62,29 @@ object IOUtils {
   def streamLimit_=(n:Int) { READ_STREAM_LIMIT=n }
   def streamLimit= READ_STREAM_LIMIT
 
+  def bytesToHexString(bits:Array[Byte]) = {
+    if (bits==null) null else new String( bytesToHexChars(bits) )
+  }
+  
+  def bytesToHexChars(bits:Array[Byte]): Array[Char] = {
+    val len = if (bits==null) 0 else bits.length
+    if (len == 0) Array() else {
+      val out= new Array[Char](2*len)
+      var n=0
+      var i=0
+      var k=0
+      while (i <  out.length) {
+          n= bits(k) & 0xFF
+          k += 1
+          out(i) = HEX_CHS( n >> 4)   // high 4 bits
+          i += 1
+          out(i) = HEX_CHS( n & 0xF ) // low 4 bits
+          i += 1
+      }
+      out
+    } 
+  }
+  
   /**
    * @param fn
    * @return

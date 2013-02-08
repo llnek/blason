@@ -41,12 +41,12 @@ import java.text.SimpleDateFormat
 import java.util.{Date=>JDate,TimeZone,Locale}
 import com.zotoh.blason.io.NettyHplr._
 import org.jboss.netty.buffer.ChannelBuffers
-
 import java.net.InetSocketAddress
 import com.zotoh.blason.io.HTTPEvent
 import com.zotoh.frwk.io.XData
 import org.apache.commons.io.{IOUtils=>IOU}
 import org.jboss.netty.handler.codec.http.CookieDecoder
+import java.net.HttpCookie
 
 
 /**
@@ -103,7 +103,7 @@ object MVCHplr {
     evt.setQueryString(qry)
     evt.setUri(path)
 
-
+    evt.setCookies( getCookies(req) )
     getHeaders(evt, req)
     getParams(evt, uri)
 
@@ -270,16 +270,16 @@ object MVCHplr {
       case s if !STU.isEmpty(s) =>new CookieDecoder().decode(s )
       case _ =>null
     }
-    val rc= mutable.HashMap[String, WebCookie]()
-    cs.foreach { (c) =>
-      val k = WebCookie()
+    val rc= mutable.HashMap[String, HttpCookie]()
+    if (cs != null) cs.foreach { (c) =>
+      val k = new HttpCookie(c.getName, c.getValue)
       k.setHttpOnly( c.isHttpOnly )
       k.setSecure( c.isSecure )
-      k.name = c.getName()
-      k.path = c.getPath()
-      k.value = c.getValue()
-      k.domain = c.getDomain()
-      rc.put(k.name, k)
+      k.setPath(c.getPath )
+      k.setDomain( c.getDomain )
+      k.setMaxAge( c.getMaxAge )
+      k.setSecure( c.isSecure )
+      rc.put (k.getName, k)
     }
     rc.toMap
   }

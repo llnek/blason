@@ -22,83 +22,63 @@
 package com.zotoh.frwk
 package security
 
-import scala.collection.JavaConversions._
-import scala.collection.mutable
-
-import org.apache.commons.lang3.{StringUtils=>STU}
-import scala.math._
-
-import com.zotoh.frwk.io.IOUtils._
-import com.zotoh.frwk.io.IOUtils
-import com.zotoh.frwk.util.CoreUtils
-import com.zotoh.frwk.util.CoreUtils._
-import com.zotoh.frwk.util.StrUtils._
-
-import java.io.{ByteArrayOutputStream=>ByteArrayOS,ByteArrayInputStream=>ByteArrayIS,File,InputStreamReader}
-import java.io.{FileOutputStream,FileInputStream}
+import java.io.{ByteArrayInputStream => ByteArrayIS}
+import java.io.{ByteArrayOutputStream => ByteArrayOS}
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStreamReader
 import java.math.BigInteger
-import java.security.GeneralSecurityException
-import java.security.InvalidAlgorithmParameterException
-import java.security.InvalidKeyException
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.KeyStore
 import java.security.KeyStore.PasswordProtection
 import java.security.KeyStore.PrivateKeyEntry
-import java.security.KeyStoreException
 import java.security.MessageDigest
-import java.security.NoSuchAlgorithmException
-import java.security.NoSuchProviderException
 import java.security.PrivateKey
 import java.security.Provider
 import java.security.PublicKey
 import java.security.SecureRandom
 import java.security.Security
-import java.security.SignatureException
-import java.security.UnrecoverableEntryException
-import java.security.cert.CertStoreException
-import java.security.cert.{Certificate=>JCert}
-import java.security.cert.CertificateEncodingException
-import java.security.cert.CertificateException
-import java.security.cert.{X509Certificate=>XCert}
-import java.security.spec.InvalidKeySpecException
-import java.util.{Date=>JDate,Random}
-
-import javax.crypto.BadPaddingException
-import javax.crypto.Cipher
-import javax.crypto.IllegalBlockSizeException
-import javax.crypto.KeyGenerator
-import javax.crypto.NoSuchPaddingException
-import javax.crypto.SecretKey
-import javax.crypto.spec.SecretKeySpec
-import javax.security.auth.x500.X500Principal
-
-import org.bouncycastle.operator.OperatorCreationException
-import org.bouncycastle.cert.CertIOException
+import java.security.cert.{Certificate => JCert}
+import java.security.cert.{X509Certificate => XCert}
+import java.util.{Date => JDate}
+import java.util.Random
+import scala.collection.JavaConversions._
+import scala.collection.mutable
+import scala.math._
 import org.bouncycastle.asn1.x509.X509Extension
 import org.bouncycastle.cert.jcajce.JcaCertStore
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
 import org.bouncycastle.cert.jcajce.JcaX509v1CertificateBuilder
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
-import org.bouncycastle.cms.CMSSignedGenerator
-import org.bouncycastle.cms.CMSException
-import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.CMSProcessableByteArray
+import org.bouncycastle.cms.CMSSignedDataGenerator
+import org.bouncycastle.cms.CMSSignedGenerator
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
-import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.openssl.PEMReader
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.DigestCalculatorProvider
-import org.bouncycastle.operator.OperatorCreationException
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder
-import org.bouncycastle.util.encoders.Base64
-import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils
+import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.bouncycastle.pkcs.PKCS10CertificationRequestBuilder
 import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder
-
 import org.slf4j._
+import com.zotoh.frwk.io.IOUtils._
+import com.zotoh.frwk.io.IOUtils
+import com.zotoh.frwk.util.CoreUtils
+import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrUtils._
+import javax.crypto.Cipher
+import javax.crypto.KeyGenerator
+import javax.crypto.Mac
+import javax.crypto.SecretKey
+import javax.crypto.spec.SecretKeySpec
+import javax.security.auth.x500.X500Principal
+import org.apache.commons.codec.binary.Base64
 
 
 
@@ -135,6 +115,20 @@ object Crypto {
   Security.addProvider( _prov)
   maybe_assert_jce()
 
+  
+  def genMAC( key:Array[Byte], data:String, algo:String = "HmacSHA512") = {
+    val mac= Mac.getInstance(algo, Crypto.provider )
+    mac.init(new SecretKeySpec(key, algo) )
+    mac.update( data.getBytes("utf-8"))    
+    bytesToHexString(mac.doFinal )
+  }
+  
+  def genHash(data:String, algo:String= "SHA-512") {  
+    val dig = MessageDigest.getInstance( algo)
+    val b= dig.digest( data.getBytes("utf-8"))
+    Base64.encodeBase64String(b)
+  }  
+  
   /**
    * @param keyLength
    * @param dnStr
@@ -554,7 +548,7 @@ object Crypto {
 
   private def fmtPEM(top:String, end:String, bits:Array[Byte]) = {
     val baos= new ByteArrayOS(); baos.write( CoreUtils.asBytes(top))
-    val bs=Base64.encode(bits)
+    val bs=Base64.encodeBase64(bits)
     val bb= Array[Byte](1)
     var pos=0
     for ( i <- 0 until bs.length) {

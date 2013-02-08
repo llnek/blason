@@ -98,40 +98,6 @@ object HTTPIO {
 sealed class HTTPIO {}
 
 
-@SerialVersionUID(834758934753475L)
-case class WebCookie() extends scala.Serializable {
-  
-    private var _httpOnly = false
-    private var _secure = false
-    private var _maxAge= -1
-    private var _name=""
-    private var _domain=""
-    private var _path= ""
-    private var _value=""
-      
-    def maxAge_=( n:Int) { _maxAge = n }
-    def maxAge = _maxAge
-    
-    def setSecure(b:Boolean) { _secure= b }
-    def isSecure() = _secure
-    
-    def domain_=(s:String) { _domain = s }
-    def domain = _domain
-    
-    def path_=(s:String) { _path = s }
-    def path = _path
-    
-    def name_=(s:String) { _name = s }
-    def name = _name
-    
-    def value_=(s:String) { _value = s }
-    def value = _value
-    
-    def setHttpOnly(b:Boolean) { _httpOnly= b }
-    def isHttpOnly() = _httpOnly
-    
-}
-
 class ByteRange(private val _file:RandomAccessFile, private var _start:Long, private var _end:Long,
     private val _cType:String, private val _incHeader:Boolean) {    
 
