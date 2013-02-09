@@ -19,6 +19,9 @@ import com.zotoh.blason.io.HTTPResult
 import org.jboss.netty.handler.codec.http.DefaultCookie
 import org.jboss.netty.handler.codec.http.Cookie
 import com.zotoh.frwk.util.UUID
+import com.zotoh.blason.io.SessionIO
+import com.zotoh.blason.io.AbstractEvent
+import com.zotoh.blason.io.AbstractResult
 
 /**
  * @author kenl
@@ -74,7 +77,7 @@ object MVCSession {
 /**
  * @author kenl
  */
-class MVCSession { //extends HttpSession {
+class MVCSession extends SessionIO { //extends HttpSession {
   import MVCSession._
   private val _attrs= new mutable.HashMap[String, String] with mutable.SynchronizedMap[String, String]{}
   private var _createTS= System.currentTimeMillis()
@@ -84,6 +87,14 @@ class MVCSession { //extends HttpSession {
   private var _newOne=true
   
   setAttribute( SSID_FLAG, UUID.newUUID() )
+  
+  
+  def handleResult(evt:AbstractEvent, res:AbstractResult) {   
+    val e=evt.asInstanceOf[HTTPEvent]
+    val r=res.asInstanceOf[HTTPResult]
+    val k=e.emitter.container.getAppKey.getBytes("utf-8")
+    r.setCookie( mkCookie(k, e.isSSL ) )
+  }
   
   def mkCookie(key:Array[Byte], ssl:Boolean): Cookie = {
     val b = _attrs.keySet.foldLeft( new StringBuilder ){ (b,k) =>
@@ -135,7 +146,7 @@ class MVCSession { //extends HttpSession {
       if (value == null) {
         _attrs.remove(name)
       } else {
-        _attrs.put(name, value)        
+        _attrs += name -> nsb(value)       
       }
     }
   }

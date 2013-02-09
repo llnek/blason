@@ -110,7 +110,7 @@ object MVCHplr {
     getHeaders(evt, req)
     getParams(evt, uri)
 
-    req.getContent match {
+    val payload= req.getContent match {
       case f:FileChannelBuffer => new XData(f.file)
       case c =>
         val t=sockBytes(c, src.threshold )
@@ -118,8 +118,15 @@ object MVCHplr {
         IOU.closeQuietly(t._1)
         x
     }
+    evt.setData(payload)
 
-    resurrect( evt)
+    try { resurrect( evt) } finally {
+      tlog.debug("{}", evt.toString)
+      if (evt.data != null) {
+        tlog.debug("PAYLOAD:\n{}", new String( evt.data.javaBytes, "utf-8") )        
+      }
+    }
+    
   }
   
   def sendRedirect(ctx:CHContext, perm:Boolean, targetUrl:String) = {

@@ -51,8 +51,10 @@ class HTTPResult extends AbstractResult() {
     setStatus(s)
   }
 
-  def setCookie() {
-    
+  def getCookies() = _cookies.values.toSeq
+  
+  def setCookie(c:Cookie) {
+    _cookies += c.getName -> c
   }
   
   def setData(data:String) { setData( new XData(data)) }

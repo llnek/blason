@@ -41,9 +41,19 @@ abstract class AbstractEvent protected(src:EventEmitter) extends EventObject(src
   private var _waitEvent:WaitEvent=null
   private var _res:AbstractResult=null  
   private var _routerClass=""
+  private var _sess:SessionIO=null  
   private var _id= SeqNumGen.next()
 
+  def bindSession(s:SessionIO) {
+    _sess=s
+  }
+  
+  def getSession() = _sess
+  
   def setResult(r:AbstractResult) {
+    if (_sess != null) {
+      _sess.handleResult(this, r)
+    }
     _res= r
     if ( _waitEvent != null) try {
       _waitEvent.resumeOnResult(r)

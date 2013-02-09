@@ -40,7 +40,7 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private val _params= mutable.HashMap[String,StrArr]()
   private val _hdrs= mutable.HashMap[String,StrArr]()
   private val _attrs= mutable.HashMap[String,Any]()
-  private var _session:Any = null
+
   private var _servletPath=""
   private var _url=""
   private var _uri= ""
@@ -69,11 +69,9 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private var _cookies:Map[String,Cookie] = null
   private var _keepAlive= false
 
-  def bindSession(session:Any) {
-    _session =session
+  override def setResult(r:AbstractResult) {
+    super.setResult(r)  
   }
-  
-  def getSession() = _session
   
   def setCookies(c:Map[String,Cookie]) {
     _cookies = c
@@ -257,10 +255,10 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
 
     var ts="\n"
     _params.foreach{ (t) => ts += t._1 + "=[" + t._2.toString() + "]" }
-    bf += "params=" + ts + "\n"
+    bf += "params=>>>" + ts + "\n"
     ts="\n"
     _hdrs.foreach{ (t) => ts += t._1 + ": " + t._2.toString() + "\n" }
-    bf += "headers=" + ts + "\n"
+    bf += "headers=>>>" + ts + "\n"
     bf
   }
 

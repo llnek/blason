@@ -27,7 +27,6 @@ import org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1
 import org.jboss.netty.handler.codec.http.HttpHeaders._
 import scala.collection.JavaConversions._
 import java.io.InputStream
-
 import org.jboss.netty.channel.Channel
 import org.jboss.netty.channel.ChannelFuture
 import org.jboss.netty.channel.ChannelFutureListener
@@ -37,10 +36,10 @@ import org.jboss.netty.handler.codec.http.DefaultHttpResponse
 import org.jboss.netty.handler.codec.http.HttpResponse
 import org.jboss.netty.handler.codec.http.HttpResponseStatus
 import org.jboss.netty.handler.stream.ChunkedStream
-
 import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.net.HTTPStatus
+import org.jboss.netty.handler.codec.http.CookieEncoder
 
 
 /**
@@ -87,7 +86,11 @@ class NettyTrigger private(src:EventEmitter) extends AsyncTrigger(src)  {
       case _ => null
     }
     rsp.setHeader("content-length", clen.toString)
-    //rsp.addHeader( Names.SET_COOKIE, _cookie.encode )
+    res.getCookies().foreach { (c) =>
+      val enc= new CookieEncoder(true)
+      enc.addCookie(c)
+      rsp.addHeader( Names.SET_COOKIE, enc.encode )      
+    }
 
     //TODO: this throw NPE some times !
     var cf:ChannelFuture = try { _channel.write(rsp) } catch {
