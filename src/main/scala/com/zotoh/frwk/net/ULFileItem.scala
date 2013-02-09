@@ -68,7 +68,7 @@ class ULFileItem extends FileItem with Serializable {
    */
   def this(field:String, contentType:String, isFormField:Boolean, fileName:String)   {
     this()
-    tstEStrArg("file-name", fileName)
+//    tstEStrArg("file-name", fileName)
     tstEStrArg("field-name", field)
 
     _ctype= nsb(contentType)

@@ -32,6 +32,7 @@ import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.util.{StrArr}
 import java.net.HttpCookie
 import org.jboss.netty.handler.codec.http.Cookie
+import com.zotoh.frwk.net.ULFileItem
 
 
 @SerialVersionUID(4177245480803037339L)
@@ -40,7 +41,8 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private val _params= mutable.HashMap[String,StrArr]()
   private val _hdrs= mutable.HashMap[String,StrArr]()
   private val _attrs= mutable.HashMap[String,Any]()
-
+  private val _atts= mutable.HashMap[String,ULFileItem]()
+  
   private var _servletPath=""
   private var _url=""
   private var _uri= ""
@@ -65,7 +67,8 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
 
   private var _data:XData=null
   private var _cLen=0L
-  
+  private var _cTypeLine=""
+    
   private var _cookies:Map[String,Cookie] = null
   private var _keepAlive= false
 
@@ -101,9 +104,17 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   def setData(s:XData): this.type =  { _data=s; this }
   def data() = _data
 
+  def hasData() = _data != null
+  
   def setContentLength(len:Long) { _cLen = len  }
   def contentLength() = _cLen
 
+  def setContentTypeLine(s:String) {
+    _cTypeLine= nsb(s)
+  }
+  
+  def contentTypeLine() = _cTypeLine
+  
   def setContentType(ct:String) {
     _ctype = nsb(ct)
   }
@@ -119,6 +130,10 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   }
   def contextPath() = _contextPath
 
+  def addFile(fi:ULFileItem) {
+    _atts.put(fi.getFieldName, fi)
+  }
+  
   def addAttr(n:String, v:Any) {
     if ( ! STU.isEmpty(n)) {
       _attrs += Tuple2(n,v)

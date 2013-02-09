@@ -33,11 +33,13 @@ import org.jboss.netty.handler.codec.http.HttpMethod
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names
 import org.slf4j._
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrUtils._
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse
 import org.jboss.netty.channel.{ChannelHandlerContext=>CHContext}
 import org.jboss.netty.handler.codec.http.HttpVersion
 import org.apache.commons.lang3.{StringUtils => STU}
 import java.text.SimpleDateFormat
+import java.io.{ByteArrayOutputStream=>ByteArrayOS}
 import java.util.{Date=>JDate,TimeZone,Locale}
 import com.zotoh.blason.io.NettyHplr._
 import org.jboss.netty.buffer.ChannelBuffers
@@ -48,15 +50,24 @@ import org.apache.commons.io.{IOUtils=>IOU}
 import org.jboss.netty.handler.codec.http.CookieDecoder
 import java.net.HttpCookie
 import org.jboss.netty.handler.codec.http.Cookie
+import com.zotoh.frwk.util.CoreImplicits
+import java.net.URLDecoder
+import org.apache.commons.fileupload.ParameterParser
+import org.apache.commons.fileupload.MultipartStream
+import java.io.OutputStream
+import org.apache.commons.fileupload.disk.DiskFileItemFactory
+import org.apache.commons.fileupload.FileItem
+import com.zotoh.frwk.net.ULFileFactory
+import com.zotoh.frwk.net.ULFileItem
 
 
 /**
  * @author kenl
  */
-object MVCHplr {
-  
+object MVCHplr extends CoreImplicits {
+
   import MVCSession._
-  
+
   def extract ( src:NettyMVC, ctx:CHContext, req:HttpRequest): HTTPEvent = {
     val (cType, enc) = parseContentType( req.getHeader(Names.CONTENT_TYPE) )
     val uri = req.getUri
@@ -75,17 +86,17 @@ object MVCHplr {
     val evt= src.mkEvent()
     val ch= ctx.getChannel()
 
+    evt.setContentTypeLine(req.getHeader(Names.CONTENT_TYPE))
     evt.setKeepAlive( chKeepAlive(req) )
     evt.setContentType(cType)
-    
     evt.setRemoteAddr(remote )
     evt.setRemoteHost(host)
     if (port < 0) {
-      evt.setRemotePort( if (isSSL(ctx) ) 443 else 80 )      
+      evt.setRemotePort( if (isSSL(ctx) ) 443 else 80 )
     } else {
-      evt.setRemotePort(port)      
+      evt.setRemotePort(port)
     }
-    
+
 /*
     ch.getRemoteAddress() match {
       case x:InetSocketAddress =>
@@ -109,7 +120,7 @@ object MVCHplr {
     evt.setCookies( getCookies(req) )
     getHeaders(evt, req)
     getParams(evt, uri)
-
+    
     val payload= req.getContent match {
       case f:FileChannelBuffer => new XData(f.file)
       case c =>
@@ -120,15 +131,22 @@ object MVCHplr {
     }
     evt.setData(payload)
 
+    if (isMultipart(evt)) {
+      handleMultipart(evt)
+    }
+    else if (isFormPOST(evt)) {
+      maybeGetFormData(evt)
+    }
+
     try { resurrect( evt) } finally {
       tlog.debug("{}", evt.toString)
       if (evt.data != null) {
-        tlog.debug("PAYLOAD:\n{}", new String( evt.data.javaBytes, "utf-8") )        
+        tlog.debug("PAYLOAD:\n{}", new String( evt.data.javaBytes, "utf-8") )
       }
     }
-    
+
   }
-  
+
   def sendRedirect(ctx:CHContext, perm:Boolean, targetUrl:String) = {
     val rsp=new DefaultHttpResponse(HttpVersion.HTTP_1_1,
         if (perm) HttpResponseStatus.MOVED_PERMANENTLY else HttpResponseStatus.TEMPORARY_REDIRECT
@@ -137,28 +155,28 @@ object MVCHplr {
     rsp.setHeader("location", targetUrl)
     closeCF(true, ctx.getChannel().write(rsp) )
   }
-    
+
   def addETag(src:NettyMVC, req:HttpRequest, rsp:HttpResponse, file:File )  {
-    
+
     val maxAge = src.getCacheMaxAgeSecs()
     val lastTm = file.lastModified()
     val eTag = "\"" + lastTm + "-" + file.hashCode + "\""
-    
+
     if (  isModified(eTag, lastTm, req)) {
       rsp.setHeader(Names.LAST_MODIFIED, getDF.format( new JDate(lastTm )))
     }
     else if (req.getMethod == HttpMethod.GET) {
-      rsp.setStatus(HttpResponseStatus.NOT_MODIFIED)      
+      rsp.setStatus(HttpResponseStatus.NOT_MODIFIED)
     }
 
     rsp.setHeader( Names.CACHE_CONTROL,
         if (maxAge == 0) "no-cache" else { "max-age=" + maxAge }
     )
-    
+
     if (src.getUseETag ) {
       rsp.setHeader(Names.ETAG, eTag)
     }
-    
+
   }
 
   def trap404( ctx:CHContext) {
@@ -168,7 +186,7 @@ object MVCHplr {
         case Some(tp) =>
           rsp.setHeader(Names.CONTENT_TYPE, tp.contentType )
           val bits = tp.body.getBytes("utf-8")
-          setContentLength(rsp, bits.length ) 
+          setContentLength(rsp, bits.length )
           rsp.setContent( ChannelBuffers.copiedBuffer(bits) )
         case _ =>
       }
@@ -188,7 +206,7 @@ object MVCHplr {
         case Some(tp) =>
           rsp.setHeader(Names.CONTENT_TYPE, tp.contentType )
           val bits = tp.body.getBytes("utf-8")
-          setContentLength(rsp, bits.length ) 
+          setContentLength(rsp, bits.length )
           rsp.setContent( ChannelBuffers.copiedBuffer(bits) )
         case _ =>
       }
@@ -200,7 +218,7 @@ object MVCHplr {
     }
 
   }
-  
+
   def trapFatal( ctx:CHContext) {
     val rsp = mkHttpReply(HttpResponseStatus.INTERNAL_SERVER_ERROR)
     try {
@@ -208,7 +226,7 @@ object MVCHplr {
         case Some(tp) =>
           rsp.setHeader(Names.CONTENT_TYPE, tp.contentType )
           val bits = tp.body.getBytes("utf-8")
-          setContentLength(rsp, bits.length ) 
+          setContentLength(rsp, bits.length )
           rsp.setContent( ChannelBuffers.copiedBuffer(bits) )
         case _ =>
       }
@@ -220,13 +238,13 @@ object MVCHplr {
     }
 
   }
-  
-  def handleStatic( src:NettyMVC, ctx:CHContext, req:HttpRequest, file:File) {      
-    tlog.debug("MVC: serve static: {}", niceFPath(file))    
+
+  def handleStatic( src:NettyMVC, ctx:CHContext, req:HttpRequest, file:File) {
+    tlog.debug("MVC: serve static: {}", niceFPath(file))
     val rsp = mkHttpReply(HttpResponseStatus.OK)
     try {
       if (file == null || !file.exists()) { trap404( ctx) } else {
-        
+
         addETag(src, req, rsp, file)
 
         if (rsp.getStatus == HttpResponseStatus.NOT_MODIFIED ) {
@@ -251,16 +269,51 @@ object MVCHplr {
 
   }
 
+  def handleMultipart(evt:HTTPEvent) {
+    val fac= new ULFileFactory()
+    val upload = new NettyFileUpload(fac)
+    upload.setSizeMax(10000000)
+    val items = upload.parseRequest(evt)
+    items.foreach { _ match {
+      case fi:ULFileItem =>
+        if (fi.isFormField) { 
+          getFormField(fi,evt) 
+        } else {
+          getUploadFile(fi,evt)
+        }
+      case _ =>
+    }}    
+  }
+  
+  private def getUploadFile(fi:ULFileItem, evt:HTTPEvent) {
+    evt.addFile(fi)
+    fi.getContentType()
+    fi.getFieldName()
+    fi.getName()
+  }
+  
+  private def getFormField(fi:ULFileItem, evt:HTTPEvent) {
+    evt.addParam( nsb( fi.getFieldName ), nsb( fi.getString ))
+  }
+  
+  private def isFormPOST(evt:HTTPEvent) = {
+    evt.contentType.lc == "application/x-www-form-urlencoded"
+  }
+  
+  private def isMultipart(evt:HTTPEvent) = {
+    evt.contentType.lc.startsWith("multipart/")
+  }
+  
   private def mkHttpReply(s:HttpResponseStatus) = {
     new DefaultHttpResponse(HttpVersion.HTTP_1_1, s)
   }
-  
+
   private def isModified(eTag:String, lastTm:Long, req:HttpRequest ) = {
-    
+
     var mod= true
-    
+
     if (req.containsHeader(Names.IF_NONE_MATCH)) {
-        mod= eTag != req.getHeader(Names.IF_NONE_MATCH)        
+        mod= eTag != req.getHeader(Names.IF_NONE_MATCH)
     }
     else
     if (req.containsHeader(Names.IF_MODIFIED_SINCE)) {
@@ -271,10 +324,10 @@ object MVCHplr {
           }
         }
     }
-    
+
     mod
   }
-  
+
   def getCookies( req:HttpRequest) = {
     val cs= req.getHeader( Names.COOKIE) match {
       case s if !STU.isEmpty(s) =>new CookieDecoder().decode(s )
@@ -282,20 +335,39 @@ object MVCHplr {
     }
     val rc= mutable.HashMap[String, Cookie]()
     if (cs != null) cs.foreach { (c) =>
-      rc.put (c.getName, c)      
+      rc.put (c.getName, c)
     }
     rc.toMap
   }
 
+  private def maybeGetFormData(evt:HTTPEvent) {
+    if ( evt.hasData ) {
+      val formData = nsb ( URLDecoder.decode( evt.data.toString , evt.encoding) )
+      formData.split("&").foreach { (s) =>
+        val nv= s.split("=")
+        var k=""
+        var v=""
+        if (nv.length > 0) {
+          k=nv(0).trim()
+        }
+        if (nv.length > 1) {
+          v=nv(1).trim()
+        }
+        evt.addParam(k, v)
+      }
+    }
+  }
+
   private val _fmt = new ThreadLocal[SimpleDateFormat]() {
     override def initialValue() = {
-      val f=new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US) 
+      val f=new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
       f.setTimeZone(TimeZone.getTimeZone("GMT"))
       f
     }
   }
+
   private def getDF() = _fmt.get
-    
+
   private val _log = LoggerFactory.getLogger(classOf[MVCHplr])
   def tlog() = _log
 }
