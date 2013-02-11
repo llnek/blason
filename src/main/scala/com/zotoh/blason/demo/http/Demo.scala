@@ -34,7 +34,7 @@ import com.zotoh.frwk.io.XData
  * @author kenl
  *
  */
-class DemoMain {
+class DemoMain(c:Container) {
   def start() {
     println("Point your browser to http://localhost:8080/test/hello")
   }

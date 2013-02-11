@@ -29,12 +29,13 @@ import com.zotoh.blason.io.WebSockResult
 import com.zotoh.blason.wflow.Work
 import com.zotoh.blason.wflow.Pipeline
 import com.zotoh.blason.kernel.Job
+import com.zotoh.blason.kernel.Container
 
 /**
  * @author kenl
  *
  */
-class DemoMain {
+class DemoMain(c:Container) {
   def start() {
     println("Demo Websockets.")
   }

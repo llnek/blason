@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * @author kenl
  */
-class DemoMain {
+class DemoMain(c:Container) {
   def start() {    
           println("Demo receiving JMS messages..." )
   }

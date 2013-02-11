@@ -24,16 +24,19 @@ package demo
 import com.zotoh.blason.kernel._
 import com.zotoh.blason.wflow._
 import com.zotoh.blason.io._
-
 import java.io.File
 import java.io.OutputStreamWriter
+import com.zotoh.frwk.db.TLocalJDBC
 
+object DemoMain {
+  private val _db= new TLocalJDBC()
+}
 
 /**
  * @author kenl
  *
  */
-class DemoMain {
+class DemoMain(c:Container) {
   def start() {    
   }
   def stop() {    

@@ -44,9 +44,14 @@ import com.zotoh.frwk.util.FileUtils
 import org.scalatest.Assertions._
 import org.scalatest._
 
+object FwkDbJUT {
+  private val LJDBC = new TLocalJDBC()
+  def getJDBC = LJDBC
+}
 
 class FwkDbJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll with Constants {
-
+  import FwkDbJUT._
+  
   override def beforeAll(configMap: Map[String, Any]) {}
 
   override def afterAll(configMap: Map[String, Any]) {
@@ -70,6 +75,88 @@ INSERT INTO star (id, firstname, lastname) VALUES (DEFAULT, 'Felix', 'the Cat')
   private val _dbID="test007"
   private val _user="zeus"
   private val _pwd="zeus123"
+    
+  test("testSingularJDBC") {
+
+    val dbUrl= H2DB.mkMemDB(_dbID, _user, _pwd)
+    val j= new JDBCInfo(_user, _pwd, dbUrl, H2_DRIVER)
+
+    if (!DBUtils.tableExists(j, "user_accounts")) {
+      DDLUtils.loadDDL(j, getDDLStr())
+    }
+
+    assert( DBUtils.tableExists(j, "user_accounts"))
+
+    LJDBC.set(new TLocalDBIO(j))
+    
+    var jj= LJDBC.get.getPool.newJdbc()
+    var m= jj.getTableMetaData("user_accounts")
+    expectResult(m.size)(14)
+    expectResult(0)( jj.countRows("user_accounts"))
+
+    // insert
+    var r= new DBRow("user_accounts")
+    r.add("user_id", "id1")
+    expectResult( 1)( jj.insertOneRow(r))
+
+    // update
+    r.clear
+    r.add("user_role", "admin")
+    expectResult(1)( jj.updateOneRow(r, "user_id=?", "id1" ))
+
+    // select
+    var s = SELECTStmt.simpleSelect("user_accounts")
+    r=jj.fetchOneRow(s).get
+    assert(r != null && r.size()==14)
+
+    s= new SELECTStmt("select * from user_accounts where user_id=?").setParams("id1")
+    r=jj.fetchOneRow(s).get
+    assert( r != null && r.size()==14)
+
+    s= new SELECTStmt("select * from user_accounts where user_id='id1' ")
+    r=jj.fetchOneRow(s).get
+    assert(r!=null && r.size()==14)
+
+    s= new SELECTStmt("user_role", "user_accounts")
+    r=jj.fetchOneRow(s).get
+    assert(r != null && r.size()==1)
+
+    s= new SELECTStmt("user_role", "user_accounts", "user_id=?").setParams("id1")
+    r=jj.fetchOneRow(s).get
+    assert(r != null && r.size()==1)
+
+    s= new SELECTStmt("user_role,user_id", "user_accounts", 
+        "user_id=?", "order by user_role").setParams("id1")
+    r=jj.fetchOneRow(s).get
+    assert(r != null && r.size()==2)
+
+    assert(jj.existRows("user_accounts"))
+    assert(jj.existRows("user_accounts", "user_id=?", "id1" ))
+
+    expectResult(1)(jj.countRows("user_accounts" ))
+    expectResult(1)(jj.countRows("user_accounts", "user_id=?", "id1"))
+
+    // delete
+    var d= DELETEStmt.simpleDelete("user_accounts")
+    expectResult(1)(jj.deleteRows(d))
+
+    d=new DELETEStmt("delete from user_accounts where user_id=?").addParams("id1")
+    expectResult(0)(jj.deleteRows(d))
+
+    d=new DELETEStmt("delete from user_accounts where user_id='id1' ")
+    expectResult(0)(jj.deleteRows(d))
+
+    d= new DELETEStmt("user_accounts", "user_id=?").setParams("id1")
+    expectResult(0)(jj.deleteRows(d))
+
+    d= new DELETEStmt("user_accounts", "user_id='id1' ")
+    expectResult(0)(jj.deleteRows(d))
+
+    assert(! jj.existRows("user_accounts"))
+    
+    LJDBC.get.finz
+  }
+
 
   test("testCreateH2DB") {
     val path= _dbDir+ "/"+ _dbID
@@ -150,7 +237,7 @@ INSERT INTO star (id, firstname, lastname) VALUES (DEFAULT, 'Felix', 'the Cat')
   test("testLoadDDL") {
     val url= H2DB.mkMemDB("aaa", _user, _pwd)
     try {
-      DDLUtils.loadDDL( new JdbcInfo(_user, _pwd, url), getDDLStr())
+      DDLUtils.loadDDL( new JDBCInfo(_user, _pwd, url), getDDLStr())
       assert(true)
     } catch {
       case e:Throwable => assert(false, "loadddl failed")
@@ -167,7 +254,7 @@ INSERT INTO star (id, firstname, lastname) VALUES (DEFAULT, 'Felix', 'the Cat')
   test("testJDBC") {
 
     val dbUrl= H2DB.mkMemDB(_dbID, _user, _pwd)
-    val j= new JdbcInfo(_user, _pwd, dbUrl, H2_DRIVER)
+    val j= new JDBCInfo(_user, _pwd, dbUrl, H2_DRIVER)
 
     if (!DBUtils.tableExists(j, "user_accounts")) {
       DDLUtils.loadDDL(j, getDDLStr())
@@ -250,7 +337,7 @@ INSERT INTO star (id, firstname, lastname) VALUES (DEFAULT, 'Felix', 'the Cat')
   }
 
   test("testUtils") {
-    val jp= new JdbcInfo(_user, _pwd, "jdbc:h2:mem:xxx;DB_CLOSE_DELAY=-1", H2_DRIVER)
+    val jp= new JDBCInfo(_user, _pwd, "jdbc:h2:mem:xxx;DB_CLOSE_DELAY=-1", H2_DRIVER)
     using(DBUtils.mkConnection(jp)) { (c) =>
       assert(c != null)
       assert( !DBUtils.tableExists(jp, "xyz"))
@@ -288,7 +375,7 @@ INSERT INTO star (id, firstname, lastname) VALUES (DEFAULT, 'Felix', 'the Cat')
   }
 
   test("testTransaction") {
-    var jp= new JdbcInfo(_user, _pwd, "jdbc:h2:mem:zzz;DB_CLOSE_DELAY=-1", H2_DRIVER)
+    var jp= new JDBCInfo(_user, _pwd, "jdbc:h2:mem:zzz;DB_CLOSE_DELAY=-1", H2_DRIVER)
     using(DBUtils.mkConnection(jp)) { (c) =>
       assert(c != null)
       using(c.createStatement()) { (stmt) =>

@@ -37,7 +37,7 @@ import com.zotoh.blason.io._
  * @author kenl
  *
  */
-class DemoMain {
+class DemoMain(c:Container) {
   def start() {    
     println("Demo sending & receiving messages via sockets..." )    
   }

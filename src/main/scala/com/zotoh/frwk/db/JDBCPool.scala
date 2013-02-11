@@ -25,19 +25,45 @@ package db
 import java.sql.{Connection=>JConn,Statement,SQLException}
 import org.apache.commons.lang3.{StringUtils=>STU}
 import org.slf4j._
-
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.db.DBUtils._
-
 import com.jolbox.bonecp.BoneCPConfig
 import com.jolbox.bonecp.BoneCP
+import com.zotoh.frwk.util.MetaUtils
 
 
 
 object JDBCPool {
   private val _log= LoggerFactory.getLogger(classOf[JDBCPool])
+  def tlog() = _log
+  
+  def mkSingularPool(ji:JDBCInfo) = {
+    tlog.debug("JDBCPoolMgr: Driver : {}" , ji.driver)
+    tlog.debug("JDBCPoolMgr: URL : {}" ,  ji.url)    
+    if (! STU.isEmpty(ji.driver )) {
+      MetaUtils.forName(ji.driver)
+    }
+    val cpds = new BoneCPConfig()
+    val v=vendor(ji)
+    val ts= v.getTestSQL()
+    cpds.setLogStatementsEnabled(tlog.isDebugEnabled)
+    cpds.setPartitionCount(1)
+    cpds.setJdbcUrl( ji.url )
+    cpds.setUsername( ji.user)
+    cpds.setPassword( ji.pwd )
+    cpds.setIdleMaxAgeInSeconds(60*60*24) // 1 day
+    cpds.setMaxConnectionsPerPartition(2)
+    cpds.setMinConnectionsPerPartition(1)
+    cpds.setPoolName( uid )
+    cpds.setAcquireRetryDelayInMs(5000)
+    cpds.setConnectionTimeoutInMs(5000)
+    cpds.setDefaultAutoCommit(false)
+    cpds.setAcquireRetryAttempts(1)
+    new JDBCPool(v, ji, new BoneCP(cpds))
+  }
+  
 }
 
 /**
@@ -47,7 +73,7 @@ object JDBCPool {
  *
  */
 sealed class JDBCPool(
-  private val _vendor:DBVendor, private val _info:JdbcInfo,
+  private val _vendor:DBVendor, private val _info:JDBCInfo,
   private val _source:BoneCP) extends Constants with CoreImplicits {
 
   import JDBCPool._
@@ -59,7 +85,7 @@ sealed class JDBCPool(
    * @param p
    */
   def this(p:BoneCP ) {
-    this(DBVendor.NOIDEA, new JdbcInfo(), p)
+    this(DBVendor.NOIDEA, new JDBCInfo(), p)
   }
 
   /**

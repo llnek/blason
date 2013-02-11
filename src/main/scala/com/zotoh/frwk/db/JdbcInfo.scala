@@ -26,8 +26,8 @@ import com.zotoh.frwk.util.StrUtils._
 import org.slf4j._
 import java.sql.Connection
 
-object JdbcInfo {
-  private val _log = LoggerFactory.getLogger(classOf[JdbcInfo])
+object JDBCInfo {
+  private val _log = LoggerFactory.getLogger(classOf[JDBCInfo])
 }
 
 /**
@@ -35,13 +35,13 @@ object JdbcInfo {
  *
  */
 @SerialVersionUID(6871654777100857463L)
-class JdbcInfo(
+class JDBCInfo(
   private var _user:String, private var _pwd:String,
   private var _url:String,
   private var _driver:String="")  extends Serializable {
 
   private var _isolation= Connection.TRANSACTION_READ_COMMITTED
-  import JdbcInfo._
+  import JDBCInfo._
   
   def tlog() = _log
 

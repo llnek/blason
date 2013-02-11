@@ -35,7 +35,7 @@ import javax.mail.Multipart
  * @author kenl
  *
  */
-class DemoMain {
+class DemoMain(c:Container) {
   private val _PS= "com.zotoh.blason.mock.mail.MockPop3Store"
   //private val _PV=new Provider(Provider.Type.STORE, "pop3s", _PS, "test", "1.0.0")
   

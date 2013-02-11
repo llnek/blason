@@ -134,7 +134,7 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
   private var _ftlCfg:FTLCfg=null
   
   private var _mainCZ:Class[_] = null
-  private var _mainObj:Any= null
+  private var _mainObj:Any = null
 
   def version() = _meta.version
   def tlog() = Container._log
@@ -175,7 +175,21 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
 
     _svcReg.setParent( r.getParent.getOrElse(null) )
     _mainCZ= loadClass(mCZ)
-    _mainObj= mkRef(_mainCZ)
+    try {
+      _mainObj = _mainCZ.getDeclaredConstructor(classOf[Container]).newInstance(this)
+    } catch {
+      case e:Throwable => tlog.warn("Main.Class: No ctor(Container) found.")
+    }
+    if (_mainObj == null) try {
+      _mainObj = mkRef(_mainCZ)
+    } catch {
+      case e:Throwable => tlog.warn("Main.Class: No ctor() found.")
+    }
+    
+    if (_mainObj == null) {
+      throw new InstantiationException("Failed to create instance: " + _mainCZ.getName )
+    }
+    
     maybeCfg()
 
     _envConf.getChild("services") match {
@@ -248,6 +262,13 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
     }
   }
 
+  def getAppMain: AnyRef = {
+    _mainObj match {
+      case r:AnyRef => r
+      case _ => throw new ClassCastException("Expecting AnyRef object.")
+    }
+  }
+  
   def getAppCfg(): Configuration = _appConf
   
   def scheduler() = _schr

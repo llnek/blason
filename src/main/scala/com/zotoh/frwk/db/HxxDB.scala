@@ -85,7 +85,7 @@ trait HxxDB extends Constants {
    * @param param
    * @throws SQLException
    */
-  def closeDB(jp:JdbcInfo ) {
+  def closeDB(jp:JDBCInfo ) {
     tstObjArg("jdbc-info", jp )
     closeDB(jp.url, jp.user, jp.pwd )
   }
@@ -130,7 +130,7 @@ trait HxxDB extends Constants {
     tlog().debug("Loading SQL: {}", niceFPath(sql))
     tlog().debug("JDBC-URL: {}", dbUrl)
 
-    DDLUtils.loadDDL( new JdbcInfo(user, pwd,dbUrl), sql)
+    DDLUtils.loadDDL( new JDBCInfo(user, pwd,dbUrl), sql)
   }
 
   /**

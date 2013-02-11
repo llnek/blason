@@ -1,6 +1,9 @@
 package @@APPDOMAIN@@
 
-class AppMain {
+import com.zotoh.blason.kernel.Container
+
+
+class AppMain(c:Container) {
   def start() {
     println("Application started.")
   }

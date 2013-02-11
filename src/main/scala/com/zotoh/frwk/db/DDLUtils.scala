@@ -86,7 +86,7 @@ object DDLUtils extends Constants with CoreImplicits {
    * @param jp
    * @param fp
    */
-  def loadDDL(jp:JdbcInfo, fp:File) {
+  def loadDDL(jp:JDBCInfo, fp:File) {
     if (fp != null) using( open(fp)) { (inp) =>
       loadDDL(jp, inp)
     }
@@ -98,7 +98,7 @@ object DDLUtils extends Constants with CoreImplicits {
    * @param jp
    * @param inp
    */
-  def loadDDL( jp:JdbcInfo, inp:InputStream) {
+  def loadDDL( jp:JDBCInfo, inp:InputStream) {
     loadDDL(jp, asString( bytes(inp)) )
   }
 
@@ -108,7 +108,7 @@ object DDLUtils extends Constants with CoreImplicits {
    * @param jp
    * @param ddl
    */
-  def loadDDL(jp:JdbcInfo, ddl:String) {
+  def loadDDL(jp:JDBCInfo, ddl:String) {
     if ( ! STU.isEmpty(ddl)) {
       using(mkConnection(jp)) { (con) =>
         loadDDL(con, ddl)

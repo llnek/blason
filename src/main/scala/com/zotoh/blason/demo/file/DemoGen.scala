@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * @author kenl
  */
-class DemoMain {
+class DemoMain(c:Container) {
   def start() {    
       println("Demo file directory monitoring - picking up new files")
   }

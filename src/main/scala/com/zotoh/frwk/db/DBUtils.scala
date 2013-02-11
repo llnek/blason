@@ -54,7 +54,7 @@ object DBUtils extends Constants with CoreImplicits {
    * @param jp
    * @return
    */
-  def mkConnection(jp:JdbcInfo) = {
+  def mkConnection(jp:JDBCInfo) = {
 /*
     Class<?> c= loadDriver(jp.getDriver());
     if (c == null) {
@@ -73,7 +73,7 @@ object DBUtils extends Constants with CoreImplicits {
   /**
    * @param jp
    */
-  def testConnection(jp:JdbcInfo) {
+  def testConnection(jp:JDBCInfo) {
     DBU.closeQuietly( mkConnection(jp))
   }
 
@@ -81,7 +81,7 @@ object DBUtils extends Constants with CoreImplicits {
    * @param jp
    * @return
    */
-  def vendor(jp:JdbcInfo):DBVendor = {
+  def vendor(jp:JDBCInfo):DBVendor = {
     using( mkConnection(jp)) { (con) => vendor(con) }
   }
 
@@ -106,7 +106,7 @@ object DBUtils extends Constants with CoreImplicits {
    * @param table
    * @return
    */
-  def tableExists(jp:JdbcInfo, table:String):Boolean = {
+  def tableExists(jp:JDBCInfo, table:String):Boolean = {
     using(mkConnection(jp)) { (con) => tableExists(con,table) }
   }
 
@@ -134,7 +134,7 @@ object DBUtils extends Constants with CoreImplicits {
    * @param table
    * @return
    */
-  def rowExists(jp:JdbcInfo, table:String):Boolean = {
+  def rowExists(jp:JDBCInfo, table:String):Boolean = {
     using(mkConnection(jp)) { (con) =>
       rowExists(con,table)
     }
@@ -160,7 +160,7 @@ object DBUtils extends Constants with CoreImplicits {
    * @param sql
    * @return
    */
-  def firstRow(jp:JdbcInfo, sql:String):Option[DBRow] = {
+  def firstRow(jp:JDBCInfo, sql:String):Option[DBRow] = {
     using(mkConnection(jp)) { (con) =>
       firstRow(con,sql)
     }
@@ -250,7 +250,7 @@ def call(isFunc:Boolean, con:Connection, name:String, outs: () => Array[Class[_]
     loadDriver(s, Thread.currentThread().getContextClassLoader)
   }
 
-  def loadTableMeta( jp:JdbcInfo, table:String):Option[TableMetaHolder]  = {
+  def loadTableMeta( jp:JDBCInfo, table:String):Option[TableMetaHolder]  = {
     using(mkConnection(jp)) { (con) =>
       maybeLoadTable(con,table)
     }
@@ -311,7 +311,7 @@ def call(isFunc:Boolean, con:Connection, name:String, outs: () => Array[Class[_]
    * @param jp
    * @return
    */
-  private def safeGetConn(jp:JdbcInfo) = {
+  private def safeGetConn(jp:JDBCInfo) = {
     val props=new JPS()
     var d:Driver = if (STU.isEmpty(jp.url)) null else {
       DriverManager.getDriver(jp.url)

@@ -61,34 +61,34 @@ sealed class JDBCPoolMgr extends Constants with CoreImplicits {
    * @param pps
    * @return
    */
-  def mkPool(pl:String, pms:JdbcInfo, pps:JPS) = create(pl, pms, pps)
+  def mkPool(pl:String, pms:JDBCInfo, pps:JPS) = create(pl, pms, pps)
 
   /**
    * @param pms
    * @param pps
    * @return
    */
-  def mkPool(pms:JdbcInfo, pps:JPS) = create( uid(), pms, pps)
+  def mkPool(pms:JDBCInfo, pps:JPS) = create( uid(), pms, pps)
 
   /**
    * @param param
    * @return
    */
-  def mkPool(pms:JdbcInfo):JDBCPool = mkPool( uid(), pms)
+  def mkPool(pms:JDBCInfo):JDBCPool = mkPool( uid(), pms)
 
   /**
    * @param pl
    * @param pms
    * @return
    */
-  def mkPool(pl:String, pms:JdbcInfo) = {
+  def mkPool(pl:String, pms:JDBCInfo) = {
     create(pl, pms,
       new JPS().add("username", pms.user).
       add("user", pms.user).
       add("password", pms.pwd) )
   }
 
-  private def create(pl:String, pms:JdbcInfo, pps:JPS) = synchronized {
+  private def create(pl:String, pms:JDBCInfo, pps:JPS) = synchronized {
 
     tlog.debug("JDBCPoolMgr: Driver : {}" , pms.driver)
     tlog.debug("JDBCPoolMgr: URL : {}" ,  pms.url)
@@ -110,12 +110,16 @@ sealed class JDBCPoolMgr extends Constants with CoreImplicits {
     cpds.setJdbcUrl( pms.url )
     cpds.setUsername( pms.user)
     cpds.setPassword( pms.pwd )
-
-    cpds.setIdleMaxAgeInSeconds(60*60*24) // 1 day
+    cpds.setDefaultAutoCommit(false)
+    cpds.setIdleMaxAgeInSeconds(60*60) // 1 minutes
     cpds.setMaxConnectionsPerPartition(5)
     cpds.setMinConnectionsPerPartition(2)
     //cpds.setAcquireIncrement(2)
     cpds.setPoolName(pl)
+    cpds.setAcquireRetryDelayInMs(5000)
+    cpds.setConnectionTimeoutInMs(5000)
+    cpds.setDefaultAutoCommit(false)
+    cpds.setAcquireRetryAttempts(1)
 
     if (! STU.isEmpty(ts)) {
       cpds.setConnectionTestStatement(ts)
@@ -123,7 +127,7 @@ sealed class JDBCPoolMgr extends Constants with CoreImplicits {
 
     // cpds is now a fully configured and usable pooled DataSource
 
-    val j= new JDBCPool(vendor(pms), pms, new BoneCP(cpds))
+    val j= new JDBCPool(v, pms, new BoneCP(cpds))
     _ps.put(pl, j)
     tlog.debug("{}: Added db pool: {}, info= {}", "JDBCPoolMgr", pl, pms)
     j
