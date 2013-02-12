@@ -71,6 +71,8 @@
     <dependency org="com.mchange" name="c3p0" rev="0.9.2-pre6" conf="libjar->default"/>
     -->
     <dependency org="com.jolbox" name="bonecp" rev="0.7.1.RELEASE" conf="libjar->default"/>
+    <dependency org="org.squeryl" name="squeryl_2.10" rev="0.9.5-6" conf="libjar->default"/>
+    <dependency org="org.apache.empire-db" name="empire-db" rev="2.4.1" conf="libjar->default"/>
 
     <!-- network stuff -->
     <!--
