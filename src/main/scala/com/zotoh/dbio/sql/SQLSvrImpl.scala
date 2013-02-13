@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2008-2009 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE, 
@@ -19,9 +19,10 @@
  *
  ??*/
  
-package com.zotoh.stratum.sql;
+package com.zotoh.dbio
+package sql
 
-import com.zotoh.stratum.core.FldMetaHolder;
+import com.zotoh.dbio.core.FldMetaHolder
 
 
 
@@ -29,82 +30,37 @@ import com.zotoh.stratum.core.FldMetaHolder;
  * @author kenl
  *
  */
-public class SQLSvrImpl extends DBDriver {
-	
-    
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genDrop(java.lang.String)
-     */
-    @Override
-    protected String genDrop(String tbl)     {
-        return new StringBuilder(256)
-        .append("IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id=object_id('")
-        .append(tbl)
-        .append("')) DROP TABLE ")
-        .append(tbl)
-        .append(genExec()).append("\n\n")
-        .toString();
-    }
+class SQLSvrImpl extends DBDriver {
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getBlobKeyword()
-     */
-    @Override
-    protected String getBlobKeyword()     {
-        return "IMAGE";
-    }
+  override def genDrop(tbl:String ) = {
+    new StringBuilder(256).
+      append("IF EXISTS (SELECT * FROM dbo.sysobjects WHERE id=object_id('").
+      append(tbl).
+      append("')) DROP TABLE ").
+      append(tbl).
+      append(genExec).append("\n\n").toString
+  }
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getTSKeyword()
-     */
-    @Override
-    protected String getTSKeyword()     {
-        return "DATETIME";
-    }
+  override def getBlobKeyword() = "IMAGE"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getDoubleKeyword()
-     */
-    @Override
-    protected String getDoubleKeyword()     {
-        return "FLOAT(53)";
-    }
+  override def getTSKeyword() = "DATETIME"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getFloatKeyword()
-     */
-    @Override
-    protected String getFloatKeyword()     {
-        return "FLOAT(53)";
-    }
+  override def getDoubleKeyword() = "FLOAT(53)"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genAutoInteger(java.lang.String, com.zotoh.stratum.core.DBColDef)
-     */
-    @Override
-    protected String genAutoInteger(String table, FldMetaHolder def)     {
-        return new StringBuilder(256)
-        .append(getPad()).append(def.getId() ).append(" ")
-        .append(getIntKeyword())
-        .append( 
-			def.isPK() ? " IDENTITY (1,1) " : " AUTOINCREMENT " )
-        .toString()
-        ;
-    }
+  override def getFloatKeyword() = "FLOAT(53)"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genAutoLong(java.lang.String, com.zotoh.stratum.core.DBColDef)
-     */
-    @Override
-    protected String genAutoLong(String table, FldMetaHolder def)     {
-        return new StringBuilder(256)
-        .append(getPad()).append(def.getId() ).append(" ")
-        .append(getLongKeyword())
-        .append( 
-			def.isPK() ? " IDENTITY (1,1) " : " AUTOINCREMENT " )
-        .toString()
-        ;
-    }
-    
-    
+  override def genAutoInteger(table:String , fld:FldMetaHolder ) = {
+    new StringBuilder(256).
+      append(getPad).append(fld.getId ).append(" ").
+      append(getIntKeyword).
+      append( if (fld.isPK) " IDENTITY (1,1) " else " AUTOINCREMENT " ).toString
+  }
+
+  override def genAutoLong(table:String , fld:FldMetaHolder ) = {
+    new StringBuilder(256).
+      append(getPad).append( fld.getId ).append(" ").
+      append(getLongKeyword).
+      append( if ( fld.isPK) " IDENTITY (1,1) " else " AUTOINCREMENT " ).toString
+  }
+
 }

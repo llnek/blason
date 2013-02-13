@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2008-2009 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE, 
@@ -19,131 +19,69 @@
  *
  ??*/
  
-package com.zotoh.stratum.sql;
+package com.zotoh.dbio
+package sql
 
-import static com.zotoh.core.util.LangUte.MP;
-
-import java.util.Map;
-
-import com.zotoh.stratum.core.FldMetaHolder;
+import com.zotoh.dbio.core.FldMetaHolder
 
 /**
  * @author kenl
  *
  */
-public class OracleImpl extends DBDriver {
-	    
-	private Map<String,FldMetaHolder> _ids= MP();
-	
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getStringKeyword()
-     */
-    @Override
-    protected String getStringKeyword()     {
-        return "VARCHAR2";
-    }
+class OracleImpl extends DBDriver {
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genDrop(java.lang.String)
-     */
-    @Override
-    protected String genDrop(String tbl)     {
-        return new StringBuilder(256).append("DROP TABLE ")
-        .append(tbl)
-        .append(" CASCADE CONSTRAINTS PURGE")
-        .append(genExec()).append("\n\n")
-        .toString();
-    }
+//private Map<String,FldMetaHolder> _ids= MP();
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getTSDefault()
-     */
-    @Override
-    protected String getTSDefault()     {
-        return "DEFAULT SYSTIMESTAMP";
-    }
+  override def getStringKeyword() = "VARCHAR2"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getLongKeyword()
-     */
-    @Override
-    protected String getLongKeyword()     {
-        return "NUMBER(38)";
-    }
+  override def genDrop(tbl:String ) = {
+    new StringBuilder(256).append("DROP TABLE ").
+      append(tbl).
+      append(" CASCADE CONSTRAINTS PURGE").
+      append(genExec).append("\n\n").toString
+  }
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getDoubleKeyword()
-     */
-    @Override
-    protected String getDoubleKeyword()     {
-        return "BINARY_DOUBLE";
-    }
+  override def getTSDefault() = "DEFAULT SYSTIMESTAMP"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getFloatKeyword()
-     */
-    @Override
-    protected String getFloatKeyword()     {
-        return "BINARY_FLOAT";
-    }
+  override def getLongKeyword() = "NUMBER(38)"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genAutoInteger(java.lang.String, com.zotoh.stratum.core.DBColDef)
-     */
-    @Override
-    protected String genAutoInteger(String table, FldMetaHolder def)     {
-        _ids.put(table, def) ;
-        return genInteger(def);
-    }
+  override def getDoubleKeyword() = "BINARY_DOUBLE"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genAutoLong(java.lang.String, com.zotoh.stratum.core.DBColDef)
-     */
-    @Override
-    protected String genAutoLong(String table, FldMetaHolder def)     {
-        _ids.put(table, def) ;
-        return genLong(def);
-    }
+  override def getFloatKeyword() = "BINARY_FLOAT"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genEndSQL()
-     */
-    protected String genEndSQL()     {
-        StringBuilder sql= new StringBuilder(256);
-        FldMetaHolder col;
-        String tn;
-        
-        for (Map.Entry<String,FldMetaHolder> en : _ids.entrySet()) {
-            col= en.getValue();
-            tn= en.getKey();
-            sql.append( create_sequence(tn));
-            sql.append( create_sequence_trigger(tn, col.getId())) ;
-        }
-                
-        return sql.toString();
-    }
-    
-    private String create_sequence(String table) {
-        
-        return "CREATE SEQUENCE SEQ_" + table +  
-            " START WITH 1 INCREMENT BY 1" + 
-            genExec() + 
-            "\n\n";
-    }
+  override def genAutoInteger(table:String , fld:FldMetaHolder ) = {
+    _ids.put(table, fld)
+    genInteger(fld)
+  }
 
-    private String create_sequence_trigger(String table, String key) {
-    
-        return "CREATE OR REPLACE TRIGGER TRIG_" + table + "\n" +
-        "BEFORE INSERT ON " + table + "\n" + 
-        "REFERENCING NEW AS NEW\n" + 
-        "FOR EACH ROW\n" + 
-        "BEGIN\n" + 
-        "SELECT SEQ_" + table + ".NEXTVAL INTO :NEW." + key + " FROM DUAL;\n" +
-        "END" + genExec() + "\n\n" ;
-        
-    }
+  override def genAutoLong(table:String , fld:FldMetaHolder ) = {
+    _ids.put(table, fld) 
+    genLong(fld)
+  }
 
-    
-    
-    
+  override  def genEndSQL() = {
+    val sql = _ids.foldLeft(new StringBuilder ) { (b, t) =>
+      b.append( create_sequence(t._1))
+      b.append( create_sequence_trigger(t._1, t._2.getId))
+      b
+    }
+    sql.toString
+  }
+
+  override def create_sequence(table:String ) = {
+    "CREATE SEQUENCE SEQ_" + table +  
+          " START WITH 1 INCREMENT BY 1" + 
+          genExec + "\n\n"
+  }
+
+  private def create_sequence_trigger(table:String , key:String ) = {
+    "CREATE OR REPLACE TRIGGER TRIG_" + table + "\n" +
+      "BEFORE INSERT ON " + table + "\n" + 
+      "REFERENCING NEW AS NEW\n" + 
+      "FOR EACH ROW\n" + 
+      "BEGIN\n" + 
+      "SELECT SEQ_" + table + ".NEXTVAL INTO :NEW." + key + " FROM DUAL;\n" +
+      "END" + genExec() + "\n\n"
+  }
+
 }

@@ -22,7 +22,7 @@
 package com.zotoh.dbio
 package sql
 
-import com.zotoh.dbio.core.FldMetaHolder
+//import com.zotoh.dbio.meta.FldMetaHolder
 
 
 
@@ -42,56 +42,29 @@ class MySQLImpl extends DBDriver {
 
   override def getTSKeyword() = "TIMESTAMP"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getDoubleKeyword()
-     */
-    @Override
-    protected String getDoubleKeyword()     {
-        return "DOUBLE";
-    }
+  override def getDoubleKeyword() = "DOUBLE"
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#getFloatKeyword()
-     */
-    @Override
-    protected String getFloatKeyword()     {
-        return "DOUBLE";
+  override def getFloatKeyword() = {
+      "DOUBLE"
 //        return "FLOAT(23)";
-    }
+  }
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genEnd()
-     */
-    @Override
-    protected String genEnd()     {
-        return "\n) Type=InnoDB" + genExec() + "\n\n" ;
-    }
+  override def genEnd() = {
+    "\n) Type=InnoDB" + genExec() + "\n\n"
+  }
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genAutoInteger(java.lang.String, com.zotoh.stratum.core.DBColDef)
-     */
-    @Override
-    protected String genAutoInteger( String table, FldMetaHolder def)     {
-        return new StringBuilder(256)
-        .append(getPad()).append(def.getId() ).append(" ")
-        .append( getIntKeyword() )
-        .append(" NOT NULL AUTO_INCREMENT")
-        .toString()
-        ;
-    }
+  override def genAutoInteger( table:String , fld:FldMetaHolder) = {
+    new StringBuilder(256).
+      append(getPad).append(fld.getId ).append(" ").
+      append( getIntKeyword ).
+      append(" NOT NULL AUTO_INCREMENT").toString
+  }
 
-    /* (non-Javadoc)
-     * @see com.zotoh.stratum.sql.DBDriver#genAutoLong(java.lang.String, com.zotoh.stratum.core.DBColDef)
-     */
-    @Override
-    protected String genAutoLong( String table, FldMetaHolder def)     {
-        return new StringBuilder(256)
-        .append(getPad()).append(def.getId() ).append(" ")
-        .append( getLongKeyword() )
-        .append(" NOT NULL AUTO_INCREMENT")
-        .toString()
-        ;
-    }
+  override def genAutoLong( table:String , fld:FldMetaHolder ) = {
+    new StringBuilder(256).
+      append(getPad).append(fld.getId ).append(" ").
+      append( getLongKeyword ).
+      append(" NOT NULL AUTO_INCREMENT").
+  }
 
-    
 }

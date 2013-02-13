@@ -1,530 +1,291 @@
 /*??
- * COPYRIGHT (C) 2008-2009 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
- * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE, 
+ * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
  * VERSION 2.0 (THE "LICENSE").
  *
  * THIS LIBRARY IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
  * BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
- *   
- * SEE THE LICENSE FOR THE SPECIFIC LANGUAGE GOVERNING PERMISSIONS 
+ *
+ * SEE THE LICENSE FOR THE SPECIFIC LANGUAGE GOVERNING PERMISSIONS
  * AND LIMITATIONS UNDER THE LICENSE.
  *
  * You should have received a copy of the Apache License
- * along with this distribution; if not, you may obtain a copy of the 
- * License at 
+ * along with this distribution; if not, you may obtain a copy of the
+ * License at
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  ??*/
 
-package com.zotoh.stratum.sql;
+package com.zotoh.dbio
+package sql
 
-import static com.zotoh.core.util.StrUte.isEmpty;
+import org.apache.commons.lang3.{StringUtils=>STU}
+import java.sql.SQLException
+import java.util.{TreeSet=>JTreeSet,Date=>JDate}
+import com.zotoh.frwk.util.MetaUtils._
+import com.zotoh.frwk.db.DBVendor._
+import com.zotoh.dbio.meta._
+import com.zotoh.frwk.db.DBVendor
+import java.util.Arrays
 
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 
-import com.zotoh.core.db.DBVendor;
-import com.zotoh.core.util.Tuple;
-import com.zotoh.stratum.core.AssocMetaHolder;
-import com.zotoh.stratum.core.ClassMetaHolder;
-import com.zotoh.stratum.core.FldMetaHolder;
-import com.zotoh.stratum.core.M2MTable;
-import com.zotoh.stratum.core.MetaCache;
+
+object DBDriver {
+  private val S_DDLSEP= "-- :"
+
+  def newDriver(v:DBVendor ) = {
+
+    v match {
+      case POSTGRESQL => new PostgreSQLImpl()
+      case H2 => new H2Impl()
+      case MYSQL => new MySQLImpl()
+      case SQLSERVER => new SQLSvrImpl()
+      case ORACLE => new OracleImpl()
+      case DERBY => new DerbyImpl()
+      case DB2 => new DB2Impl()
+      case _ => throw new SQLException("Unsupported database: " + v)
+    }
+
+  }
+
+}
+
 
 /**
  * @author kenl
  *
  */
-public abstract class DBDriver {
-	
-    protected MetaCache m_meta= new MetaCache();
-    protected static final String S_DDLSEP= "-- :";
-    protected boolean m_useSep = true;
-    
-    /**
-     * @param v
-     * @return
-     * @throws SQLException
-     */
-    public static DBDriver newDriver(DBVendor v) 
-    throws SQLException {
-        
-        if (DBVendor.HSQLDB.equals(v))
-        return new HSQLDBImpl();
-        
-        if (DBVendor.H2.equals(v))
-        return new H2Impl();
-        
-        if (DBVendor.MYSQL.equals(v))
-        return new MySQLImpl();
-        
-        if (DBVendor.SQLSERVER.equals(v))
-        return new SQLSvrImpl();
-        
-        if (DBVendor.POSTGRESQL.equals(v))
-        return new PostgreSQLImpl();
-        
-        if (DBVendor.ORACLE.equals(v))
-        return new OracleImpl();
-        
-        if (DBVendor.DERBY.equals(v))
-        return new DerbyImpl();
-        
-        if (DBVendor.DB2.equals(v))
-        return new DB2Impl();
-        
-        throw new SQLException("Unsupported database : " + v) ;
-    }
-    
-    /**
-     * @param classes
-     * @return
-     * @throws Exception
-     */
-    public String getDDL(Class<?> ... classes ) throws Exception    {
-    	
-        StringBuilder body= new StringBuilder(1024);
-        StringBuilder drops= new StringBuilder(512);
-        
-        ClassMetaHolder zm;
-        String tn;
-        
-        for (int i=0; i < classes.length; ++i) {
-            zm= m_meta.getClassMeta( classes[i]) ;
-        }
-        for (int i=-1; i < classes.length; ++i) {
-        	if(i== -1) {
-                zm= m_meta.getClassMeta(M2MTable.class) ;        		
-        	} else {
-        		zm= m_meta.getClassMeta( classes[i]) ;
-        	}
-            tn= zm.getTable().toUpperCase();
-            drops.append( genDrop(tn)) ;
-            body.append( f(zm));
-        }
-        
-        return  "" + drops + body + genEndSQL(); 
-    }
-        
-    /**
-     * @param zm
-     * @return
-     * @throws Exception
-     */
-    protected String f(ClassMetaHolder zm)  throws Exception     {
-    	
-        String n= zm.getTable().toUpperCase();
+abstract class DBDriver protected() {
 
-        if (isEmpty(n)) { return ""; }
-        
-        Map<String,FldMetaHolder> getters = zm.getFldMetas() ;
-        Map<String,AssocMetaHolder> assocs = ClassMetaHolder.getAssocMetas() ;
-        
-        return xx(n, getters, assocs);
-    }
-    
-    /**
-     * @param table
-     * @param cols
-     * @param autoKey
-     * @return
-     */
-    protected String xx(String table, Map<String,FldMetaHolder> cols, Map<String,AssocMetaHolder> assocs)     {
-        StringBuilder ddl= new StringBuilder(10000),
-        				inx= new StringBuilder(256) ;
-        
-        //ddl.append( genDrop(table));
-        
-        ddl.append( genBegin(table));
-        ddl.append(genBody(table, cols, assocs, inx));
-        ddl.append(genEnd());
-        if ( inx.length() > 0) {
-        	ddl.append(inx.toString()) ;
-        }        
-        ddl.append( genGrant(table));
-        
-        return ddl.toString();
-    }
-        
-    /**
-     * @param tbl
-     * @return
-     */
-    protected String genDrop( String tbl)    {
-        return new StringBuilder(256).append("DROP TABLE ").append(tbl.toUpperCase()).
-        append(genExec()).append("\n\n").toString();
+  import DBDriver._
+
+  protected val _meta= new MetaCache()
+  protected var _useSep = true
+
+  def getDDL(classes:Class[_]*) = {
+
+    val arr= classes :: List( _meta.getClassMeta(classOf[M2MTable]))  
+    val body= new StringBuilder(1024)
+    val drops= new StringBuilder(512)
+    arr.foreach { (c) =>
+      val zm= _meta.getClassMeta( c)
+      val tn= zm.getTable().lc
+      drops.append( genDrop(tn))
+      body.append( f(zm))
     }
 
-    /**
-     * @param tbl
-     * @return
-     */
-    protected String genBegin( String tbl)     {
-        return new StringBuilder(256).append("CREATE TABLE ").append(tbl.toUpperCase()).
-        append("\n(\n").toString();
-    }
-    
-    /**
-     * @param table
-     * @param cols
-     * @return
-     */
-    protected String genBody(String table, 
-    				Map<String,FldMetaHolder> cols, 
-    				Map<String,AssocMetaHolder> assocs, StringBuilder inx)     {
-        StringBuilder bf= new StringBuilder(512);
-        Class<?> dt;
-        String zn, cn, col;
-        Set<String> pkeys= new TreeSet<String>();
-        Set<String> keys= new TreeSet<String>();
-        FldMetaHolder def;
-        
-        for (Map.Entry<String, FldMetaHolder> en : cols.entrySet() )        {            
-            def= en.getValue();
-            cn= en.getKey();
-            col=null;
-            dt= def.getColType();
-            zn= dt.getName();
-            
-            if (def.isPK()) { pkeys.add(cn); }
-            else
-            if (def.isUniqueKey()) { keys.add(cn); }
-            
-            if ( Boolean.class == dt || "boolean".equals(zn) ) { col= genBool(def); }
-            else if ( java.sql.Timestamp.class== dt ) { col= genTimestamp(def); }
-            else if ( java.util.Date.class== dt ) { col= genDate(def); }
-            else if ( Integer.class== dt || "int".equals(zn)) {
-                col= def.isAutoGen() ? genAutoInteger(table, def) :
-                    genInteger(def);
-            }
-            else if ( Long.class== dt || "long".equals(zn)) { 
-                col= def.isAutoGen() ? genAutoLong(table, def) :
-                    genLong(def);
-            }
-            else if ( Double.class==dt || "double".equals(zn)) { col= genDouble(def); }
-            else if ( Float.class==dt || "float".equals(zn)) { col= genFloat(def); }
-            else if ( String.class==dt) { col= genString(def); }
-//            else if ( StreamData.class==dt ) col= GenBlob(p);
-            else if ( byte[].class== dt ) { col= genBytes(def); }
+    "" + drops + body + genEndSQL()
+  }
 
-            if (isEmpty(col)) {            continue;            }
+  protected def f(zm:ClassMetaHolder ) = {
+    val n= zm.getTable().lc
+    if (STU.isEmpty(n)) "" else {
+      xx(n, zm.getFldMetas, ClassMetaHolder.getAssocMetas )
+    }
+  }
 
-            if (bf.length() > 0) { bf.append(",\n"); }
-            bf.append(col);
-        }
-        AssocMetaHolder asoc= assocs.get(table);
-        inx.setLength(0) ;
-        int iix=1;
-        if (asoc != null) for (Tuple t : asoc.getFKeys()) {
-        	Boolean m2m = (Boolean) t.get(0);
-        	if (m2m) { continue; }
-        	t.get(1);
-        	t.get(2);        	
-        	cn = (String) t.get(3) ;
-            col = genColDef( cn, 
-            				getLongKeyword() ,
-//                            getStringKeyword() + "(255)" ,
-                             true) ;
-            if (bf.length() > 0) { bf.append(",\n"); }
-            bf.append(col);
-            
-            inx.append(
-				"CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + " ( " + MetaCache.COL_ROWID + ", " + cn + " )" + 
-									genExec() + "\n\n" );
-            ++iix;
-        }
-        
-        
-        if (bf.length() > 0)         {
-            String s= pkeys.size() ==0 ? "" : genPrimaryKey(pkeys);
-            if ( !isEmpty(s)) {
-                bf.append(",\n").append(s);
-            }
-            s= keys.size() ==0 ? "" : genUniques(keys);
-            if ( !isEmpty(s)) {
-                bf.append(",\n").append(s);
-            }
-        }
+  protected def xx(table:String, cols:Map[String,FldMetaHolder], assocs:Map[String,AssocMetaHolder] )  = {
+    val ddl= new StringBuilder(10000)
+    val inx= new StringBuilder(256)
+    //ddl.append( genDrop(table))
+    ddl.append( genBegin(table))
+    ddl.append(genBody(table, cols, assocs, inx))
+    ddl.append(genEnd)
+    if (inx.length() > 0) {
+      ddl.append(inx.toString)
+    }
+    ddl.append( genGrant(table))
+    ddl.toString()
+  }
 
-        return bf.toString();
+  protected def genDrop( tbl:String ) = {
+    new StringBuilder(256).append("DROP TABLE ").append(tbl.lc).append(genExec).append("\n\n").toString
+  }
+
+  protected def genBegin( tbl:String )  = {
+    new StringBuilder(256).append("CREATE TABLE ").append(tbl.lc).append("\n(\n").toString
+  }
+
+  protected def genBody(table:String,
+    cols:Map[String,FldMetaHolder],
+    assocs:Map[String,AssocMetaHolder], inx:StringBuilder) = {
+
+    val pkeys= new JTreeSet[String]()
+    val keys= new JTreeSet[String]()
+    val bf= new StringBuilder(512)
+
+    cols.foreach { (en) =>
+      val fld= en._2
+      val cn= en._1
+      var col=""
+      val dt= fld.getColType
+      val zn= dt.getName
+
+      if (fld.isPK) { pkeys.add(cn) }
+      else
+      if (fld.isUniqueKey) { keys.add(cn) }
+
+      if ( isBoolean(dt)) { col= genBool(fld) }
+      else if ( classOf[java.sql.Timestamp] == dt ) { col= genTimestamp(fld) }
+      else if ( classOf[JDate] == dt) { col= genDate(fld) }
+      else if ( isInt(dt)) {
+        col= if (fld.isAutoGen) genAutoInteger(table, fld) else genInteger(fld)
+      }
+      else if ( isLong(dt)) {
+        col= if (fld.isAutoGen) genAutoLong(table, fld) else genLong(fld)
+      }
+      else if ( isDouble(dt)) { col= genDouble(fld) }
+      else if ( isFloat(dt)) { col= genFloat(fld) }
+      else if ( isString(dt)) { col= genString(fld) }
+      else if ( isBytes(dt)) { col= genBytes(fld) }
+
+      if (! STU.isEmpty(col)) {
+        if (bf.length() > 0) { bf.append(",\n") }
+        bf.append(col)
+      }
     }
-    
-    /**
-     * @return
-     */
-    protected String genEnd()     {
-        return new StringBuilder(256).append("\n)").append(genExec()).append("\n\n").toString();
-    }
-    
-    /**
-     * @param tbl
-     * @return
-     */
-    protected String genGrant(String tbl)    {
-        return "";
-    }
-    
-    protected String genEndSQL()     {
-        return "";
+    val asoc= assocs.get(table)
+    inx.setLength(0)
+    var iix=1
+    if (asoc.isDefined) asoc.get.ferFKeys.foreach { (t) =>
+      if (!t._1) {
+        val cn = t._4
+        val col = genColDef(cn, getLongKeyword() , true)
+        if (bf.length() > 0) { bf.append(",\n") }
+        bf.append(col)
+        inx.append( "CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + 
+          " ( " + MetaCache.COL_ROWID + ", " + cn + " )" + genExec + "\n\n" )
+        iix += 1
+      }
     }
 
-    /**
-     * @param keys
-     * @return
-     */
-    protected String genPrimaryKey(Set<String> keys)    {
-        String[] a= keys.toArray(new String[0]) ;
-        Arrays.sort(a);
-        String b="";
-        for (int i=0; i < a.length; ++i) {           
-            if (b.length() > 0) { b += ","; }
-            b += a[i];
-        }        
-        return getPad() + "PRIMARY KEY(" + b + ")";
-    }
-    
-    protected String genUniques(Set<String> keys)    {
-        String[] a= keys.toArray(new String[0]) ;
-        Arrays.sort(a);
-        String b="";
-        for (int i=0; i < a.length; ++i) {           
-            if (b.length() > 0) { b += ","; }
-            b += a[i];
-        }        
-        return getPad() + "UNIQUE(" + b + ")";
-    }
-    
-    /**
-     * @param col
-     * @param type
-     * @param optional
-     * @return
-     */
-    protected String genColDef(String col, String type, boolean optional)     {
-        return new StringBuilder(256)
-        .append(getPad()).append(col ).append(" ")
-        .append( type )
-        .append(" ")
-        .append(nullClause( optional ))
-        .toString()
-        ;
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genBytes(FldMetaHolder def)    {
-        return genColDef(def.getId(), getBlobKeyword(), def.isNullable()) ;
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genString(FldMetaHolder def)     {
-        return genColDef(def.getId(), 
-                getStringKeyword() + "(" + Integer.toString(def.getSize()) + ")"
-                , def.isNullable()) ;
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genInteger(FldMetaHolder def)     {
-        return genColDef(def.getId(), getIntKeyword(), def.isNullable()) ;
-    }
-    
-    /**
-     * @param table
-     * @param def
-     * @return
-     */
-    protected String genAutoInteger(String table, FldMetaHolder def)     {
-        return "";
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genDouble(FldMetaHolder def)    {        
-        return genColDef(def.getId(), getDoubleKeyword(), def.isNullable()) ;
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genFloat(FldMetaHolder def)     {        
-        return genColDef(def.getId(), getFloatKeyword(), def.isNullable()) ;
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genLong(FldMetaHolder def)    {
-        return genColDef(def.getId(), getLongKeyword(), def.isNullable()) ;
-    }
-    
-    /**
-     * @param table
-     * @param def
-     * @return
-     */
-    protected String genAutoLong(String table, FldMetaHolder def)    {
-        return "";
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genTimestamp(FldMetaHolder def)    {
-        return genColDef(def.getId(), getTSKeyword(), def.isNullable()) ;
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genDate(FldMetaHolder def)    {
-        return genColDef(def.getId(), getDateKeyword(), def.isNullable()) ;
-    }
-    
-    /**
-     * @param def
-     * @return
-     */
-    protected String genBool(FldMetaHolder def)    {
-        return genColDef(def.getId(), getBoolKeyword(), def.isNullable()) ;
+    if (bf.length() > 0) {
+      var s= if(pkeys.size ==0 ) "" else genPrimaryKey(pkeys.toArray )
+      if ( !STU.isEmpty(s)) {
+        bf.append(",\n").append(s)
+      }
+      s= if (keys.size == 0) "" else genUniques(keys.toArray)
+      if ( !STU.isEmpty(s)) {
+        bf.append(",\n").append(s)
+      }
     }
 
-    /**
-     * @return
-     */
-    protected String getTSDefault()    {
-        return "DEFAULT CURRENT_TIMESTAMP";
-    }
-    
-    /**
-     * @return
-     */
-    protected String getPad()    { 
-        return "    "; 
-    }
-    
-    /**
-     * @return
-     */
-    protected String getFloatKeyword()    {
-        return "FLOAT";
-    }
-    
-    /**
-     * @return
-     */
-    protected String getIntKeyword()    {
-        return "INTEGER";
-    }
+    bf.toString()
+  }
 
-    /**
-     * @return
-     */
-    protected String getTSKeyword()    {
-        return "TIMESTAMP";
-    }
-    
-    /**
-     * @return
-     */
-    protected String getDateKeyword()    {
-        return "DATE";
-    }
-    
-    /**
-     * @return
-     */
-    protected String getBoolKeyword()    {
-        return "INTEGER";
-    }
+  protected def genEnd() = {
+    new StringBuilder(256).append("\n)").append(genExec).append("\n\n").toString
+  }
 
-    /**
-     * @return
-     */
-    protected String getLongKeyword()    {
-        return "BIGINT";
-    }
+  protected def genGrant(tbl:String ) = ""
 
-    /**
-     * @return
-     */
-    protected String getDoubleKeyword()    {
-        return "DOUBLE PRECISION";
-    }
+  protected def genEndSQL() = ""
 
-    /**
-     * @return
-     */
-    protected String getStringKeyword()    {
-        return "VARCHAR";
+  protected def genPrimaryKey(keys:Array[Object]) = {
+    Arrays.sort(keys)
+    val b=keys.foldLeft(new StringBuilder) { (b,k) =>
+      if (b.length() > 0) { b.append( ",") }
+      b.append(k)
     }
-    
-    /**
-     * @return
-     */
-    protected String getBlobKeyword()    {
-        return "BLOB";
-    }
+    getPad() + "PRIMARY KEY(" + b + ")"
+  }
 
-    /**
-     * @param optional
-     * @return
-     */
-    protected String nullClause(boolean optional)    {
-        return optional ? getNull() : getNotNull();
+  protected def genUniques(keys:Array[Object]) = {
+    Arrays.sort(keys)
+    val b=keys.foldLeft(new StringBuilder) { (b,k) =>
+      if (b.length() > 0) { b.append(",") }
+      b.append(k)
     }
-    
-    /**
-     * @return
-     */
-    protected String getNotNull()     { 
-        return "NOT NULL"; 
-    }
+    getPad() + "UNIQUE(" + b + ")"
+  }
 
-    /**
-     * @return
-     */
-    protected String getNull()     { 
-        return "NULL"; 
-    }
-    
-    /**
-     * @return
-     */
-    protected String genExec()     {
-        return ";\n" + genSep() ;
-    }
-    
-    /**
-     * @return
-     */
-    protected String genSep()     { 
-        return m_useSep ? S_DDLSEP : ""; 
-    }
-    
-    /**
-     * 
-     */
-    protected DBDriver()
-    {}
-    
+  protected def genColDef(col:String , ty:String , optional:Boolean) = {
+    new StringBuilder(256).
+      append(getPad).append(col ).append(" ").
+      append( ty).
+      append(" ").
+      append(nullClause( optional )).toString
+  }
+
+  protected def genBytes(fld:FldMetaHolder ) = {
+    genColDef(fld.getId, getBlobKeyword, fld.isNullable )
+  }
+
+  protected def genString(fld:FldMetaHolder ) = {
+    genColDef(fld.getId,
+      getStringKeyword + "(" + fld.getSize().toString + ")",
+      fld.isNullable )
+  }
+
+  protected def genInteger(fld:FldMetaHolder ) = {
+    genColDef(fld.getId, getIntKeyword, fld.isNullable)
+  }
+
+  protected def genAutoInteger(table:String , fld:FldMetaHolder ) = ""
+
+  protected def genDouble(fld:FldMetaHolder )  = {
+    genColDef(fld.getId, getDoubleKeyword, fld.isNullable)
+  }
+
+  protected def genFloat(fld:FldMetaHolder ) = {
+    genColDef(fld.getId, getFloatKeyword, fld.isNullable)
+  }
+
+  protected def genLong(fld:FldMetaHolder ) = {
+    genColDef(fld.getId, getLongKeyword, fld.isNullable)
+  }
+
+  protected def genAutoLong(table:String , fld:FldMetaHolder ) = ""
+
+  protected def genTimestamp(fld:FldMetaHolder ) = {
+    genColDef(fld.getId, getTSKeyword, fld.isNullable)
+  }
+
+  protected def genDate(fld:FldMetaHolder ) = {
+    genColDef(fld.getId, getDateKeyword, fld.isNullable)
+  }
+
+  protected def genBool(fld:FldMetaHolder ) = {
+    genColDef(fld.getId, getBoolKeyword, fld.isNullable)
+  }
+
+  protected def getTSDefault() = "DEFAULT CURRENT_TIMESTAMP"
+
+  protected def getPad() = "    "
+
+  protected def getFloatKeyword() = "FLOAT"
+
+  protected def getIntKeyword() = "INTEGER"
+
+  protected def getTSKeyword() = "TIMESTAMP"
+
+  protected def getDateKeyword() = "DATE"
+
+  protected def getBoolKeyword() = "INTEGER"
+
+  protected def getLongKeyword() = "BIGINT"
+
+  protected def getDoubleKeyword() = "DOUBLE PRECISION"
+
+  protected def getStringKeyword() = "VARCHAR"
+
+  protected def getBlobKeyword() = "BLOB"
+
+  protected def nullClause(opt:Boolean ) = {
+    if (opt) getNull else getNotNull
+  }
+
+  protected def getNotNull() = "NOT NULL"
+
+  protected def getNull() = "NULL"
+
+  protected def genExec() = ";\n" + genSep()
+
+  protected def genSep() = {
+    if (_useSep) S_DDLSEP else ""
+  }
+
 }

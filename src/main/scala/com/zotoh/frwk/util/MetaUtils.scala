@@ -95,6 +95,17 @@ object MetaUtils {
       case _ => false
     }
   }
+  
+  def isString(z:Class[_]) = {
+    z.getName match {
+      case "String" | "java.lang.String" => true
+      case _ => false
+    }
+  }
+  
+  def isBytes(z:Class[_]) = {
+    if (z == classOf[Array[Byte]]) true else false
+  }
 
   /**
    * @param z
