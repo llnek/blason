@@ -22,6 +22,7 @@
 package com.zotoh.dbio
 package sql
 
+import scala.collection.mutable
 import com.zotoh.dbio.core.FldMetaHolder
 
 /**
@@ -30,7 +31,7 @@ import com.zotoh.dbio.core.FldMetaHolder
  */
 class OracleImpl extends DBDriver {
 
-//private Map<String,FldMetaHolder> _ids= MP();
+  private val _ids= mutable.HashMap[String,FldMetaHolder]()
 
   override def getStringKeyword() = "VARCHAR2"
 
@@ -68,7 +69,7 @@ class OracleImpl extends DBDriver {
     sql.toString
   }
 
-  override def create_sequence(table:String ) = {
+  def create_sequence(table:String ) = {
     "CREATE SEQUENCE SEQ_" + table +  
           " START WITH 1 INCREMENT BY 1" + 
           genExec + "\n\n"

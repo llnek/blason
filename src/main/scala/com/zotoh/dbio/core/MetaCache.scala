@@ -21,28 +21,30 @@
 
 
 package com.zotoh.dbio
-package meta
+package core
 
+import scala.collection.mutable
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.ResultSet
 import java.sql.SQLException
 import org.slf4j._
-import com.zotoh.frwk.utils.CoreImplicits
+import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.db.DBUtils
 import org.apache.commons.lang3.{StringUtils=>STU}
+import com.zotoh.frwk.db.TableMetaHolder
 
 
 object MetaCache {
   private val _log=LoggerFactory.getLogger(classOf[MetaCache])
-  /*
+
   val COL_ROWID= "II_ROWID"
   val COL_VERID= "II_VERID"
   val COL_RHS= "II_RHS"
   val COL_LHS= "II_LHS"
   val COL_RHSOID= "II_RHSOID"
   val COL_LHSOID= "II_LHSOID"
-  */
+
 }
 
 /**
@@ -62,7 +64,7 @@ sealed class MetaCache extends CoreImplicits {
 
   loadClassMeta(classOf[M2MTable])
 
-  def getTableMeta( con:Connection,table:String ) = {
+  def getTableMeta( con:Connection,table:String ): Option[TableMetaHolder]  = {
     var m= getTableMeta(table)
     if (m.isEmpty && con != null) {
       m= loadTableMeta(con,table)
@@ -70,14 +72,14 @@ sealed class MetaCache extends CoreImplicits {
     m
   }
 
-  def getTableMeta( table:String ) = {
+  def getTableMeta( table:String ): Option[TableMetaHolder] = {
     if (STU.isEmpty(table)) None else _meta.get(table.lc)
   }
 
   def getClassMeta( target:Class[_]) = {
     var rc= _classes.get(target)
-    if (rc.isEmpty)
-      rc= loadClassMeta(target)
+    if (rc.isEmpty) {
+      rc= Option(loadClassMeta(target))
     }
     rc
   }

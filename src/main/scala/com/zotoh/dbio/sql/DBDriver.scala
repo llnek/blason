@@ -30,6 +30,11 @@ import com.zotoh.frwk.db.DBVendor._
 import com.zotoh.dbio.meta._
 import com.zotoh.frwk.db.DBVendor
 import java.util.Arrays
+import com.zotoh.dbio.core.ClassMetaHolder
+import com.zotoh.dbio.core.FldMetaHolder
+import com.zotoh.dbio.core.MetaCache
+import com.zotoh.dbio.core.AssocMetaHolder
+import com.zotoh.dbio.core.M2MTable
 
 
 
@@ -67,14 +72,16 @@ abstract class DBDriver protected() {
 
   def getDDL(classes:Class[_]*) = {
 
-    val arr= classes :: List( _meta.getClassMeta(classOf[M2MTable]))  
+    val arr= List[Class[_]]( classOf[M2MTable] ) ++ classes
     val body= new StringBuilder(1024)
     val drops= new StringBuilder(512)
     arr.foreach { (c) =>
-      val zm= _meta.getClassMeta( c)
-      val tn= zm.getTable().lc
-      drops.append( genDrop(tn))
-      body.append( f(zm))
+      _meta.getClassMeta( c) match {
+        case Some(zm) =>
+          drops.append( genDrop(zm.getTable().lc ))
+          body.append( f(zm))
+        case _ =>
+      }
     }
 
     "" + drops + body + genEndSQL()
@@ -150,7 +157,7 @@ abstract class DBDriver protected() {
     val asoc= assocs.get(table)
     inx.setLength(0)
     var iix=1
-    if (asoc.isDefined) asoc.get.ferFKeys.foreach { (t) =>
+    if (asoc.isDefined) asoc.get.getFKeys.foreach { (t) =>
       if (!t._1) {
         val cn = t._4
         val col = genColDef(cn, getLongKeyword() , true)

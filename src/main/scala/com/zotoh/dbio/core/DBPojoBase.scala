@@ -19,48 +19,30 @@
  *
  ??*/
 
+
 package com.zotoh.dbio
 package core
-
-import com.zotoh.dbio.meta.Column
-import com.zotoh.dbio.meta.Table
 
 
 /**
  * @author kenl
  *
  */
-@Table(table="DBIO_MMTABLE")
-class M2MTable extends DBPojoBase {
+abstract class DBPojoBase extends DBPojo {
 
-  private var _rhsObj = 0L
-  private var _lhsObj = 0L
-  private var _lhs=""
-  private var _rhs=""
+  private var _primaryKey = -1L
+  private var _ver=  -1L
 
-  @Column(id="XX_LHS", unique=true)
-  def getLHS() = _lhs
-  def setLHS(s:String ) {
-    _lhs=s
+  def getRowID() = _primaryKey
+
+  def setRowID(n:Long ) {
+    _primaryKey=n
   }
 
-  @Column(id="XX_RHS", unique=true)
-  def getRHS() = _rhs
-  def setRHS(s:String ) {
-    _rhs=s
-  }
+  def getVerID() = _ver
 
-  @Column(id="XX_LHSOID", unique=true)
-  def getLhsObjID() = _lhsObj
-  def setLhsObjID(id:Long) {
-    _lhsObj=id
+  def setVerID(v:Long ) {
+    _ver=v
   }
-
-  @Column(id="XX_RHSOID", unique=true)
-  def getRhsObjID() = _rhsObj
-  def setRhsObjID(id:Long ) {
-    _rhsObj=id
-  }
-
 
 }

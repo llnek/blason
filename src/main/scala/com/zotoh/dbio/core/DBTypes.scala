@@ -32,6 +32,15 @@ import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreUtils._
 import org.slf4j._
 
+trait DBPojo {
+
+  def setRowID(n:Long ): Unit
+  def setVerID(n:Long): Unit
+
+  def getRowID(): Long
+  def getVerID(): Long
+}
+
 /**
  * @author kenl
  */
@@ -93,9 +102,9 @@ class PoolableDB( ji:JDBCInfo,
   private val maxPartitions: Int,
   private val maxWaitForConnMillis: Long,
   private val dbg:Boolean) extends DB {
-  
+
   val _log= LoggerFactory.getLogger(classOf[PoolableDB])
-  
+
   private val _props = new JPS()
   if (!STU.isEmpty(ji.user)) {
     _props.put("username", ji.user)

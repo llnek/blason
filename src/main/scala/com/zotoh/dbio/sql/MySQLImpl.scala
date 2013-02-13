@@ -22,6 +22,8 @@
 package com.zotoh.dbio
 package sql
 
+import com.zotoh.dbio.core.FldMetaHolder
+
 //import com.zotoh.dbio.meta.FldMetaHolder
 
 
@@ -64,7 +66,7 @@ class MySQLImpl extends DBDriver {
     new StringBuilder(256).
       append(getPad).append(fld.getId ).append(" ").
       append( getLongKeyword ).
-      append(" NOT NULL AUTO_INCREMENT").
+      append(" NOT NULL AUTO_INCREMENT").toString
   }
 
 }

@@ -27,7 +27,7 @@ import java.lang.reflect.Method
 import com.zotoh.dbio.meta.Column
 
 object FldMetaHolder {
-  protected val DUMBO= new FldMetaHolder()
+  val DUMBO= new FldMetaHolder()
 }
 
 /**
@@ -53,7 +53,7 @@ class FldMetaHolder {
 
   def isAutoGen() = if (_col == null) false else _col.autogen()
 
-  def getId() = if (_col==null) "" else _col.id().lc
+  def getId() = if (_col==null) "" else _col.id().toUpperCase()
 
   def isNullable() = if (_col==null) true else _col.optional()
 
