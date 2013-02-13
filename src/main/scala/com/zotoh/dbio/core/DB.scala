@@ -19,53 +19,48 @@
  *
  ??*/
 
-package com.zotoh.frwk
-package db
+package com.zotoh.dbio
+package core
 
-import java.util.{Properties=>JPS}
-import java.sql.Connection
+import java.sql.{SQLException, Connection}
+import com.zotoh.frwk.db.JDBCInfo
+import org.slf4j._
 
 
 /**
  * @author kenl
  */
-class TLocalDBIO(private val _ji:JDBCInfo, private val _props:JPS) {
-  private var _pool:JDBCPool=null
-  
-  def finz() {
-    if (_pool != null) {
-      _pool.finz
-    }
-    _pool=null
-  }
-  
-  private def mkPool() = {
-    if (_pool != null) {
-      _pool.finz
-      _pool=null
-    }
-    if (_ji != null) {
-      _pool = JDBCPool.mkSingularPool(_ji, 1,2,1,5000,_props)
-    }
-    _pool
-  }
-  
-  def getPool() = {
-    if (_pool == null) mkPool() else _pool
-  }
-  
+object ScalaDB {
+  def apply(fac:DBFactory) = fac
 }
 
 /**
  * @author kenl
  */
-class TLocalJDBC(ji:JDBCInfo, props:JPS) extends ThreadLocal[TLocalDBIO] {
-  
-  def this() {
-    this(null, new JPS())
-  }
-  
-  override def initialValue() = new TLocalDBIO(ji,new JPS() )
-  
+trait DBFactory {
+  def apply(ji:JDBCInfo, dbg:Boolean=false): DB
 }
 
+/**
+ * @author kenl
+ */
+trait DB {
+
+  protected val _log:Logger
+  def tlog() = _log
+
+  def newCompositeSQLProcessor() = new CompositeSQLr(this)
+  def newSimpleSQLProcessor() = new SimpleSQLr(this)
+
+  def close(c: Connection) {
+    try {
+      c.close()
+    } catch {
+      case e:Throwable => tlog.error("", e)
+    }
+  }
+
+  def open(): Connection
+  def finz(): Unit
+
+}

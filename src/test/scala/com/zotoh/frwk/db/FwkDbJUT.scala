@@ -31,7 +31,7 @@ import com.zotoh.frwk.io.IOUtils._
 import org.apache.commons.io.{FileUtils=>FUS}
 import org.apache.commons.io.{IOUtils=>IOU}
 import java.util.concurrent.Callable
-
+import java.util.{Properties=>JPS}
 
 import java.io.{ByteArrayOutputStream=>ByteArrayOS}
 import java.io.File
@@ -87,7 +87,7 @@ INSERT INTO star (id, firstname, lastname) VALUES (DEFAULT, 'Felix', 'the Cat')
 
     assert( DBUtils.tableExists(j, "user_accounts"))
 
-    LJDBC.set(new TLocalDBIO(j))
+    LJDBC.set(new TLocalDBIO(j, new JPS()))
     
     var jj= LJDBC.get.getPool.newJdbc()
     var m= jj.getTableMetaData("user_accounts")

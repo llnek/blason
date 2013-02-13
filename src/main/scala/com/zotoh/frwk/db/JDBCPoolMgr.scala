@@ -26,7 +26,7 @@ import scala.collection.mutable
 
 import java.sql.{Driver,DriverManager,SQLException,Connection=>JConn}
 import java.util.{Properties=>JPS}
-
+import java.{lang=>jl}
 import org.apache.commons.lang3.{StringUtils=>STU}
 import org.slf4j._
 
@@ -105,7 +105,7 @@ sealed class JDBCPoolMgr extends Constants with CoreImplicits {
     val v=vendor(pms)
     val ts= v.getTestSQL()
 
-    cpds.setLogStatementsEnabled(tlog.isDebugEnabled)
+    cpds.setLogStatementsEnabled(pps.get("debug") match { case b:jl.Boolean => b; case _ => false })
     cpds.setPartitionCount(4)
     cpds.setJdbcUrl( pms.url )
     cpds.setUsername( pms.user)
