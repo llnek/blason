@@ -54,7 +54,7 @@ object MetaCache {
  * @author kenl
  *
  */
-sealed class MetaCache extends CoreImplicits {
+sealed class MetaCache(models:Schema) extends CoreImplicits {
 
   private val _classes = mutable.HashMap[Class[_], ClassMetaHolder]()
   private val _meta= mutable.HashMap[String, TableMetaHolder]()
@@ -63,6 +63,7 @@ sealed class MetaCache extends CoreImplicits {
   import MetaCache._
 
   loadClassMeta(classOf[M2MTable])
+  models.getModels.foreach { (c) =>loadClassMeta(c) }        
 
   def getTableMeta( con:Connection,table:String ): Option[TableMetaHolder]  = {
     var m= getTableMeta(table)
@@ -83,6 +84,8 @@ sealed class MetaCache extends CoreImplicits {
     }
     rc
   }
+  
+  def getClassMetas() = _classes.toMap
 
   private def loadClassMeta( z:Class[_]) = synchronized {
     try {

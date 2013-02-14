@@ -32,20 +32,11 @@ import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreUtils._
 import org.slf4j._
 
-trait DBPojo {
-
-  def setRowID(n:Long ): Unit
-  def setVerID(n:Long): Unit
-
-  def getRowID(): Long
-  def getVerID(): Long
-}
-
 /**
  * @author kenl
  */
 class SimpleDBFactory extends DBFactory {
-  def apply(ji:JDBCInfo, dbg:Boolean=false): DB = new SimpleDB(ji,dbg)
+  def apply(ji:JDBCInfo, s:Schema, ps:JPS): DB = new SimpleDB(ji,s, ps)
 }
 
 object SimpleDB {
@@ -55,16 +46,18 @@ object SimpleDB {
 /**
  * @author kenl
  */
-class SimpleDB(ji:JDBCInfo, dbg:Boolean=false) extends DB {
+class SimpleDB(ji:JDBCInfo, s:Schema, pps:JPS) extends DB {
   import SimpleDB._
   val _log= LoggerFactory.getLogger(classOf[SimpleDB])
+  val _meta= new MetaCache(s)
   private val _props = new JPS()
+  _props.putAll(pps)
+  
   if (!STU.isEmpty(ji.user)) {
     _props.put("username", ji.user)
     _props.put("user", ji.user)
     _props.put("password", nsb( ji.pwd))
   }
-  if (dbg) { _props.put("debug", java.lang.Boolean.TRUE) }
 
   def finz() {
   }
@@ -79,45 +72,4 @@ class SimpleDB(ji:JDBCInfo, dbg:Boolean=false) extends DB {
 }
 
 
-/**
- * @author kenl
- */
-class PoolableDBFactory( private val minConns: Int,
-  private val maxConns: Int,
-  private val maxWaitForConnMillis: Long = 5000,
-  private val dbg:Boolean=false) extends DBFactory {
-  val _log= LoggerFactory.getLogger(classOf[PoolableDBFactory])
-  override def apply(ji:JDBCInfo, dbg:Boolean): DB = {
-    new PoolableDB(ji, minConns, maxConns, 1, maxWaitForConnMillis,dbg)
-  }
 
-}
-
-/**
- * @author kenl
- */
-class PoolableDB( ji:JDBCInfo,
-  private val minConns: Int,
-  private val maxConns: Int,
-  private val maxPartitions: Int,
-  private val maxWaitForConnMillis: Long,
-  private val dbg:Boolean) extends DB {
-
-  val _log= LoggerFactory.getLogger(classOf[PoolableDB])
-
-  private val _props = new JPS()
-  if (!STU.isEmpty(ji.user)) {
-    _props.put("username", ji.user)
-    _props.put("user", ji.user)
-    _props.put("password", nsb( ji.pwd))
-  }
-  if (dbg) { _props.put("debug", java.lang.Boolean.TRUE) }
-
-  private val _pool = JDBCPool.mkSingularPool( ji, minConns,maxConns,1,maxWaitForConnMillis,_props)
-
-  def open()  = _pool.nextFree
-  def finz() {
-    _pool.finz
-  }
-
-}

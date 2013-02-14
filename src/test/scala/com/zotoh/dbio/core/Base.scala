@@ -24,7 +24,7 @@ package core
 
 
 import java.sql.{DriverManager,Connection}
-import java.util.{Date => JDate}
+import java.util.{Properties=>JPS,Date => JDate}
 import org.h2.tools
 import org.h2.tools.DeleteDbFiles
 import com.zotoh.frwk.db.JDBCInfo
@@ -66,7 +66,7 @@ create cached table TESTTABLE (
   """
 
   private def useFactory : DBFactory = {
-    if (true) new SimpleDBFactory else new PoolableDBFactory(4,10)
+    if (true) new SimpleDBFactory else new PoolableDBFactory
   }
 
   protected def genesis : Unit = {
@@ -85,7 +85,11 @@ create cached table TESTTABLE (
   }
 
   protected def iniz = {
-    dbRef=ScalaDB(useFactory)(new JDBCInfo(DBUSER,DBPWD,DBURL,DBDRIVER))
+    dbRef=ScalaDB(useFactory)(new JDBCInfo(DBUSER,DBPWD,DBURL,DBDRIVER),
+        new Schema() {
+      def getModels() = Nil
+    },
+        new JPS())
     dbComplexr=dbRef.newCompositeSQLProcessor
       dbSimpler= dbRef.newSimpleSQLProcessor
         genesis
@@ -109,7 +113,7 @@ class TestTable extends SRecord {
  * @author kenl
  */
 object TestTable extends SRecordFactory {
-
+    val _log= null
     override def getUpdatableCols = {
         columns - "CID"
     }

@@ -37,13 +37,14 @@ import com.zotoh.frwk.util.MetaUtils
 
 
 
-object JDBCPool {
+object JDBCPool extends CoreImplicits {
   private val _log= LoggerFactory.getLogger(classOf[JDBCPool])
   def tlog() = _log
   
   def mkSingularPool(ji:JDBCInfo,
-      minConns:Int, maxConns:Int, maxPartitions:Int, 
-      maxWaitConnMillis:Long, ps:JPS) = {
+//      minConns:Int, maxConns:Int, maxPartitions:Int, 
+//      maxWaitConnMillis:Long, 
+      pps:JPS) = {
     tlog.debug("JDBCPoolMgr: Driver : {}" , ji.driver)
     tlog.debug("JDBCPoolMgr: URL : {}" ,  ji.url)    
     if (! STU.isEmpty(ji.driver )) {
@@ -52,17 +53,17 @@ object JDBCPool {
     val cpds = new BoneCPConfig()
     val v=vendor(ji)
     val ts= v.getTestSQL()
-    cpds.setLogStatementsEnabled(ps.get("debug") match { case b:jl.Boolean => b; case _ => false })
-    cpds.setPartitionCount( maxPartitions)
+    cpds.setLogStatementsEnabled( pps.getb("debug") )
+    cpds.setPartitionCount( Math.max(1, pps.geti("partitions") ))
     cpds.setJdbcUrl( ji.url )
     cpds.setUsername( ji.user)
     cpds.setPassword( ji.pwd )
     cpds.setIdleMaxAgeInSeconds(60*60*24) // 1 day
-    cpds.setMaxConnectionsPerPartition( maxConns)
-    cpds.setMinConnectionsPerPartition(minConns)
+    cpds.setMaxConnectionsPerPartition( Math.max(2, pps.geti("max_conns")) )
+    cpds.setMinConnectionsPerPartition( Math.max(1, pps.geti("min_conns")))
     cpds.setPoolName( uid )
     cpds.setAcquireRetryDelayInMs(5000)
-    cpds.setConnectionTimeoutInMs(maxWaitConnMillis)
+    cpds.setConnectionTimeoutInMs(  Math.max( 5000, pps.geti("max_connwait")).toLong )
     cpds.setDefaultAutoCommit(false)
     cpds.setAcquireRetryAttempts(1)
     new JDBCPool(v, ji, new BoneCP(cpds))

@@ -45,7 +45,7 @@ class TLocalDBIO(private val _ji:JDBCInfo, private val _props:JPS) {
       _pool=null
     }
     if (_ji != null) {
-      _pool = JDBCPool.mkSingularPool(_ji, 1,2,1,5000,_props)
+      _pool = JDBCPool.mkSingularPool(_ji, _props)
     }
     _pool
   }

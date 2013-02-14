@@ -22,48 +22,12 @@
 package com.zotoh.dbio
 package core
 
-import java.sql.{SQLException, Connection}
-import com.zotoh.frwk.db.JDBCInfo
-import org.slf4j._
+trait DBPojo {
 
-import java.util.{Properties=>JPS}
+  def setRowID(n:Long ): Unit
+  def setVerID(n:Long): Unit
 
-
-/**
- * @author kenl
- */
-object ScalaDB {
-  def apply(fac:DBFactory) = fac
+  def getRowID(): Long
+  def getVerID(): Long
 }
 
-/**
- * @author kenl
- */
-trait DBFactory {
-  def apply(ji:JDBCInfo, s:Schema, props:JPS): DB
-}
-
-/**
- * @author kenl
- */
-trait DB {
-
-  protected val _meta:MetaCache
-  protected val _log:Logger
-  def tlog() = _log
-
-  def newCompositeSQLProcessor() = new CompositeSQLr(this)
-  def newSimpleSQLProcessor() = new SimpleSQLr(this)
-
-  def close(c: Connection) {
-    try {
-      c.close()
-    } catch {
-      case e:Throwable => tlog.error("", e)
-    }
-  }
-
-  def open(): Connection
-  def finz(): Unit
-
-}

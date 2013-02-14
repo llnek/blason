@@ -41,9 +41,9 @@ import java.io.FileFilter
 
 object FILEAction extends Enumeration {
   type FILEAction = Value
-  val FP_CREATED = Value("created")
-  val FP_CHANGED = Value("changed")
-  val FP_DELETED = Value("deleted")
+  val FP_CREATED = Value(0,"created")
+  val FP_CHANGED = Value(1,"changed")
+  val FP_DELETED = Value(2,"deleted")
 }
 
 

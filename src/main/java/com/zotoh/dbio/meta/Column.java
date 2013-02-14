@@ -64,4 +64,18 @@ public @interface Column {
      * @return
      */
     public boolean autogen() default false;
+    
+    /**
+     * For UI
+     * @return
+     */
+    public String desc() default "";
+    
+    public boolean readonly() default false;
+    public boolean viewable() default true;
+    
+    public String dft() default "";
+    
+    public boolean system() default false;
+    
 }

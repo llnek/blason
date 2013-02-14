@@ -35,6 +35,7 @@ import com.zotoh.dbio.core.FldMetaHolder
 import com.zotoh.dbio.core.MetaCache
 import com.zotoh.dbio.core.AssocMetaHolder
 import com.zotoh.dbio.core.M2MTable
+import com.zotoh.dbio.core.Schema
 
 
 
@@ -67,7 +68,7 @@ abstract class DBDriver protected() {
 
   import DBDriver._
 
-  protected val _meta= new MetaCache()
+  protected val _meta= new MetaCache( new Schema() { def getModels() = Nil })
   protected var _useSep = true
 
   def getDDL(classes:Class[_]*) = {
