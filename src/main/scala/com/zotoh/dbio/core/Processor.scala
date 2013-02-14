@@ -39,54 +39,41 @@ object SQLSimpleType extends SQLBlockType
 */
 trait SQLProcessor {
 
-  type DMap = Map[String, Any]
-
+  protected val _meta:MetaCache
   protected val _log:Logger
   def tlog() = _log
 
-  def select[X]( sql: String, params: Seq[Any])(f: ResultSet => X): Seq[X]
-  def select[X]( sql: String)(f: ResultSet => X): Seq[X]
+  def select[T]( sql:String, params:Any* )(f: ResultSet => T): Seq[T]
 
-  def execute(sql: String, params: Seq[Any]): Int
-  def execute(sql: String): Int
+  def execute(sql:String, params:Any* ): Int
 
-  def insert( obj : SRecord): Int
-  def delete( obj : SRecord): Int
+  def insert( obj:DBPojo): Int
+  def delete( obj:DBPojo): Int
 
-  def update( obj : SRecord, cols : Set[String] ): Int
-  def update( obj : SRecord): Int = {
-    update(obj, obj.getSchemaFactory.getUpdatableCols )
+  def update( obj:DBPojo, cols:Set[String] ): Int
+  def update( obj:DBPojo): Int = {
+    //update(obj, obj.getSchemaFactory.getUpdatableCols )
+    update(obj, Set())
   }
 
-  def findSome(fac : SRecordFactory, filter : DMap): Seq[SRecord]
-  def findAll(fac : SRecordFactory) : Seq[SRecord]
+  def findSome(cz:ClassMetaHolder, filter:NameValues): Seq[DBPojo]
+  def findAll(cz:ClassMetaHolder): Seq[DBPojo]
 
-
-  protected def doFindSome(fac : SRecordFactory, filter : DMap): Seq[SRecord] = {
-    val s= "SELECT * FROM " + fac.getTableName
+  protected def doFindSome(cz:ClassMetaHolder, filter:NameValues): Seq[DBPojo] = {
     val lst = mutable.ArrayBuffer[Any]()
-    val wb= new StringBuilder(512)
-    filter.foreach { kv =>
-      if (wb.length > 0) { wb.append(" AND ") }
-      wb.append(kv._1)
-      kv._2 match {
-        case null | NullAny => wb.append("=NULL")
-        case _ => 
-          wb.append("=?")
-          lst += kv._2
-      }
-    }
-    val cb : ResultSet => SRecord = { row : ResultSet => fac.create(row)  }
-    if (wb.length > 0) {
-      select( s + " WHERE " + wb, lst.toSeq )(cb)
+    val s= "SELECT * FROM " + cz.table
+    val wc= filter.toWhereClause()
+    val cb= { row : ResultSet => fac.create(row)  }
+    if ( !STU.isEmpty(wc._1) ) {
+      select( s + " WHERE " + wc._1, wc._2:_* )(cb)
     } else {
       select( s)(cb)
     }
   }
 
-  protected def doFindAll(fac : SRecordFactory): Seq[SRecord] = {
-    val cb : ResultSet => SRecord = { row : ResultSet => fac.create(row)  }
-    select("SELECT * FROM " + fac.getTableName)(cb)
+  protected def doFindAll(cz:ClassMetaHolder): Seq[DBPojo] = {
+    val cb = { row : ResultSet => fac.create(row)  }
+    select("SELECT * FROM " + cz.table )(cb)
   }
 
   protected def pkeys(obj : SRecord): (String, Seq[Any]) = {
@@ -159,6 +146,388 @@ trait SQLProcessor {
       execute( "INSERT INTO " + obj.getSchemaFactory.getTableName + "(" + s1 + ") VALUES (" + s2 + ")" , lst.toSeq )
     } else {
       0
+    }
+  }
+
+  def update( conn:Connection, obj:DBPojo ): Int = {
+    val t= getMetas(conn, obj.getClass )
+    update( conn, t._1, t._2, obj)
+  }
+
+  private def update( conn:Connection, zm:ClassMetaHolder, tm:TableMetaHolder,
+    obj:DBPojo): Int = {
+
+    val bf= new StringBuilder(1024).append( "UPDATE  " ).append( tm.getName ).append( " SET " )
+    val vs= mutable.ArrayBuffer[ (Any,Int) ]() 
+    val b1= new StringBuilder(512)
+    val w= new StringBuilder(512)
+    val cms= tm.getColMetas
+    val flds=zm.getFldMetas
+    val curVer= obj.getVerID
+    val newVer= curVer+1
+
+    cms.foreach { (en) =>
+      val cn= en._1.uc
+      val cm= en._2
+      val fld=flds.get(cn)
+      var gm = if (fld.isEmpty) null else fld.get.getGetter()
+      var ct=0
+      var arg:Any= null
+      if (COL_ROWID == cn || gm == null || fld.get.isAutoGen) {} else {
+        val ct = if (COL_VERID == cn) {
+          arg = newVer
+          java.sql.Types.BIGINT
+        } else {
+          try {
+            arg= gm.invoke(obj)
+          } catch {
+            case e:SQLException => throw e
+            case e:Throwable => throw new SQLException(e)
+          }
+          cm.getSQLType
+        }
+        vs += (arg, ct)
+        addAndDelim(b1, ",", cn+"=?")
+      }
+    }
+
+    w.append(COL_ROWID).append("=? AND ").append(COL_VERID).append("=?")
+    bf.append(b1).append(" WHERE ").append(w)
+
+    // add in the row id, primary key
+    vs += ( obj.getRowID, java.sql.Types.BIGINT)
+    vs += ( curVer, java.sql.Types.BIGINT)
+
+    val cnt= update( conn, bf.toString, vs:_* )
+    lockError(cnt, tm.getName, obj.getRowID )
+
+    // update the version num
+    obj.setVerID( newVer)
+    cnt
+  }
+
+  private def update( conn:Connection, sql:String, values:(Any,Int)* ): Int = {
+
+    val ps=conn.prepareStatement( jiggleSQL(sql,2) )
+    var n=0
+    try {
+      values.foldLeft(1) { (pos,t) =>
+        setStatement(ps, pos, t._2, t._1)
+      }
+      n= ps.executeUpdate()
+    } finally {
+      tlog.debug("update: {} row(s)" , n)
+      DBU.close(ps)
+    }
+    n
+  }
+
+
+  def remove( conn:Connection, obj:DBPojo): Int = {
+    val t= getMetas(conn, obj.getClass )
+    remove( conn, t._1, t._2, obj)
+  }
+
+  private def remove( conn:Connection, zm:ClassMetaHolder, tm:TableMetaHolder,
+    obj:DBPojo): Int = {
+
+    val bd= new StringBuilder(512).
+    append("DELETE FROM ").
+    append( tm.getName).
+    append( " WHERE ").
+    append( COL_ROWID ).
+    append(" =? AND ").
+    append(COL_VERID).append("=?")
+    val cnt= remove(conn, bd.toString, obj.getRowID, obj.getVerID )
+
+    lockError(cnt, tm.getName, obj.getRowID )
+
+    // do we need to do this?
+    obj.setVerID( -1L )
+    cnt
+  }
+
+  private def remove( conn:Connection, sql:String , rowID:Long, verID:Long ): Int = {
+
+    val ps=conn.prepareStatement( jiggleSQL(sql, 0) )
+    var n=0
+    try {
+      setStatement(ps, 1, java.sql.Types.BIGINT, rowID)
+      setStatement(ps, 2, java.sql.Types.BIGINT, verID)
+      n= ps.executeUpdate()
+    } finally {
+      DBU.close(ps)
+    }
+    tlog().debug("removed {} row(s)" , n )
+    n
+  }
+
+
+  protected def create(conn:Connection, obj:DBPojo):DBPojo = {
+    val t= getMetas( conn, obj.getClass())
+    create( conn, t._1, t._2, obj ) match {
+      case (a:Int, rc:Some(Long)) => obj.setRowID( rc.get)
+      case (a:Int, _ ) =>
+    }
+    obj
+  }
+
+  private def create( conn:Connection, zm:ClassMetaHolder, tm:TableMetaHolder, 
+    obj:DBPojo): (Int,Option[Any])  = {
+    val bf= new StringBuilder(1024).append("INSERT INTO  ").append(tm.getName).append(" (")
+    val values= mutable.ArrayBuffer[(Any,Int)]()
+    // column-name, db-type, value
+    val b2= new StringBuilder(512)
+    val b1= new StringBuilder(512)
+    val flds= zm.getFldMetas()
+    val cms= tm.getColMetas()
+
+    // always set to initial value
+    obj.setVerID(1L)
+
+    cms.foreach { (en) =>
+      val cn= en._1.getName().uc
+      val cm= en._2
+      val fld=flds.get(cn)
+      var arg:Any = null
+
+      if (COL_VERID == cn) {
+        arg= 1L
+      } else {
+        gm = if (fld.isEmpty) null else fld.get.getGetter()
+        if (gm==null || fld.get.isAutoGen) {} else {
+          try {
+            arg= gm.invoke(obj)
+          } catch {
+            case e:SQLException => throw e
+            case e:Throwable => throw new SQLException(e)
+          }
+        }
+      }
+      if (arg != null) {
+        values += (arg, cm.getSQLType )
+        addAndDelim(b1, ",", cn)
+        addAndDelim(b2, ",", "?")
+      }
+    }
+
+    bf.append(b1).append(") VALUES (").append(b2).append(")")
+    create(conn, zm, tm, bf.toString(), values.toSeq )
+  }
+
+  private def create( conn:Connection, zm:ClassMetaHolder, tm:TableMetaHolder,
+      sql:String, values:Seq[(Any,Int)] ): (Int,Option[Any]) = {
+
+    tlog.debug("Insert: SQL = {}" , sql)
+
+    val ps = if (tm.canGetGeneratedKeys) {
+      con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+    } else {
+      con.prepareStatement(sql)
+    }
+    var rc:Option[Any] = None
+    var n=0
+    try {
+      values.foldLeft(1) { (pos,t) =>
+        setStatement(ps, pos, t._2, t._1)
+        pos+1
+      }
+      n= ps.executeUpdate()
+      if (tm.canGetGeneratedKeys) {
+        val rs=ps.getGeneratedKeys()
+        val cnt = if (rs == null) 0 else {
+          rs.getMetaData).getColumnCount()
+        }
+        if (cnt > 0 && rs.next ) {
+          rc= Some(rs.getObject(1))
+        }
+      }
+      (n,rc)
+    } finally {
+      tlog.debug("insert: inserted {} row(s)", n)
+      DBU.close(ps)
+    }
+  }
+
+////////////////
+
+  def getO2O[T](lhs:DBPojo, rhs:Class[T], fkey:String) = {
+    val t= rhs.getAnnotation(classOf[Table] )
+    if (t==null) { throw new SQLEx("RHS class " + rhs + " has no Table annotation" ) }
+    fetchObj(rhs, new NameValues(fkey, lhs.getRowID) )
+  }
+
+  def setO2O(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
+    val t= rhs.getClass.getAnnotation(classOf[Table] )
+    if (t==null) { throw new SQLEx( "RHS class " +
+              rhs.getClass + " has no Table annotation" ) }
+    val curVer = rhs.getVerID
+    val newVer = curVer+1
+    val rid = rhs.getRowID
+    val tn=t.table.uc
+    val sql="UPDATE " + tn + " SET " + fkey + " =? , " + COL_VERID + "=? " + " WHERE " +
+            COL_ROWID + "=? and " + COL_VERID + "=?"
+
+    val cnt= execUpdateSQL(sql, lhs.getRowID, newVer, rid , curVer )
+    lockError(cnt, tn, rid)
+
+    // up the ver num
+    rhs.setVerID( newVer)
+    cnt
+  }
+
+  def purgeO2O(lhs:DBPojo, rhs:Class[_], fkey:String) = {
+    val t= rhs.getAnnotation(classOf[Table] )
+    if (t==null) { throw new SQLEx( "RHS class " +
+                        rhs + " has no Table annotation" ) }
+    val rn=t.table.uc
+    val sql="DELETE from " + rn + " WHERE " + fkey + "=?"
+    execUpdateSQL(sql, lhs.getRowID )
+  }
+
+  def getO2M[T](lhs:DBPojo, rhs:Class[T], fkey:String): Seq[T] = {
+    val t= rhs.getAnnotation(classOf[Table] )
+    if (t==null) { throw new SQLEx( "RHS class " + rhs + " has no Table annotation" ) }
+    // do a general select
+    fetchObjs(rhs, new NameValues(fkey, lhs.getRowID ))
+  }
+
+  def removeO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
+    val t= rhs.getClass().getAnnotation(classOf[Table] )
+    if (t==null) { throw new SQLEx( "RHS class " +
+              rhs.getClass() + " has no Table annotation" ) }
+    val curVer= rhs.getVerID
+    val newVer= curVer+1
+    val rid = rhs.getRowID
+    val rn=t.table.uc
+    val sql= "UPDATE " + rn + " SET " + fkey + " =NULL , " + COL_VERID + "=? " +
+            " WHERE " + COL_ROWID + "=? and " +
+            COL_VERID + "=?"
+
+    val cnt= execUpdateSQL(sql, newVer, rid, curVer )
+    lockError(cnt, rn, rid)
+
+    rhs.setVerID(newVer)
+    cnt
+  }
+
+  def purgeO2M(lhs:DBPojo, rhs:Class[_], fkey:String) = {
+    val t= rhs.getAnnotation(classOf[Table] )
+    if (t==null) { throw new SQLEx( "RHS class " +
+                        rhs.getClass() + " has no Table annotation" ) }
+    val rn=t.table.uc
+    val sql="DELETE from " + rn + " WHERE " + fkey + "=?"
+    execUpdateSQL(sql, lhs.getRowID )
+  }
+
+  def addO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
+    val t= rhs.getClass.getAnnotation(classOf[Table] )
+    if (t==null) { throw new SQLEx( "RHS class " +
+              rhs.getClass + " has no Table annotation" ) }
+    val tn=t.table.uc
+    val curVer = rhs.getVerID
+    val newVer = curVer+1
+    val rid= rhs.getRowID
+    val sql="UPDATE " + tn + " SET " + fkey + " =? , " + COL_VERID + "=? " + " WHERE " +
+            COL_ROWID + "=? and " +  COL_VERID + "=?"
+
+    val cnt= execUpdateSQL(sql, lhs.getRowID, newVer, rid , curVer )
+    lockError(cnt, tn, rid)
+
+    // up the ver num
+    rhs.setVerID( newVer)
+    cnt
+  }
+
+  def getM2M[T](lhs:DBPojo, rhs:Class[T]): Seq[T] = {
+
+    val t=classOf[M2MTable].getAnnotation(classOf[Table] )
+    val z:Class[_] = lhs.getClass
+    var tn=t.table.uc
+    t = rhs.getAnnotation(classOf[Table] )
+    val rn= t.table.uc
+    t=z.getAnnotation(classOf[Table] )
+    val ln= t.table.uc
+    val sql = "SELECT distinct res.* from " + rn + " res JOIN " + tn + " mm  ON " +
+            "mm." + COL_LHS + "=? and " + "mm." + COL_RHS + "=? and " +
+            "mm." + COL_LHSOID + "=? and " + "mm." + COL_RHSOID + " = res." + COL_ROWID
+
+    fetchViaSQL(rhs, sql, ln, rn, lhs.getRowID)
+  }
+
+  def removeM2M(lhs:DBPojo, rhs:DBPojo): Int = {
+    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
+    val z:Class[_]= lhs.getClass
+    val tn=t.table.uc
+    t = rhs.getClass.getAnnotation(classOf[Table] )
+    val rn= t.table.uc
+    t=z.getAnnotation(classOf[Table] )
+    val ln= t.table.uc
+
+    val sql ="DELETE from " + tn +
+            " where " + COL_RHS + "=? and " + COL_LHS + "=? and " +
+            COL_RHSOID + "=? and " + COL_LHSOID + "=?"
+
+    execUpdateSQL(sql, rn, ln, rhs.getRowID, lhs.getRowID)
+  }
+
+  def removeM2M(lhs:DBPojo, rhs:Class[_]): Int = {
+    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
+    val z:Class[_]= lhs.getClass
+    val tn=t.table.uc
+    t = rhs.getAnnotation(classOf[Table] )
+    val rn= t.table.uc
+    t=z.getAnnotation(classOf[Table] )
+    val ln= t.table.uc
+
+    val sql ="DELETE from " + tn +
+            " where " + COL_RHS + "=? and " + COL_LHS + "=? and " +
+            COL_LHSOID + "=?"
+
+    execUpdateSQL(sql, rn, ln, lhs.getRowID )
+  }
+
+  def addM2M(lhs:DBPojo, rhs:DBPojo): Int = {
+    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
+    val z:Class[_]= lhs.getClass
+    val tn=t.table.uc
+    t = rhs.getClass.getAnnotation(classOf[Table] )
+    val rn= t.table.uc
+    t=z.getAnnotation(classOf[Table] )
+    val ln= t.table.uc
+
+    val sql ="INSERT into " + tn +
+            " ( " + COL_VERID + ", " + COL_RHS + ", " + COL_LHS + ", " +
+            COL_RHSOID + ", " + COL_LHSOID + ") values (?,?,?,?,?)"
+
+    execUpdateSQL(sql, 1L, rn, ln, rhs.getRowID, lhs.getRowID )
+  }
+
+  private def getMetas( conn:Connection, z:Class[_]) = {
+    val tm= getTableMeta(conn, z)
+    _meta.getClassMeta(z) match {
+      case Some(zm) => (zm,tm)
+      case _ =>
+        throw new SQLException("Failed to locate class info: " + z)
+    }
+  }
+
+  private def getTableMeta( conn:Connection, z:Class[_] ) = {
+    val t= z.getAnnotation(classOf[Table] )
+    if (t==null) {
+      throw new SQLException("No DBTable-Annotation for class: " + z.getName )
+    }
+    _meta.getTableMeta(conn,t.table) match {
+      case Some(tm) => tm
+      case _ =>
+      throw new SQLException("No Table: " + t.table + " in DB.")
+    }
+  }
+
+  private def lockError(cnt:Int, table:String, rowID:Long ) {
+    if (cnt==0) {
+       throw new SQLException("Possible Optimistic lock failure for table: " +
+               table + ", rowid= " + rowID)
     }
   }
 
