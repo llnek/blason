@@ -98,7 +98,7 @@ class CRUDSuite extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll 
 
     test("3. update object") {
         dbComplexr.execWith { tx =>
-            val lst = tx.findSome(TestTable, Map("cid" -> 100L))
+            val lst = tx.findSome(TestTable, new NameValues("cid" , 100L))
             assert(lst.length === 1, "read failed")
             val rec = lst.head
             rec.setVal("age", Some(81))

@@ -51,7 +51,7 @@ public @interface Column {
      * 
      * @return
      */
-    public String id();
+    public String id() default "";
     
     /**
      * For varchar, this will be the size of the string.
@@ -77,5 +77,6 @@ public @interface Column {
     public String dft() default "";
     
     public boolean system() default false;
+    
     
 }

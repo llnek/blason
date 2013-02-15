@@ -22,6 +22,18 @@
 package com.zotoh.dbio
 package core
 
+object DBPojo {
+
+  val COL_ROWID= "DBIO_ROWID"
+  val COL_VERID= "DBIO_VERID"
+  val COL_RHS= "DBIO_RHS"
+  val COL_LHS= "DBIO_LHS"
+  val COL_RHSOID= "DBIO_RHSOID"
+  val COL_LHSOID= "DBIO_LHSOID"
+
+  
+}
+
 trait DBPojo {
 
   def setRowID(n:Long ): Unit

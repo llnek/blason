@@ -27,14 +27,14 @@ import java.lang.reflect.Method
 import com.zotoh.dbio.meta.Column
 
 object FldMetaHolder {
-  val DUMBO= new FldMetaHolder()
+  val DUMBO= new FldMetaHolder("")
 }
 
 /**
  * @author kenl
  *
  */
-class FldMetaHolder {
+class FldMetaHolder(private val _name:String) {
 
   private val _mtds = new Array[Method](2)
   private var _col:Column =null
@@ -53,7 +53,7 @@ class FldMetaHolder {
 
   def isAutoGen() = if (_col == null) false else _col.autogen()
 
-  def getId() = if (_col==null) "" else _col.id().toUpperCase()
+  def getId() = _name.toUpperCase()
 
   def isNullable() = if (_col==null) true else _col.optional()
 

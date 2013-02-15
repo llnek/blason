@@ -22,15 +22,16 @@
 package com.zotoh.dbio
 package core
 
+import scala.collection.mutable
 import org.apache.commons.lang3.{StringUtils=>STU}
 import java.util.{Properties=>JPS}
-
+import com.zotoh.frwk.util.CoreImplicits
 
 /**
  * @author kenl
  *
  */
-class NameValues {
+class NameValues extends CoreImplicits {
 
   private val _keys= mutable.HashMap[String,String]()
   private val _ps= mutable.HashMap[String,Any]()
@@ -65,7 +66,7 @@ class NameValues {
   def size() = _keys.size
 
   def contains(key:String) = {
-    if (STU.isEmpty(key)) false else _ps.containsKey( key.uc)
+    if (STU.isEmpty(key)) false else _ps.contains( key.uc)
   }
 
   def toWhereClause(): (String, Seq[Any]) = {

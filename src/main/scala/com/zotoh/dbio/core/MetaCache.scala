@@ -37,14 +37,6 @@ import com.zotoh.frwk.db.TableMetaHolder
 
 object MetaCache {
   private val _log=LoggerFactory.getLogger(classOf[MetaCache])
-
-  val COL_ROWID= "II_ROWID"
-  val COL_VERID= "II_VERID"
-  val COL_RHS= "II_RHS"
-  val COL_LHS= "II_LHS"
-  val COL_RHSOID= "II_RHSOID"
-  val COL_LHSOID= "II_LHSOID"
-
 }
 
 /**
@@ -56,15 +48,15 @@ object MetaCache {
  */
 sealed class MetaCache(models:Schema) extends CoreImplicits {
 
-  private val _classes = mutable.HashMap[Class[_], ClassMetaHolder]()
-  private val _meta= mutable.HashMap[String, TableMetaHolder]()
+  private val _classes = mutable.HashMap[ Class[_], ClassMetaHolder]()
+  private val _meta= mutable.HashMap[ String, TableMetaHolder]()
 
   def tlog() = MetaCache._log
-  import MetaCache._
 
-  loadClassMeta(classOf[M2MTable])
-  models.getModels.foreach { (c) =>loadClassMeta(c) }        
+//  loadClassMeta(classOf[M2MTable])
+  models.getModels.foreach( loadClassMeta( _ ) )        
 
+  
   def getTableMeta( con:Connection,table:String ): Option[TableMetaHolder]  = {
     var m= getTableMeta(table)
     if (m.isEmpty && con != null) {

@@ -22,9 +22,19 @@
 package com.zotoh.dbio
 package core
 
-import java.sql.{SQLException, Connection, ResultSet}
+import java.sql.{SQLException=>SQLEx, Connection, ResultSet}
 import scala.collection.mutable
 import org.slf4j._
+import com.zotoh.frwk.db.TableMetaHolder
+import com.zotoh.dbio.meta.Table
+import org.apache.commons.lang3.{StringUtils=>STU}
+import com.zotoh.frwk.util.CoreImplicits
+import com.zotoh.frwk.util.StrUtils._
+import com.zotoh.frwk.db.DBVendor
+import com.zotoh.frwk.db.JDBCUtils._
+import org.apache.commons.dbutils.{DbUtils=>DBU}
+import java.sql.Statement
+
 
 
 /**
@@ -37,12 +47,14 @@ object SQLSimpleType extends SQLBlockType
 /**
  * @author kenl
 */
-trait SQLProcessor {
+trait SQLProcessor extends CoreImplicits {
 
   protected val _meta:MetaCache
   protected val _log:Logger
   def tlog() = _log
-
+  
+  import DBPojo._
+  
   def select[T]( sql:String, params:Any* )(f: ResultSet => T): Seq[T]
 
   def execute(sql:String, params:Any* ): Int
@@ -53,7 +65,9 @@ trait SQLProcessor {
   def update( obj:DBPojo, cols:Set[String] ): Int
   def update( obj:DBPojo): Int = {
     //update(obj, obj.getSchemaFactory.getUpdatableCols )
-    update(obj, Set())
+    //TODO, uncomment
+    //update(obj, Set()) 
+    0
   }
 
   def findSome(cz:ClassMetaHolder, filter:NameValues): Seq[DBPojo]
@@ -61,9 +75,9 @@ trait SQLProcessor {
 
   protected def doFindSome(cz:ClassMetaHolder, filter:NameValues): Seq[DBPojo] = {
     val lst = mutable.ArrayBuffer[Any]()
-    val s= "SELECT * FROM " + cz.table
+    val s= "SELECT * FROM " + cz.getTable()
     val wc= filter.toWhereClause()
-    val cb= { row : ResultSet => fac.create(row)  }
+    val cb= { row : ResultSet => null }
     if ( !STU.isEmpty(wc._1) ) {
       select( s + " WHERE " + wc._1, wc._2:_* )(cb)
     } else {
@@ -72,8 +86,8 @@ trait SQLProcessor {
   }
 
   protected def doFindAll(cz:ClassMetaHolder): Seq[DBPojo] = {
-    val cb = { row : ResultSet => fac.create(row)  }
-    select("SELECT * FROM " + cz.table )(cb)
+    val cb = { row : ResultSet => null  }
+    select("SELECT * FROM " + cz.getTable )(cb)
   }
 
   protected def pkeys(obj : SRecord): (String, Seq[Any]) = {
@@ -84,8 +98,8 @@ trait SQLProcessor {
       if (sb1.length > 0) { sb1.append(" AND ") }
       sb1.append(k).append("=?")
       obj.getVal(k) match {
-        case Some(NullAny) => throw new SQLException("Primary key has NULL value")
-        case null | None => throw new SQLException("Primary key has no value")
+        case Some(NullAny) => throw new SQLEx("Primary key has NULL value")
+        case null | None => throw new SQLEx("Primary key has no value")
         case v => lst += v.get
       }
     }
@@ -181,12 +195,12 @@ trait SQLProcessor {
           try {
             arg= gm.invoke(obj)
           } catch {
-            case e:SQLException => throw e
-            case e:Throwable => throw new SQLException(e)
+            case e:SQLEx => throw e
+            case e:Throwable => throw new SQLEx(e)
           }
           cm.getSQLType
         }
-        vs += (arg, ct)
+        vs += new Tuple2( arg ,   ct )
         addAndDelim(b1, ",", cn+"=?")
       }
     }
@@ -195,8 +209,8 @@ trait SQLProcessor {
     bf.append(b1).append(" WHERE ").append(w)
 
     // add in the row id, primary key
-    vs += ( obj.getRowID, java.sql.Types.BIGINT)
-    vs += ( curVer, java.sql.Types.BIGINT)
+    vs += new Tuple2( obj.getRowID, java.sql.Types.BIGINT)
+    vs += new Tuple2( curVer, java.sql.Types.BIGINT)
 
     val cnt= update( conn, bf.toString, vs:_* )
     lockError(cnt, tm.getName, obj.getRowID )
@@ -213,6 +227,7 @@ trait SQLProcessor {
     try {
       values.foldLeft(1) { (pos,t) =>
         setStatement(ps, pos, t._2, t._1)
+        pos+1
       }
       n= ps.executeUpdate()
     } finally {
@@ -266,8 +281,8 @@ trait SQLProcessor {
   protected def create(conn:Connection, obj:DBPojo):DBPojo = {
     val t= getMetas( conn, obj.getClass())
     create( conn, t._1, t._2, obj ) match {
-      case (a:Int, rc:Some(Long)) => obj.setRowID( rc.get)
-      case (a:Int, _ ) =>
+      case Tuple2(a:Int, None ) =>
+      case Tuple2( a:Int, rc:Option[Any] ) => obj.setRowID( rc.get.asInstanceOf[Long])
     }
     obj
   }
@@ -286,7 +301,7 @@ trait SQLProcessor {
     obj.setVerID(1L)
 
     cms.foreach { (en) =>
-      val cn= en._1.getName().uc
+      val cn= en._1.toUpperCase()
       val cm= en._2
       val fld=flds.get(cn)
       var arg:Any = null
@@ -294,18 +309,18 @@ trait SQLProcessor {
       if (COL_VERID == cn) {
         arg= 1L
       } else {
-        gm = if (fld.isEmpty) null else fld.get.getGetter()
+        val gm = if (fld.isEmpty) null else fld.get.getGetter()
         if (gm==null || fld.get.isAutoGen) {} else {
           try {
             arg= gm.invoke(obj)
           } catch {
-            case e:SQLException => throw e
-            case e:Throwable => throw new SQLException(e)
+            case e:SQLEx => throw e
+            case e:Throwable => throw new SQLEx(e)
           }
         }
       }
       if (arg != null) {
-        values += (arg, cm.getSQLType )
+        values += new Tuple2(arg, cm.getSQLType )
         addAndDelim(b1, ",", cn)
         addAndDelim(b2, ",", "?")
       }
@@ -321,9 +336,9 @@ trait SQLProcessor {
     tlog.debug("Insert: SQL = {}" , sql)
 
     val ps = if (tm.canGetGeneratedKeys) {
-      con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+      conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
     } else {
-      con.prepareStatement(sql)
+      conn.prepareStatement(sql)
     }
     var rc:Option[Any] = None
     var n=0
@@ -336,7 +351,7 @@ trait SQLProcessor {
       if (tm.canGetGeneratedKeys) {
         val rs=ps.getGeneratedKeys()
         val cnt = if (rs == null) 0 else {
-          rs.getMetaData).getColumnCount()
+          rs.getMetaData.getColumnCount()
         }
         if (cnt > 0 && rs.next ) {
           rc= Some(rs.getObject(1))
@@ -349,12 +364,18 @@ trait SQLProcessor {
     }
   }
 
+  def execUpdateSQL(sql:String, params:Any*) = {
+    0
+  }
+  
 ////////////////
 
   def getO2O[T](lhs:DBPojo, rhs:Class[T], fkey:String) = {
     val t= rhs.getAnnotation(classOf[Table] )
     if (t==null) { throw new SQLEx("RHS class " + rhs + " has no Table annotation" ) }
-    fetchObj(rhs, new NameValues(fkey, lhs.getRowID) )
+    //TODO
+    //fetchObj(rhs, new NameValues(fkey, lhs.getRowID) )
+    null
   }
 
   def setO2O(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
@@ -389,7 +410,9 @@ trait SQLProcessor {
     val t= rhs.getAnnotation(classOf[Table] )
     if (t==null) { throw new SQLEx( "RHS class " + rhs + " has no Table annotation" ) }
     // do a general select
-    fetchObjs(rhs, new NameValues(fkey, lhs.getRowID ))
+    // TODO
+    //fetchObjs(rhs, new NameValues(fkey, lhs.getRowID ))
+    Nil
   }
 
   def removeO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
@@ -441,7 +464,7 @@ trait SQLProcessor {
 
   def getM2M[T](lhs:DBPojo, rhs:Class[T]): Seq[T] = {
 
-    val t=classOf[M2MTable].getAnnotation(classOf[Table] )
+    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
     val z:Class[_] = lhs.getClass
     var tn=t.table.uc
     t = rhs.getAnnotation(classOf[Table] )
@@ -451,8 +474,9 @@ trait SQLProcessor {
     val sql = "SELECT distinct res.* from " + rn + " res JOIN " + tn + " mm  ON " +
             "mm." + COL_LHS + "=? and " + "mm." + COL_RHS + "=? and " +
             "mm." + COL_LHSOID + "=? and " + "mm." + COL_RHSOID + " = res." + COL_ROWID
-
-    fetchViaSQL(rhs, sql, ln, rn, lhs.getRowID)
+//TODO
+    //fetchViaSQL(rhs, sql, ln, rn, lhs.getRowID)
+            Nil
   }
 
   def removeM2M(lhs:DBPojo, rhs:DBPojo): Int = {
@@ -508,54 +532,74 @@ trait SQLProcessor {
     _meta.getClassMeta(z) match {
       case Some(zm) => (zm,tm)
       case _ =>
-        throw new SQLException("Failed to locate class info: " + z)
+        throw new SQLEx("Failed to locate class info: " + z)
     }
   }
 
   private def getTableMeta( conn:Connection, z:Class[_] ) = {
     val t= z.getAnnotation(classOf[Table] )
     if (t==null) {
-      throw new SQLException("No DBTable-Annotation for class: " + z.getName )
+      throw new SQLEx("No DBTable-Annotation for class: " + z.getName )
     }
     _meta.getTableMeta(conn,t.table) match {
       case Some(tm) => tm
       case _ =>
-      throw new SQLException("No Table: " + t.table + " in DB.")
+      throw new SQLEx("No Table: " + t.table + " in DB.")
     }
   }
 
   private def lockError(cnt:Int, table:String, rowID:Long ) {
     if (cnt==0) {
-       throw new SQLException("Possible Optimistic lock failure for table: " +
+       throw new SQLEx("Possible Optimistic lock failure for table: " +
                table + ", rowid= " + rowID)
     }
   }
 
+  private def jiggleSQL( sql:String, ty:Int) = {
+      
+      val v:DBVendor = null//v= _pool.getVendor()
+              
+      val rc = ty match {
+          case 0 => v.tweakDELETE(sql)
+          case 1 => v.tweakSELECT(sql)
+          case 2 => v.tweakUPDATE(sql)
+        case -1 => v.tweakSQL(sql)
+      }
+      
+      tlog().debug("jggleSQL= {}", rc)
+      rc
+  }
+        
+  
 }
 
 /**
  * @author kenl
 */
-class SimpleSQLr(private val _db: DB) extends SQLProcessor {
+class SimpleSQLr(private val _db: DB) { //}extends SQLProcessor {
   val _log= LoggerFactory.getLogger(classOf[SimpleSQLr])
   
-  def findSome(fac : SRecordFactory, filter : DMap): Seq[SRecord] = {
-    doFindSome(fac,filter)
+  def findSome(fac : SRecordFactory, filter : NameValues): Seq[SRecord] = {
+    //doFindSome(fac,filter)
+    Nil
   }
 
   def findAll(fac : SRecordFactory): Seq[SRecord] = {
-    doFindAll(fac)
+    //doFindAll(fac)
+    Nil
   }
 
   def update(obj : SRecord, cols : Set[String]): Int = {
-    doUpdate(obj, cols)
+    //doUpdate(obj, cols)
+    0
   }
 
   def delete(obj : SRecord): Int = {
     val c= _db.open
     try {
       c.setAutoCommit(true)
-      doDelete(c, obj)
+      //doDelete(c, obj)
+      0
     }
     finally {
       _db.close(c)
@@ -566,7 +610,8 @@ class SimpleSQLr(private val _db: DB) extends SQLProcessor {
     val c= _db.open
     try {
       c.setAutoCommit(true)
-      doInsert(c, obj)
+      //doInsert(c, obj)
+      0
     }
     finally {
       _db.close(c)
@@ -646,12 +691,13 @@ class CompositeSQLr(private val _db : DB) {
 /**
  * @author kenl
  */
-class Transaction(private val _conn : Connection ) extends SQLProcessor {
+class Transaction(private val _conn : Connection ) { //}extends SQLProcessor {
 
   val _log= LoggerFactory.getLogger(classOf[Transaction])
 
   def insert(obj : SRecord): Int = {
-    doInsert(_conn, obj)
+//    doInsert(_conn, obj)
+    0
   }
 
   def select[X]( sql: String, params: Seq[Any])(f: ResultSet => X): Seq[X] = {
@@ -671,19 +717,23 @@ class Transaction(private val _conn : Connection ) extends SQLProcessor {
   }
 
   def delete( obj : SRecord): Int = {
-    doDelete(_conn, obj)
+//    doDelete(_conn, obj)
+    0
   }
 
   def update(obj : SRecord, cols : Set[String]): Int = {
-    doUpdate(obj, cols)
+//    doUpdate(obj, cols)
+    0
   }
 
-  def findSome(fac : SRecordFactory, filter : DMap): Seq[SRecord] = {
-    doFindSome(fac,filter)
+  def findSome(fac : SRecordFactory, filter : NameValues): Seq[SRecord] = {
+//    doFindSome(fac,filter)
+    Nil
   }
 
   def findAll(fac : SRecordFactory): Seq[SRecord] = {
-    doFindAll(fac)
+//    doFindAll(fac)
+    Nil
   }
 
 }

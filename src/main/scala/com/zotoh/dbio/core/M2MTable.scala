@@ -24,42 +24,63 @@ package core
 
 import com.zotoh.dbio.meta.Column
 import com.zotoh.dbio.meta.Table
+import com.zotoh.blason.model.AbstractModel
 
 
 /**
  * @author kenl
  *
  */
-@Table(table="DBIO_MMTABLE")
-class M2MTable extends DBPojoBase {
 
-  private var _rhsObj = 0L
-  private var _lhsObj = 0L
-  private var _lhs=""
-  private var _rhs=""
+abstract class M2MTable extends AbstractModel {
+  import DBPojo._
 
-  @Column(id="XX_LHS", unique=true)
-  def getLHS() = _lhs
+  @Column( unique=true)
+  def dbio_getLHS_column = COL_LHS
+  def getLHS() = {
+    readData( dbio_getLHS_column ) match {
+      case Some(s:String) => s
+      case _ => ""
+    }
+  }
   def setLHS(s:String ) {
-    _lhs=s
+    writeData( dbio_getLHS_column, Option(s))
   }
 
-  @Column(id="XX_RHS", unique=true)
-  def getRHS() = _rhs
+  @Column( unique=true)
+  def dbio_getRHS_column = COL_RHS
+  def getRHS() = {
+    readData( dbio_getRHS_column ) match {
+      case Some(s:String) => s
+      case _ => ""
+    }
+  }
   def setRHS(s:String ) {
-    _rhs=s
+    writeData( dbio_getRHS_column, Option(s))
   }
 
   @Column(id="XX_LHSOID", unique=true)
-  def getLhsObjID() = _lhsObj
-  def setLhsObjID(id:Long) {
-    _lhsObj=id
+  def dbio_getLHSObjID_column = COL_LHSOID
+  def getLHSObjID() = {
+    readData( dbio_getLHSObjID_column ) match {
+      case Some(n:Long) => n
+      case _ => -1L
+    }
+  }
+  def setLHSObjID(id:Long) {
+    writeData( dbio_getLHSObjID_column, Option(id) )
   }
 
   @Column(id="XX_RHSOID", unique=true)
-  def getRhsObjID() = _rhsObj
-  def setRhsObjID(id:Long ) {
-    _rhsObj=id
+  def dbio_getRHSObjID_column = COL_RHSOID
+  def getRHSObjID() = {
+    readData( dbio_getRHSObjID_column ) match {
+      case Some(n:Long) => n
+      case  _ => -1L
+    }
+  }
+  def setRHSObjID(id:Long ) {
+    writeData( dbio_getRHSObjID_column , Option(id) )
   }
 
 

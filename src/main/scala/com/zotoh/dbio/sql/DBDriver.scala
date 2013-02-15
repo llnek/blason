@@ -36,6 +36,8 @@ import com.zotoh.dbio.core.MetaCache
 import com.zotoh.dbio.core.AssocMetaHolder
 import com.zotoh.dbio.core.M2MTable
 import com.zotoh.dbio.core.Schema
+import com.zotoh.dbio.core.DBPojo
+
 
 
 
@@ -165,7 +167,7 @@ abstract class DBDriver protected() {
         if (bf.length() > 0) { bf.append(",\n") }
         bf.append(col)
         inx.append( "CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + 
-          " ( " + MetaCache.COL_ROWID + ", " + cn + " )" + genExec + "\n\n" )
+          " ( " + DBPojo.COL_ROWID + ", " + cn + " )" + genExec + "\n\n" )
         iix += 1
       }
     }

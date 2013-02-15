@@ -22,27 +22,99 @@
 package com.zotoh.blason
 package model
 
-import com.zotoh.dbio.core.DBPojoBase
+import scala.collection.mutable
 import com.zotoh.dbio.meta.Column
 import java.util.{Date=>JDate}
-
+import com.zotoh.dbio.core.DBPojo
+import com.zotoh.frwk.util.CoreImplicits
+import com.zotoh.frwk.util.Nichts
 
 
 /**
  * @author kenl
  */
-abstract class AbstractModel extends DBPojoBase {
+abstract class AbstractModel extends DBPojo with CoreImplicits {
+  import DBPojo._
+  
+  private val _storage= mutable.HashMap[String,Any]()
+  private val _dirtyFields= mutable.HashSet[String]()
+  private def iniz() {
+  }
+  iniz()
+  
+  protected def writeData(col:String, value:Option[Any]) {
+    col.uc match {
+      case s =>
+      _storage.put(s, value.getOrElse(Nichts.NICHTS))
+      _dirtyFields += s
+    }
+  }
+  
+  protected def readData(col:String): Option[Any] = {
+    _storage.get(col.uc)
+  }
+  
+  def isDirty= _dirtyFields.size > 0
+  
+  @Column(autogen=true,optional=false,system=true)
+  def dbio_getRowID_column = COL_ROWID
+  def getRowID()  = {
+    readData( dbio_getRowID_column ) match {
+      case Some(x:Long) => x
+      case _ => -1L
+    }
+  }
+  def setRowID(n:Long ) {
+    writeData( dbio_getRowID_column , Option(n))
+  }
 
-  @Column(id="LAST_CHANGED",optional=false, system=true)
-  def getLastModified() = null
-  def setLastModified(t:JDate) {}
+  
+  @Column( optional=false,system=true)
+  def dbio_getVerID_column = COL_VERID
+  def getVerID() = {
+    readData(dbio_getVerID_column ) match {
+      case Some(x:Long) => x
+      case _ => -1L
+    }
+  }
+  def setVerID(v:Long ) {
+    writeData( dbio_getVerID_column, Option(v))
+  }
+  
+  @Column( optional=false, system=true)
+  def dbio_getLastModified_column = "LAST_CHANGED"
+  def getLastModified() = {
+    readData( dbio_getLastModified_column) match {
+      case Some(x:JDate) => x
+      case _ =>new JDate()
+    }
+  }
+  def setLastModified(t:JDate) {
+    writeData( dbio_getLastModified_column, Option(t) )
+  }
 
-  @Column(id="CREATED_ON", optional=false, system=true, dft="current_timestamp")
-  def getCreated() = null
-  def setCreated(t:JDate) {}
+  @Column( optional=false, system=true, dft="current_timestamp")
+  def dbio_getCreated_column = "CREATED_ON"
+  def getCreated() = {
+    readData( dbio_getCreated_column) match {
+      case Some(x:JDate) => x
+      case _ =>new JDate()
+    }
+  }
+  def setCreated(t:JDate) {
+    writeData( dbio_getCreated_column, Option(t) )
+  }
 
-  @Column(id="CREATED_BY")
-  def getCreator() = null
-  def setCreator(s:String) {}
+  @Column()
+  def dbio_getCreator_column = "CREATED_BY"
+  def getCreator() = {
+    readData( dbio_getCreator_column ) match {
+      case Some(s:String) => s
+      case _ => ""
+    }
+  }
+  def setCreator(s:String) {
+    writeData(dbio_getCreator_column, Option(s) )
+  }
 
 }

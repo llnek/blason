@@ -40,6 +40,15 @@ object MetaUtils {
 
   type ListOfCzs= List[Class[_]]
 
+  
+  def isChild(base:Class[_], c:Class[_]): Boolean = {
+    if (c==null) false else base.isAssignableFrom(c)    
+  }
+  
+  def isChild(base:Class[_], obj:Any): Boolean = {
+    if (obj==null) false else isChild(base, obj.getClass)    
+  }
+  
   def isBoolean(z:Class[_]) = {
     z.getName match {
       case "boolean" | "Boolean" | "java.lang.Boolean" => true

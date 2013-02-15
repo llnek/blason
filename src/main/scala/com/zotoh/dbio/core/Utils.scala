@@ -23,26 +23,22 @@
 package com.zotoh.dbio
 package core
 
+import java.lang.reflect.Method
+import com.zotoh.dbio.meta.Column
+import com.zotoh.dbio.meta.Table
 
 /**
  * @author kenl
- *
  */
-abstract class DBPojoBase extends DBPojo {
+object Utils {
 
-  private var _primaryKey = -1L
-  private var _ver=  -1L
-
-  def getRowID() = _primaryKey
-
-  def setRowID(n:Long ) {
-    _primaryKey=n
-  }
-
-  def getVerID() = _ver
-
-  def setVerID(v:Long ) {
-    _ver=v
-  }
-
+  def getColumn(m:Method) = if (m==null) null else m.getAnnotation(classOf[Column])  
+  def hasColumn(m:Method) = getColumn(m) != null
+  
+  def getTable(z:Class[_]) = if(z==null) null else z.getAnnotation(classOf[Table])  
+  def hasTable(z:Class[_]) = getTable(z) != null
+  
+  
 }
+
+
