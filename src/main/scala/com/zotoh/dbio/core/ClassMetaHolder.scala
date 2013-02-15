@@ -66,7 +66,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     this
   }
 
-  def getTable() = _table
+  def getTable() = _table.toUpperCase()
 
   def getGetter( col:String ) = {
     _info.getViaCol(col) match {
@@ -96,7 +96,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
       val m = if (ii.isUniqueKey()) ii.getGetter() else null
       val c= if (m==null) null else m.getAnnotation(classOf[Column])
       if (c != null) {
-        rc += c.id().uc
+        rc += ii.getId().uc
       }
     }
     rc.toSeq
@@ -108,7 +108,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
       val m= en._2.getGetter
       val c= if (m==null) null else m.getAnnotation(classOf[Column])
       if (c != null) {
-        rc.put( c.id().uc, m)
+        rc.put( en._2.getId().uc, m)
       }
     }
     rc.toMap
@@ -118,19 +118,18 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
 
   private def iniz( z:Class[_] ) {
     
-    tstArgIsType( z.getName() , z, classOf[DBPojo])    
     Utils.getTable(z) match {
       case t:Table =>
+        tstArgIsType( z.getName() , z, classOf[DBPojo])    
         val mtds= z.getMethods()
         val ms = mtds.foldLeft( new mutable.HashMap[String,Method] ) { (out, m) => 
           out += m.getName -> m
         }.toMap
         val obj= mkRef(z)
         scanAllMarkers(obj, mtds, ms)
-        scanSetters(ms)
-        scanAssocs( z, mtds, ms)
-        _table= t.table()
-  //      injectSysCols()        
+        scanSetters(z,ms)
+        scanAssocs( z, obj, mtds, ms)
+        _table= t.table().toUpperCase()
       case _ =>
     }
     
@@ -157,6 +156,16 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     nsb ( m.invoke(obj) )
   }
   
+  private def mkFldMeta(c:Column, col:String, getter:String) = {
+    if (getter == "getRowID") {
+      new FldMetaHolder( col,c ) {
+        override def isPK() = true
+      }
+    } else {
+      new FldMetaHolder( col,c )
+    }
+  }
+  
     // scan for "markers(s)", all column defs are bound to markers
   private def scanAllMarkers( obj:Any, ms:Array[Method], allMtds:Map[String,Method]) {
     
@@ -164,12 +173,12 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
       val mn= ensureMarker( m.getName)
       ensureMarkerType( m )
       val cn = getCol(obj, m).toUpperCase()
+      val gn= chompMarker(mn)
       val c = getColumn(m)      
       _info.get(cn) match {
         case Some(x) =>throw new Exception("Found duplicate marker: " + mn)
-        case _ => _info.put(cn, new FldMetaHolder( cn ) )
+        case _ => _info.put(cn, mkFldMeta(c, cn,gn))
       }
-      val gn= chompMarker(mn)
       val rt= allMtds.get( gn) match {
         case Some(x) =>
           _info.get(cn).get.setGetter(x)
@@ -186,28 +195,41 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
   }
 
     // scan for corresponding "setter(s)"
-  private def scanSetters( getters:Map[String,Method], ms:Map[String,Method] ) {
-    
-    getters.foreach { (en) =>
-      val sn= "set" + en._1.substring(3)
+  private def scanSetters( z:Class[_], ms:Map[String,Method] ) {    
+    _info.foreach { (en) =>
+      val gn = en._2.getGetter.getName()
+      val cn = en._1
+      val sn = "set" + gn.substring(3)
       ms.get(sn) match {
-        case Some(x) =>
-          val c = getColumn(en._2)
-          val n= maybeGetCID(c, en._1)
-          val h= _info.getViaCol(n).get
-          if ( h.getSetter() != null) {
-            throw new Exception("Can only have one setter  :  existing setter : " +
-                              h.getSetter().getName + " , found another : " + sn ) 
-          }
-          h.setSetter(x)
-        case _ =>
+        case Some(x) => en._2.setSetter(x)
+        case _ => tlog.warn("No setter defined for getter: " + gn + " for class: " + z)
       }
     }
-    
   }
 
+  private def mkAssoc(z:Class[_], obj:Any, m:Method, rhs:Class[_], m2m:Boolean) {
+    val fkey = nsb( m.invoke( obj ))
+    val rt = if (rhs.isAssignableFrom(z)) {
+      // assoc target is a parent of this class, switch to be this class instead
+      Utils.getTable(z)
+    } else {
+      Utils.getTable( rhs)
+    }
+    if (rt == null) {
+      throw new Exception("RHS of assoc must have Table annotated: " + rhs)
+    }
+    if (STU.isEmpty(fkey)) {      
+      throw new Exception("Invalid foreign key on method: " + m.getName)
+    }    
+    val rtb= rt.table.toUpperCase()
+    if (! _assocs.contains(rtb)) {
+      _assocs.put(rtb, new AssocMetaHolder() )      
+    }
+    _assocs.get(rtb).get.add(m2m, z, rhs, fkey)
+  }
+  
     // scan for "assoc(s)" ...
-  private def scanAssocs(z:Class[_], ms:Array[Method], allMtds:Map[String, Method] ) {
+  private def scanAssocs(z:Class[_], obj:Any, ms:Array[Method], allMtds:Map[String, Method] ) {
     ms.filter(_.getName().startsWith("get")).foreach { (m) =>
       val m2m= m.getAnnotation(classOf[Many2Many])
       val o2o= m.getAnnotation(classOf[One2One])
@@ -219,63 +241,17 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
       if (m2m != null) { count += 1; rhs=m2m.rhs()  }
       if (o2o != null) { count += 1; rhs= o2o.rhs() }
       if (o2m != null) { count += 1; rhs= o2m.rhs() }
-
       if (count > 1 ) {
-        throw new Exception("Cannot have multiple assoc types bound to same getter")
+        throw new Exception("Too many assocs bound to: " + mn)
       }
-
-      if (count == 1) { 
-        allMtds.get(mn + "FKey") match {
-          case Some(m2) =>
-            val fkey = m2.invoke( m2.getDeclaringClass().newInstance() )
-            val rt = if (rhs.isAssignableFrom(z)) {
-              // assoc target is a parent of this class, switch to be this class instead
-              z.getAnnotation(classOf[Table] )
-            } else {
-              rhs.getAnnotation(classOf[Table] )
-            }
-            if (rt == null) {
-              throw new Exception("RHS of assoc must have Table annotated")
-            }
-            val rtb= rt.table().uc
-            val am= _assocs.get(rtb) match {
-              case Some(x) => x
-              case _ =>
-                val a= new AssocMetaHolder()
-                _assocs.put(rtb, a)
-                a
-            }
-            am.add(m2m != null, z, rhs, nsb(fkey))
-          case _ =>
-            throw new Exception("Missing foreign key column getter for assoc : mtd = " + mn) 
-        }
-
+      if (count==1) allMtds.get(mn+"FKey") match {
+        case Some(x) => mkAssoc(z, obj, x, rhs, m2m!=null)
+        case _ =>
       }
-
+      
     }
 
 
-  }
-
-  // add in internal cols
-  private def injectSysCols() {
-    var h = new FldMetaHolder() {
-      override def isAutoGen() = true
-      override def getId() = COL_ROWID
-      override def isNullable() = false
-      override def isPK() = true
-      override def getColType() = classOf[Long]
-    }
-    _info.put(COL_ROWID, h)
-
-    h = new FldMetaHolder() {
-      override def isAutoGen() = false
-      override def getId() = COL_VERID
-      override def isNullable() = false
-      override def isPK() = false
-      override def getColType() = classOf[Long]
-    }
-    _info.put(COL_VERID, h)
   }
 
 }

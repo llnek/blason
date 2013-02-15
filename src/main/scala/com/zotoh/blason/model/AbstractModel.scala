@@ -82,7 +82,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
   
   @Column( optional=false, system=true)
-  def dbio_getLastModified_column = "LAST_CHANGED"
+  def dbio_getLastModified_column = "dbio_lastchanged"
   def getLastModified() = {
     readData( dbio_getLastModified_column) match {
       case Some(x:JDate) => x
@@ -94,7 +94,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
   @Column( optional=false, system=true, dft="current_timestamp")
-  def dbio_getCreated_column = "CREATED_ON"
+  def dbio_getCreated_column = "dbio_created_on"
   def getCreated() = {
     readData( dbio_getCreated_column) match {
       case Some(x:JDate) => x
@@ -106,7 +106,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
   @Column()
-  def dbio_getCreator_column = "CREATED_BY"
+  def dbio_getCreator_column = "dbio_created_by"
   def getCreator() = {
     readData( dbio_getCreator_column ) match {
       case Some(s:String) => s

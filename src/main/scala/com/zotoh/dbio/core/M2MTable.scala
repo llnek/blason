@@ -59,7 +59,7 @@ abstract class M2MTable extends AbstractModel {
     writeData( dbio_getRHS_column, Option(s))
   }
 
-  @Column(id="XX_LHSOID", unique=true)
+  @Column(unique=true)
   def dbio_getLHSObjID_column = COL_LHSOID
   def getLHSObjID() = {
     readData( dbio_getLHSObjID_column ) match {
@@ -71,7 +71,7 @@ abstract class M2MTable extends AbstractModel {
     writeData( dbio_getLHSObjID_column, Option(id) )
   }
 
-  @Column(id="XX_RHSOID", unique=true)
+  @Column(unique=true)
   def dbio_getRHSObjID_column = COL_RHSOID
   def getRHSObjID() = {
     readData( dbio_getRHSObjID_column ) match {

@@ -75,13 +75,14 @@ abstract class DBDriver protected() {
 
   def getDDL(classes:Class[_]*) = {
 
-    val arr= List[Class[_]]( classOf[M2MTable] ) ++ classes
+//    val arr= List[Class[_]]( classOf[M2MTable] ) ++ classes
+    val arr= List[Class[_]]( ) ++ classes
     val body= new StringBuilder(1024)
     val drops= new StringBuilder(512)
     arr.foreach { (c) =>
       _meta.getClassMeta( c) match {
         case Some(zm) =>
-          drops.append( genDrop(zm.getTable().lc ))
+          drops.append( genDrop(zm.getTable() ))
           body.append( f(zm))
         case _ =>
       }
@@ -91,7 +92,7 @@ abstract class DBDriver protected() {
   }
 
   protected def f(zm:ClassMetaHolder ) = {
-    val n= zm.getTable().lc
+    val n= zm.getTable()
     if (STU.isEmpty(n)) "" else {
       xx(n, zm.getFldMetas, ClassMetaHolder.getAssocMetas )
     }
@@ -112,11 +113,11 @@ abstract class DBDriver protected() {
   }
 
   protected def genDrop( tbl:String ) = {
-    new StringBuilder(256).append("DROP TABLE ").append(tbl.lc).append(genExec).append("\n\n").toString
+    new StringBuilder(256).append("DROP TABLE ").append(tbl).append(genExec).append("\n\n").toString
   }
 
   protected def genBegin( tbl:String )  = {
-    new StringBuilder(256).append("CREATE TABLE ").append(tbl.lc).append("\n(\n").toString
+    new StringBuilder(256).append("CREATE TABLE ").append(tbl).append("\n(\n").toString
   }
 
   protected def genBody(table:String,

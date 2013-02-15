@@ -47,13 +47,6 @@ public @interface Column {
     public boolean optional() default true;
     
     /**
-     * The table column name.
-     * 
-     * @return
-     */
-    public String id() default "";
-    
-    /**
      * For varchar, this will be the size of the string.
      * 
      * @return

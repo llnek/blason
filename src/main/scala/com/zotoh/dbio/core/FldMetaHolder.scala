@@ -27,23 +27,21 @@ import java.lang.reflect.Method
 import com.zotoh.dbio.meta.Column
 
 object FldMetaHolder {
-  val DUMBO= new FldMetaHolder("")
+  val DUMBO= new FldMetaHolder("",null)
 }
 
 /**
  * @author kenl
  *
  */
-class FldMetaHolder(private val _name:String) {
+class FldMetaHolder(private val _name:String, private val _col:Column) {
 
   private val _mtds = new Array[Method](2)
-  private var _col:Column =null
 
   def getGetter() = _mtds(0)
   def getSetter() = _mtds(1)
 
   def setGetter(m:Method ) {
-    _col=m.getAnnotation(classOf[Column] )
     _mtds(0)=m
   }
 
