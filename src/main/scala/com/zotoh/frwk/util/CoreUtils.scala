@@ -58,6 +58,7 @@ import java.io.FileInputStream
 import java.net.InetAddress
 import java.net.URLEncoder
 import java.net.URLDecoder
+import java.util.Arrays
 
 
 class ZString(str:String) {
@@ -285,6 +286,12 @@ object CoreUtils extends Constants  with CoreImplicits {
    */
   def isNilPS(props:JPS) = { props == null || props.isEmpty }
 
+  def sortAndJoin(str:String*) = {
+    val a= str.toArray[Object]
+    Arrays.sort( a )
+    StrUtils.join(a, "")
+  }
+  
   /**
    * Convert string to int.
    *

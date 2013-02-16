@@ -61,4 +61,6 @@ class FldMetaHolder(private val _name:String, private val _col:Column) {
 
   def isPK() = false
 
+  def isInternal() = if (_col==null) false else _col.system()
+  
 }

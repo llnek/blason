@@ -69,7 +69,11 @@ class NameValues extends CoreImplicits {
     if (STU.isEmpty(key)) false else _ps.contains( key.uc)
   }
 
-  def toWhereClause(): (String, Seq[Any]) = {
+  def toFilterClause(): (String, Seq[Any]) = {
+      if (size == 0 ) ("", Nil) else toClause()
+  }
+  
+  private def toClause(): (String, Seq[Any]) = {
     val r= mutable.ArrayBuffer[Any]()
     val w= new StringBuilder(256)
     _ps.foreach { (en) =>

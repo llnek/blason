@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -19,38 +19,13 @@
  *
  ??*/
 
+
 package com.zotoh.dbio
 package core
 
-import java.util.{Date=>JDate}
+import com.zotoh.dbio.meta._
 
-
-
-object DBPojo {
-
-  val COL_ROWID= "DBIO_ROWID"
-  val COL_VERID= "DBIO_VERID"
-  val COL_RHS= "DBIO_RHS"
-  val COL_LHS= "DBIO_LHS"
-  val COL_RHSOID= "DBIO_RHSOID"
-  val COL_LHSOID= "DBIO_LHSOID"
-
-  
-}
-
-trait DBPojo {
-
-  def setRowID(n:Long ): Unit
-  def setVerID(n:Long): Unit
-
-  def getRowID(): Long
-  def getVerID(): Long
-  
-  def set(field:String, value: Option[Any] ): Unit
-  def get(field:String): Option[Any]
-  
-  def setLastModified(dt:JDate): Unit
-  def getLastModified(): JDate
-  
+@Table(table="MM_DEPT_EMP")
+class DeptEmp extends M2MTable {
 }
 

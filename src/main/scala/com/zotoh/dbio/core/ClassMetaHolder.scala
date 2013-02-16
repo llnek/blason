@@ -61,6 +61,8 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
    */
   def this() { this(null) }
 
+  def getCZ() = z 
+    
   def scan(z:Class[_] ): this.type = {
     iniz(z)
     this
@@ -224,11 +226,25 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     }
   }
 
-  private def mkAssoc(z:Class[_], obj:Any, fkm:Method, m:Method) {
-    val fkey = nsb( fkm.invoke( obj ))
-    val rhs = if (hasM2M(m)) {
-      getM2M(m).rhs()
-    } else if (hasO2M(m)) { getO2M(m).rhs() } else if (hasO2O(m)) {
+  private def mkM2M(z:Class[_], m:Method, fkey:String) {
+    val mm= getM2M(m)
+    val jc= mm.joined()
+    val rhs = mm.rhs()
+    val rt= Utils.getTable(rhs)
+    if ( rt==null) {
+      throw new Exception("RHS of assoc must have Table annotated: " + rhs)
+    }
+    val lt= Utils.getTable(z)    
+    val jn= sortAndJoin(rt.table.uc, lt.table().uc)
+    getMMS().get(jn) match {
+      case Some(x) =>
+      case _ =>
+        putMMS(jn, jc)
+    }
+  }
+  
+  private def mkX2X(z:Class[_], m:Method, fkey:String) {
+    val rhs = if (hasO2M(m)) { getO2M(m).rhs() } else if (hasO2O(m)) {
       getO2O(m).rhs()
     } else { throw new Exception("never!" ) }
     
@@ -250,7 +266,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
       putAssocMeta( akey, new AssocMetaHolder() )      
     }
     
-    getAssocMetas().get(akey).get.add( hasM2M(m), z, rhs, fkey)
+    getAssocMetas().get(akey).get.add( z, rhs, fkey)
   }
   
     // scan for "assoc(s)" ...
@@ -258,9 +274,13 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     ms.filter( (m) => m.getName.startsWith("get") && hasAssoc(m) ).foreach { (m) =>
       val mn= m.getName()
       allMtds.get( fmtAssocKey(mn) ) match {
-        case Some(x) =>
-          ensureFKeyType(x)
-          mkAssoc(z, obj, x, m)
+        case Some(x) =>  ensureFKeyType(x)
+          val fk=nsb( x.invoke( obj ))
+          if (hasM2M(m)) {
+            mkM2M(z,m,fk)
+          } else {
+            mkX2X(z, m, fk)            
+          }
         case _ => throw new Exception("Missing assoc-fkey getter for: " + mn)
       }
     }

@@ -41,75 +41,39 @@ import java.sql.Statement
  * @author kenl
 */
 class SimpleSQLr(private val _db: DB) extends SQLProc {
+  
   val _log= LoggerFactory.getLogger(classOf[SimpleSQLr])
-
-  def findSome(fac : SRecordFactory, filter : NameValues): Seq[SRecord] = {
-    //doFindSome(fac,filter)
-    Nil
+  val _meta= _db.getMeta()
+  
+  def update(obj : DBPojo, cols : Set[String]): Int = {
+    doUpdate(obj, cols)
   }
 
-  def findAll(fac : SRecordFactory): Seq[SRecord] = {
-    //doFindAll(fac)
-    Nil
+  def delete(obj : DBPojo): Int = {
+    doDelete(obj)
   }
 
-  def update(obj : SRecord, cols : Set[String]): Int = {
-    //doUpdate(obj, cols)
-    0
+  def insert(obj : DBPojo): Int = {
+    doInsert(obj)
   }
 
-  def delete(obj : SRecord): Int = {
+  def select[T]( sql: String, params:Any* )(f: ResultSet => T): Seq[T] = {
     val c= _db.open
     try {
-      c.setAutoCommit(true)
-      //doDelete(c, obj)
-      0
-    }
-    finally {
-      _db.close(c)
-    }
-  }
-
-  def insert(obj : SRecord): Int = {
-    val c= _db.open
-    try {
-      c.setAutoCommit(true)
-      //doInsert(c, obj)
-      0
-    }
-    finally {
-      _db.close(c)
-    }
-  }
-
-  def select[X]( sql: String, params: Seq[Any])(f: ResultSet => X): Seq[X] = {
-    val c= _db.open
-    try {
-      c.setAutoCommit(true)
       new SQuery(c, sql, params).select(f)
-    }
-    finally {
+    }  finally {
       _db.close(c)
     }
   }
 
-  def select[X]( sql: String)(f: ResultSet => X): Seq[X] = {
-    select(sql, Nil)(f)
-  }
-
-  def execute( sql: String, params: Seq[Any]): Int = {
+  def execute( sql: String, params:Any* ): Int = {
     val c= _db.open
     try {
       c.setAutoCommit(true)
-      new SQuery(c, sql, params).execute()
-    }
-    finally {
+      doExecute(c, sql, params:_*)
+    } finally {
       _db.close(c)
     }
-  }
-
-  def execute( sql: String): Int = {
-    execute(sql, Nil)
   }
 
 }

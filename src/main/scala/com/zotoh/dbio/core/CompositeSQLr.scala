@@ -56,7 +56,7 @@ class CompositeSQLr(private val _db : DB) {
   def execWith[T](f: Transaction => T) = {
     val c= begin
     try {
-      f ( new Transaction(c) )
+      f ( new Transaction(c,_db) )
       commit(c)
     } catch {
       case e: Throwable => { rollback(c) ; tlog.warn("",e) }
@@ -88,49 +88,29 @@ class CompositeSQLr(private val _db : DB) {
 /**
  * @author kenl
  */
-class Transaction(private val _conn : Connection ) extends SQLProcessor {
+class Transaction(private val _conn : Connection, private val _db: DB ) extends SQLProc {
 
   val _log= LoggerFactory.getLogger(classOf[Transaction])
-
-  def insert(obj : SRecord): Int = {
-//    doInsert(_conn, obj)
-    0
+  val _meta =  _db.getMeta
+  
+  def insert(obj : DBPojo): Int = {
+    doInsert(obj)
   }
 
-  def select[X]( sql: String, params: Seq[Any])(f: ResultSet => X): Seq[X] = {
-    new SQuery(_conn, sql, params ).select(f)
+  def select[T]( sql: String, params:Any* )(f: ResultSet => T ): Seq[T] = {
+    new SQuery(_conn, sql, params.toSeq ).select(f)
   }
 
-  def select[X]( sql: String)(f: ResultSet => X): Seq[X] = {
-    select(sql, Nil) (f)
+  def execute( sql: String, params:Any* ): Int = {
+    new SQuery(_conn, sql, params.toSeq ).execute()
   }
 
-  def execute( sql: String, params: Seq[Any]): Int = {
-    new SQuery(_conn, sql, params ).execute()
+  def delete( obj : DBPojo): Int = {
+    doDelete(obj)    
   }
 
-  def execute( sql: String): Int = {
-    execute(sql, Nil)
-  }
-
-  def delete( obj : SRecord): Int = {
-//    doDelete(_conn, obj)
-    0
-  }
-
-  def update(obj : SRecord, cols : Set[String]): Int = {
-//    doUpdate(obj, cols)
-    0
-  }
-
-  def findSome(fac : SRecordFactory, filter : NameValues): Seq[SRecord] = {
-//    doFindSome(fac,filter)
-    Nil
-  }
-
-  def findAll(fac : SRecordFactory): Seq[SRecord] = {
-//    doFindAll(fac)
-    Nil
+  def update(obj : DBPojo, cols : Set[String]): Int = {
+    doUpdate(obj, cols)    
   }
 
 }

@@ -24,7 +24,7 @@ package core
 
 import com.zotoh.dbio.meta.Column
 import com.zotoh.dbio.meta.Table
-import com.zotoh.blason.model.AbstractModel
+import com.zotoh.dbio.core.AbstractModel
 
 
 /**

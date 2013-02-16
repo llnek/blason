@@ -311,7 +311,9 @@ object JDBCUtils extends CoreImplicits {
 
   // ------------------------- set --------------
 
-  private def javeToSQLBoolean(obj:Any) = {
+  def javaToBytes(obj:Any) = bytes_coerce(obj)
+
+  def javaToSQLBoolean(obj:Any) = {
     obj match {
       case v:Number => v.intValue() > 0
       case v:Boolean => v
@@ -319,7 +321,7 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javeToSQLInt(obj:Any) = {
+  def javaToSQLInt(obj:Any) = {
     obj match {
       case v:Boolean => if (v) 1 else 0
       case v:Number => v.intValue()
@@ -327,7 +329,7 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javeToSQLLong(obj:Any) = {
+  def javaToSQLLong(obj:Any) = {
     obj match {
       case v:Boolean => if (v) 1L else 0L
       case v:Number => v.longValue()
@@ -335,7 +337,7 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javeToSQLDecimal(obj:Any) = {
+  def javaToSQLDecimal(obj:Any) = {
     obj match {
       case v:BigDecimal => v
       case v:BigInteger =>
@@ -345,7 +347,7 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javeToSQLDouble(obj:Any) = {
+  def javaToSQLDouble(obj:Any) = {
     obj match {
       case d:Double  => d.toDouble
       case f:Float => f.toDouble
@@ -354,7 +356,7 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javeToSQLFloat(obj:Any) = {
+  def javaToSQLFloat(obj:Any) = {
     obj match {
       case d:Double  => d.toFloat
       case f:Float => f.toFloat
@@ -363,7 +365,15 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javaToSQLDate(obj:Any) = {
+  def javaToJDate(obj:Any) = {
+    obj match {
+      case d:JSDate => new JUDate(d.getTime())
+      case d:JUDate => d
+      case _ => null
+    }
+  }
+  
+  def javaToSQLDate(obj:Any) = {
     obj match {
       case d:JSDate => d
       case d:JUDate => new JSDate(d.getTime)
@@ -371,7 +381,7 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javaToSQLTime(obj:Any) = {
+  def javaToSQLTime(obj:Any) = {
     obj match {
       case t:JSTime => t
       case t:JUDate => new JSTime( t.getTime )
@@ -379,7 +389,7 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
-  private def javaToSQLTimestamp(obj:Any) = {
+  def javaToSQLTimestamp(obj:Any) = {
     obj match {
       case t:JSTStamp => t
       case t:JUDate => new JSTStamp( t.getTime )
@@ -401,25 +411,25 @@ object JDBCUtils extends CoreImplicits {
     if (z != null) sqlType match {
 
       case BOOLEAN =>
-        stmt.setBoolean(pos, javeToSQLBoolean(value))
+        stmt.setBoolean(pos, javaToSQLBoolean(value))
 
         // numbers
       case DECIMAL | NUMERIC =>
-        stmt.setBigDecimal(pos, javeToSQLDecimal(value))
+        stmt.setBigDecimal(pos, javaToSQLDecimal(value))
 
         // ints
       case BIGINT =>
-        stmt.setLong(pos, javeToSQLLong(value))
+        stmt.setLong(pos, javaToSQLLong(value))
 
       case INTEGER | TINYINT | SMALLINT =>
-        stmt.setInt(pos, javeToSQLInt(value))
+        stmt.setInt(pos, javaToSQLInt(value))
 
         // real numbers
       case DOUBLE =>
-        stmt.setDouble(pos, javeToSQLDouble(value))
+        stmt.setDouble(pos, javaToSQLDouble(value))
 
       case REAL | FLOAT =>
-        stmt.setFloat(pos, javeToSQLFloat(value))
+        stmt.setFloat(pos, javaToSQLFloat(value))
 
         // date time
       case DATE =>

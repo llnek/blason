@@ -54,7 +54,8 @@ trait DB {
 
   def newCompositeSQLProcessor() = new CompositeSQLr(this)
   def newSimpleSQLProcessor() = new SimpleSQLr(this)
-
+  def getMeta() = _meta
+  
   def close(c: Connection) {
     try {
       c.close()

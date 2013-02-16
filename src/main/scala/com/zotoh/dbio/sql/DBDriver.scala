@@ -164,15 +164,13 @@ abstract class DBDriver protected() {
     inx.setLength(0)
     var iix=1
     if (asoc.isDefined) asoc.get.getInfo.foreach { (t) =>
-      if ( ! t._1) {
-        val cn = t._4.toUpperCase()
-        val col = genColDef(cn, getLongKeyword() , true)
-        if (bf.length() > 0) { bf.append(",\n") }
-        bf.append(col)
-        inx.append( "CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + 
-          " ( "  + cn + " )" + genExec + "\n\n" )
-        iix += 1
-      }
+      val cn = t._3.toUpperCase()
+      val col = genColDef(cn, getLongKeyword() , true)
+      if (bf.length() > 0) { bf.append(",\n") }
+      bf.append(col)
+      inx.append( "CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + 
+        " ( "  + cn + " )" + genExec + "\n\n" )
+      iix += 1
     }
 
     if (bf.length() > 0) {
