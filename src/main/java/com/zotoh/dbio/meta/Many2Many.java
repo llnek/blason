@@ -35,6 +35,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Many2Many {
+  public Class<?> joined();
 	public Class<?> rhs();
-
 }

@@ -30,12 +30,12 @@ import scala.collection.mutable
  */
 class AssocMetaHolder {
 
-  private val _fkeys = mutable.ArrayBuffer[(Boolean,Class[_],Class[_], String)]()
+  private val _info = mutable.ArrayBuffer[(Boolean,Class[_],Class[_], String)]()
 
-  def getFKeys() = _fkeys.toSeq
+  def getInfo() = _info.toSeq
 
   def add(m2m:Boolean, lhs:Class[_], rhs:Class[_], fkey:String ) {
-    _fkeys += new Tuple4(m2m, lhs, rhs,fkey)
+    _info += new Tuple4(m2m, lhs, rhs,fkey)
   }
 
 

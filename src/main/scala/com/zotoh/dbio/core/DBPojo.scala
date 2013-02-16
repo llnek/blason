@@ -41,5 +41,9 @@ trait DBPojo {
 
   def getRowID(): Long
   def getVerID(): Long
+  
+  def set(field:String, value: Option[Any] ): Unit
+  def get(field:String): Option[Any]
+  
 }
 

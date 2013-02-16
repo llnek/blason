@@ -41,6 +41,14 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   private def iniz() {
   }
   iniz()
+
+  def set(field:String, value: Option[Any] ) {
+    writeData( field,value)
+  }
+  
+  def get(field:String): Option[Any] = {
+    _storage.get( field.uc)    
+  }
   
   protected def writeData(col:String, value:Option[Any]) {
     col.uc match {

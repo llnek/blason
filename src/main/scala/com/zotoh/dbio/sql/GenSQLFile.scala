@@ -28,16 +28,15 @@ import org.apache.commons.lang3.{StringUtils=>STU}
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
-
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
-
 import com.zotoh.frwk.db.DBVendor
 import org.apache.commons.io.{IOUtils=>IOU}
 import com.zotoh.frwk.io.IOUtils
 import com.zotoh.frwk.xml.XMLUtils
 import com.zotoh.frwk.util.MetaUtils
+import com.zotoh.dbio.core.Schema
 
 
 
@@ -72,7 +71,7 @@ object GenSQLFile {
       var inp:InputStream = null
       try {
         inp= new FileInputStream(file)
-        writeDDL(v, out, readFile(inp):_* )
+        writeDDL(v, out, new Schema() { def getModels = readFile(inp)  } )
       } catch {
         case e:Throwable =>
           println("Failed to parse manifest file : " + file)
@@ -82,12 +81,12 @@ object GenSQLFile {
     }
   }
 
-  def genDDL( v:DBVendor , css:Class[_]* ) = {
-    DBDriver.newDriver(v).getDDL(css:_*)
+  def genDDL( v:DBVendor , s:Schema ) = {
+    DBDriver.newDriver(v).withSchema(s).getDDL()
   }
 
-  def writeDDL( v:DBVendor, out:File , css:Class[_]* ) {
-    IOUtils.writeFile( out, genDDL(v, css:_*) )
+  def writeDDL( v:DBVendor, out:File ,s:Schema ) {
+    IOUtils.writeFile( out, genDDL(v, s) )
   }
 
   private def readFile(inp:InputStream ) = {

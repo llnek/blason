@@ -70,35 +70,38 @@ abstract class DBDriver protected() {
 
   import DBDriver._
 
-  protected val _meta= new MetaCache( new Schema() { def getModels() = Nil })
+  protected var _meta= new MetaCache( new Schema { def getModels = Nil } )
   protected var _useSep = true
 
-  def getDDL(classes:Class[_]*) = {
+  def withSchema(s:Schema): this.type = {
+    _meta=new MetaCache(s)
+    this
+  }
+  
+  def getDDL() = {
 
 //    val arr= List[Class[_]]( classOf[M2MTable] ) ++ classes
-    val arr= List[Class[_]]( ) ++ classes
     val body= new StringBuilder(1024)
     val drops= new StringBuilder(512)
-    arr.foreach { (c) =>
-      _meta.getClassMeta( c) match {
-        case Some(zm) =>
-          drops.append( genDrop(zm.getTable() ))
-          body.append( f(zm))
-        case _ =>
-      }
+    
+    _meta.getClassMetas.foreach { (c) =>
+        drops.append( genDrop(c._2.getTable() ))
+        body.append( genOneClass(c._2))
     }
 
     "" + drops + body + genEndSQL()
   }
 
-  protected def f(zm:ClassMetaHolder ) = {
+  protected def genOneClass(zm:ClassMetaHolder ) = {
     val n= zm.getTable()
     if (STU.isEmpty(n)) "" else {
-      xx(n, zm.getFldMetas, ClassMetaHolder.getAssocMetas )
+      genOneTable(n, zm.getFldMetas, MetaCache.getAssocMetas )
     }
   }
 
-  protected def xx(table:String, cols:Map[String,FldMetaHolder], assocs:Map[String,AssocMetaHolder] )  = {
+  protected def genOneTable(table:String, cols:Map[String,FldMetaHolder], 
+      assocs:Map[String,AssocMetaHolder] )  = {
+    
     val ddl= new StringBuilder(10000)
     val inx= new StringBuilder(256)
     //ddl.append( genDrop(table))
@@ -120,8 +123,7 @@ abstract class DBDriver protected() {
     new StringBuilder(256).append("CREATE TABLE ").append(tbl).append("\n(\n").toString
   }
 
-  protected def genBody(table:String,
-    cols:Map[String,FldMetaHolder],
+  protected def genBody(table:String, cols:Map[String,FldMetaHolder],
     assocs:Map[String,AssocMetaHolder], inx:StringBuilder) = {
 
     val pkeys= new JTreeSet[String]()
@@ -133,7 +135,6 @@ abstract class DBDriver protected() {
       val cn= en._1
       var col=""
       val dt= fld.getColType
-      val zn= dt.getName
 
       if (fld.isPK) { pkeys.add(cn) }
       else
@@ -158,17 +159,18 @@ abstract class DBDriver protected() {
         bf.append(col)
       }
     }
+    
     val asoc= assocs.get(table)
     inx.setLength(0)
     var iix=1
-    if (asoc.isDefined) asoc.get.getFKeys.foreach { (t) =>
-      if (!t._1) {
-        val cn = t._4
+    if (asoc.isDefined) asoc.get.getInfo.foreach { (t) =>
+      if ( ! t._1) {
+        val cn = t._4.toUpperCase()
         val col = genColDef(cn, getLongKeyword() , true)
         if (bf.length() > 0) { bf.append(",\n") }
         bf.append(col)
         inx.append( "CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + 
-          " ( " + DBPojo.COL_ROWID + ", " + cn + " )" + genExec + "\n\n" )
+          " ( "  + cn + " )" + genExec + "\n\n" )
         iix += 1
       }
     }

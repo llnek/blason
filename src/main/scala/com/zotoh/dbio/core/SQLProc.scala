@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -36,25 +36,17 @@ import org.apache.commons.dbutils.{DbUtils=>DBU}
 import java.sql.Statement
 
 
-
 /**
  * @author kenl
 */
-sealed trait SQLBlockType
-object SQLComplexType extends SQLBlockType
-object SQLSimpleType extends SQLBlockType
-
-/**
- * @author kenl
-*/
-trait SQLProcessor extends CoreImplicits {
+trait SQLProc extends CoreImplicits {
 
   protected val _meta:MetaCache
   protected val _log:Logger
   def tlog() = _log
-  
+
   import DBPojo._
-  
+
   def select[T]( sql:String, params:Any* )(f: ResultSet => T): Seq[T]
 
   def execute(sql:String, params:Any* ): Int
@@ -66,7 +58,7 @@ trait SQLProcessor extends CoreImplicits {
   def update( obj:DBPojo): Int = {
     //update(obj, obj.getSchemaFactory.getUpdatableCols )
     //TODO, uncomment
-    //update(obj, Set()) 
+    //update(obj, Set())
     0
   }
 
@@ -172,7 +164,7 @@ trait SQLProcessor extends CoreImplicits {
     obj:DBPojo): Int = {
 
     val bf= new StringBuilder(1024).append( "UPDATE  " ).append( tm.getName ).append( " SET " )
-    val vs= mutable.ArrayBuffer[ (Any,Int) ]() 
+    val vs= mutable.ArrayBuffer[ (Any,Int) ]()
     val b1= new StringBuilder(512)
     val w= new StringBuilder(512)
     val cms= tm.getColMetas
@@ -287,7 +279,7 @@ trait SQLProcessor extends CoreImplicits {
     obj
   }
 
-  private def create( conn:Connection, zm:ClassMetaHolder, tm:TableMetaHolder, 
+  private def create( conn:Connection, zm:ClassMetaHolder, tm:TableMetaHolder,
     obj:DBPojo): (Int,Option[Any])  = {
     val bf= new StringBuilder(1024).append("INSERT INTO  ").append(tm.getName).append(" (")
     val values= mutable.ArrayBuffer[(Any,Int)]()
@@ -367,162 +359,112 @@ trait SQLProcessor extends CoreImplicits {
   def execUpdateSQL(sql:String, params:Any*) = {
     0
   }
-  
-////////////////
 
-  def getO2O[T](lhs:DBPojo, rhs:Class[T], fkey:String) = {
-    val t= rhs.getAnnotation(classOf[Table] )
-    if (t==null) { throw new SQLEx("RHS class " + rhs + " has no Table annotation" ) }
-    //TODO
-    //fetchObj(rhs, new NameValues(fkey, lhs.getRowID) )
-    null
+//////////////// assoc-stuff
+
+  private def throwNoTable(rhs:Class[_]) = {
+    val t= Utils.getTable(rhs)
+    if (t==null) { throw new SQLEx("" + rhs + " has no Table annotation." ) }
+    t
   }
 
-  def setO2O(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
-    val t= rhs.getClass.getAnnotation(classOf[Table] )
-    if (t==null) { throw new SQLEx( "RHS class " +
-              rhs.getClass + " has no Table annotation" ) }
-    val curVer = rhs.getVerID
-    val newVer = curVer+1
-    val rid = rhs.getRowID
-    val tn=t.table.uc
-    val sql="UPDATE " + tn + " SET " + fkey + " =? , " + COL_VERID + "=? " + " WHERE " +
-            COL_ROWID + "=? and " + COL_VERID + "=?"
+  def getO2O[T](lhs:DBPojo, rhs:Class[T], fkey:String) = {
+    val t= throwNoTable(rhs)
+    if (t.bias < 0) {
+      fetchObj(rhs, new NameValues(COL_ROWID, lhs.get(fkey)) )
+    } else {
+      throw new UnsupportedException("o2o assoc with rhs bias not supported")
+      //fetchObj(rhs, new NameValues(fkey, lhs.getRowID) )
+    }
+  }
 
-    val cnt= execUpdateSQL(sql, lhs.getRowID, newVer, rid , curVer )
-    lockError(cnt, tn, rid)
-
-    // up the ver num
-    rhs.setVerID( newVer)
-    cnt
+  def setO2O(lhs:DBPojo, rhs:DBPojo, fkey:String) {
+    lhs.set(fkey, if (rhs==null) ? None else Option(rhs.getRowID ) )
   }
 
   def purgeO2O(lhs:DBPojo, rhs:Class[_], fkey:String) = {
-    val t= rhs.getAnnotation(classOf[Table] )
-    if (t==null) { throw new SQLEx( "RHS class " +
-                        rhs + " has no Table annotation" ) }
-    val rn=t.table.uc
-    val sql="DELETE from " + rn + " WHERE " + fkey + "=?"
-    execUpdateSQL(sql, lhs.getRowID )
+    val t= throwNoTable(rhs)
+    val sql="DELETE FROM " + t.table.uc + " WHERE " + COL_ROWID + "=?"
+    lhs.get(fkey) match {
+      case Some(v) => execUpdateSQL(sql, v)
+      case _ => 0
+    }
   }
 
   def getO2M[T](lhs:DBPojo, rhs:Class[T], fkey:String): Seq[T] = {
-    val t= rhs.getAnnotation(classOf[Table] )
-    if (t==null) { throw new SQLEx( "RHS class " + rhs + " has no Table annotation" ) }
-    // do a general select
-    // TODO
-    //fetchObjs(rhs, new NameValues(fkey, lhs.getRowID ))
-    Nil
+    fetchObjs(rhs, new NameValues(fkey, lhs.getRowID ))
   }
 
-  def removeO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
-    val t= rhs.getClass().getAnnotation(classOf[Table] )
-    if (t==null) { throw new SQLEx( "RHS class " +
-              rhs.getClass() + " has no Table annotation" ) }
-    val curVer= rhs.getVerID
-    val newVer= curVer+1
-    val rid = rhs.getRowID
-    val rn=t.table.uc
-    val sql= "UPDATE " + rn + " SET " + fkey + " =NULL , " + COL_VERID + "=? " +
-            " WHERE " + COL_ROWID + "=? and " +
-            COL_VERID + "=?"
+  def unlinkO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
+    if (rhs != null) {
+      rhs.set(fkey, None)
+    }
+    0
+  }
 
-    val cnt= execUpdateSQL(sql, newVer, rid, curVer )
-    lockError(cnt, rn, rid)
-
-    rhs.setVerID(newVer)
-    cnt
+  def purgeO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
+    delete(rhs)
   }
 
   def purgeO2M(lhs:DBPojo, rhs:Class[_], fkey:String) = {
-    val t= rhs.getAnnotation(classOf[Table] )
-    if (t==null) { throw new SQLEx( "RHS class " +
-                        rhs.getClass() + " has no Table annotation" ) }
-    val rn=t.table.uc
-    val sql="DELETE from " + rn + " WHERE " + fkey + "=?"
+    val t= throwNoTable(rhs)
+    val sql="DELETE FROM " + t.table.uc + " WHERE " + fkey + "=?"
     execUpdateSQL(sql, lhs.getRowID )
   }
 
-  def addO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
-    val t= rhs.getClass.getAnnotation(classOf[Table] )
-    if (t==null) { throw new SQLEx( "RHS class " +
-              rhs.getClass + " has no Table annotation" ) }
-    val tn=t.table.uc
-    val curVer = rhs.getVerID
-    val newVer = curVer+1
-    val rid= rhs.getRowID
-    val sql="UPDATE " + tn + " SET " + fkey + " =? , " + COL_VERID + "=? " + " WHERE " +
-            COL_ROWID + "=? and " +  COL_VERID + "=?"
-
-    val cnt= execUpdateSQL(sql, lhs.getRowID, newVer, rid , curVer )
-    lockError(cnt, tn, rid)
-
-    // up the ver num
-    rhs.setVerID( newVer)
-    cnt
+  def linkO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
+    rhs.set(fkey, lhs.getRowID)
+    update(rhs, Set(fkey))
   }
 
   def getM2M[T](lhs:DBPojo, rhs:Class[T]): Seq[T] = {
+    val jc= _meta.findJoined(lhs.getClass,rhs)
+    val jn= throwNoTable(jc).table.uc
+    val rn= Utils.getTable(rhs).table.uc
+    val ln= Utils.getTable( lhs.getClass ).table.uc
 
-    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
-    val z:Class[_] = lhs.getClass
-    var tn=t.table.uc
-    t = rhs.getAnnotation(classOf[Table] )
-    val rn= t.table.uc
-    t=z.getAnnotation(classOf[Table] )
-    val ln= t.table.uc
-    val sql = "SELECT distinct res.* from " + rn + " res JOIN " + tn + " mm  ON " +
-            "mm." + COL_LHS + "=? and " + "mm." + COL_RHS + "=? and " +
-            "mm." + COL_LHSOID + "=? and " + "mm." + COL_RHSOID + " = res." + COL_ROWID
-//TODO
-    //fetchViaSQL(rhs, sql, ln, rn, lhs.getRowID)
-            Nil
+    val sql = "SELECT DISTINCT RES.* FROM " + rn + " RES JOIN " + jn + " MM  ON " +
+    "MM." + COL_LHS + "=? AND " + "MM." + COL_RHS + "=? AND " +
+    "MM." + COL_LHSOID + "=? AND " + "MM." + COL_RHSOID + " = RES." + COL_ROWID
+
+    fetchViaSQL(rhs, sql, ln, rn, lhs.getRowID)
   }
 
-  def removeM2M(lhs:DBPojo, rhs:DBPojo): Int = {
-    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
-    val z:Class[_]= lhs.getClass
-    val tn=t.table.uc
-    t = rhs.getClass.getAnnotation(classOf[Table] )
-    val rn= t.table.uc
-    t=z.getAnnotation(classOf[Table] )
-    val ln= t.table.uc
+  def unlinkM2M(lhs:DBPojo, rhs:DBPojo): Int = {
+    val jc= _meta.findJoined(lhs,rhs)
+    val jn= throwNoTable(jc).table.uc
+    val rn= Utils.getTable(rhs).table.uc
+    val ln= Utils.getTable( lhs.getClass ).table.uc
 
-    val sql ="DELETE from " + tn +
-            " where " + COL_RHS + "=? and " + COL_LHS + "=? and " +
-            COL_RHSOID + "=? and " + COL_LHSOID + "=?"
+    val sql ="DELETE FROM " + jn +
+            " WHERE " + COL_RHS + "=? AND " + COL_LHS + "=? AND " +
+            COL_RHSOID + "=? AND " + COL_LHSOID + "=?"
 
     execUpdateSQL(sql, rn, ln, rhs.getRowID, lhs.getRowID)
   }
 
-  def removeM2M(lhs:DBPojo, rhs:Class[_]): Int = {
-    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
-    val z:Class[_]= lhs.getClass
-    val tn=t.table.uc
-    t = rhs.getAnnotation(classOf[Table] )
-    val rn= t.table.uc
-    t=z.getAnnotation(classOf[Table] )
-    val ln= t.table.uc
+  def purgeM2M(lhs:DBPojo, rhs:Class[_]): Int = {
+    val jc= _meta.findJoined(lhs.getClass,rhs)
+    val jn= throwNoTable(jc).table.uc
+    val rn= Utils.getTable(rhs).table.uc
+    val ln= Utils.getTable( lhs.getClass ).table.uc
 
-    val sql ="DELETE from " + tn +
-            " where " + COL_RHS + "=? and " + COL_LHS + "=? and " +
+    val sql ="DELETE FROM " + jn +
+            " WHERE " + COL_RHS + "=? AND " + COL_LHS + "=? AND " +
             COL_LHSOID + "=?"
 
     execUpdateSQL(sql, rn, ln, lhs.getRowID )
   }
 
-  def addM2M(lhs:DBPojo, rhs:DBPojo): Int = {
-    var t=classOf[M2MTable].getAnnotation(classOf[Table] )
-    val z:Class[_]= lhs.getClass
-    val tn=t.table.uc
-    t = rhs.getClass.getAnnotation(classOf[Table] )
-    val rn= t.table.uc
-    t=z.getAnnotation(classOf[Table] )
-    val ln= t.table.uc
+  def linkM2M(lhs:DBPojo, rhs:DBPojo): Int = {
+    val jc= _meta.findJoined(lhs,rhs)
+    val jn= throwNoTable(jc).table.uc
+    val rn= Utils.getTable(rhs).table.uc
+    val ln= Utils.getTable( lhs.getClass ).table.uc
 
-    val sql ="INSERT into " + tn +
+    val sql ="INSERT INTO " + jn +
             " ( " + COL_VERID + ", " + COL_RHS + ", " + COL_LHS + ", " +
-            COL_RHSOID + ", " + COL_LHSOID + ") values (?,?,?,?,?)"
+            COL_RHSOID + ", " + COL_LHSOID + ") VALUES (?,?,?,?,?)"
 
     execUpdateSQL(sql, 1L, rn, ln, rhs.getRowID, lhs.getRowID )
   }
@@ -556,185 +498,20 @@ trait SQLProcessor extends CoreImplicits {
   }
 
   private def jiggleSQL( sql:String, ty:Int) = {
-      
+
       val v:DBVendor = null//v= _pool.getVendor()
-              
+
       val rc = ty match {
           case 0 => v.tweakDELETE(sql)
           case 1 => v.tweakSELECT(sql)
           case 2 => v.tweakUPDATE(sql)
         case -1 => v.tweakSQL(sql)
       }
-      
+
       tlog().debug("jggleSQL= {}", rc)
       rc
   }
-        
-  
-}
 
-/**
- * @author kenl
-*/
-class SimpleSQLr(private val _db: DB) { //}extends SQLProcessor {
-  val _log= LoggerFactory.getLogger(classOf[SimpleSQLr])
-  
-  def findSome(fac : SRecordFactory, filter : NameValues): Seq[SRecord] = {
-    //doFindSome(fac,filter)
-    Nil
-  }
-
-  def findAll(fac : SRecordFactory): Seq[SRecord] = {
-    //doFindAll(fac)
-    Nil
-  }
-
-  def update(obj : SRecord, cols : Set[String]): Int = {
-    //doUpdate(obj, cols)
-    0
-  }
-
-  def delete(obj : SRecord): Int = {
-    val c= _db.open
-    try {
-      c.setAutoCommit(true)
-      //doDelete(c, obj)
-      0
-    }
-    finally {
-      _db.close(c)
-    }
-  }
-
-  def insert(obj : SRecord): Int = {
-    val c= _db.open
-    try {
-      c.setAutoCommit(true)
-      //doInsert(c, obj)
-      0
-    }
-    finally {
-      _db.close(c)
-    }
-  }
-
-  def select[X]( sql: String, params: Seq[Any])(f: ResultSet => X): Seq[X] = {
-    val c= _db.open
-    try {
-      c.setAutoCommit(true)
-      new SQuery(c, sql, params).select(f)
-    }
-    finally {
-      _db.close(c)
-    }
-  }
-
-  def select[X]( sql: String)(f: ResultSet => X): Seq[X] = {
-    select(sql, Nil)(f)
-  }
-
-  def execute( sql: String, params: Seq[Any]): Int = {
-    val c= _db.open
-    try {
-      c.setAutoCommit(true)
-      new SQuery(c, sql, params).execute()
-    }
-    finally {
-      _db.close(c)
-    }
-  }
-
-  def execute( sql: String): Int = {
-    execute(sql, Nil)
-  }
-
-}
-
-
-/**
- * @author kenl
- */
-class CompositeSQLr(private val _db : DB) {
-
-  def execWith[X](f: Transaction => X) = {
-    val c= begin
-    try {
-      f ( new Transaction(c) )
-      commit(c)
-    } catch {
-      case e: Throwable => { rollback(c) ; e.printStackTrace }
-    } finally {
-      close(c)
-    }
-  }
-
-  private def rollback(c :Connection) {
-    try { c.rollback() } catch { case e:Throwable => }
-  }
-
-  private def commit(c : Connection) {
-    c.commit()
-  }
-
-  private def begin(): Connection = {
-    val c= _db.open
-    c.setAutoCommit(false)
-    c
-  }
-
-  private def close(c: Connection) {
-    try { c.close() } catch { case e:Throwable => }
-  }
-
-}
-
-/**
- * @author kenl
- */
-class Transaction(private val _conn : Connection ) { //}extends SQLProcessor {
-
-  val _log= LoggerFactory.getLogger(classOf[Transaction])
-
-  def insert(obj : SRecord): Int = {
-//    doInsert(_conn, obj)
-    0
-  }
-
-  def select[X]( sql: String, params: Seq[Any])(f: ResultSet => X): Seq[X] = {
-    new SQuery(_conn, sql, params ).select(f)
-  }
-
-  def select[X]( sql: String)(f: ResultSet => X): Seq[X] = {
-    select(sql, Nil) (f)
-  }
-
-  def execute( sql: String, params: Seq[Any]): Int = {
-    new SQuery(_conn, sql, params ).execute()
-  }
-
-  def execute( sql: String): Int = {
-    execute(sql, Nil)
-  }
-
-  def delete( obj : SRecord): Int = {
-//    doDelete(_conn, obj)
-    0
-  }
-
-  def update(obj : SRecord, cols : Set[String]): Int = {
-//    doUpdate(obj, cols)
-    0
-  }
-
-  def findSome(fac : SRecordFactory, filter : NameValues): Seq[SRecord] = {
-//    doFindSome(fac,filter)
-    Nil
-  }
-
-  def findAll(fac : SRecordFactory): Seq[SRecord] = {
-//    doFindAll(fac)
-    Nil
-  }
 
 }
 

@@ -30,13 +30,12 @@ import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.MetaUtils._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreUtils._
-
+import org.slf4j._
 
 
 
 object ClassMetaHolder {
-  private val _assocs= mutable.HashMap[ String,AssocMetaHolder]()
-  def getAssocMetas() = _assocs.toMap
+  private val _log= LoggerFactory.getLogger(classOf[ClassMetaHolder])
 }
 
 /**
@@ -50,7 +49,8 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
   private val _info= new FMap()
   private var _table=""
 
-  import ClassMetaHolder._
+  def tlog() =  ClassMetaHolder._log
+  
   import MetaCache._
   import DBPojo._
   import Utils._
@@ -140,8 +140,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
         throw new Exception("Invalid marker:  found : " + mn)         
       }
       mn
-  }
-  
+  }  
   private def chompMarker(mn:String) = {
     mn.substring(5, mn.length - 7)
   }
@@ -151,7 +150,25 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
         throw new Exception("Expected marker type (string) for: " + m.getName )               
     }
   }
-  
+
+  private def ensureFKeyType(m:Method) = {
+    if ( !isString( m.getReturnType() ) ) {
+        throw new Exception("Expected marker type (string) for: " + m.getName )               
+    }
+  }
+  private def ensureAssoc(mn:String) = {
+      if ( mn.startsWith("dbio_") && mn.endsWith("_fkey") && mn.length >10 ) {} else {
+        throw new Exception("Invalid assoc-fkey marker:  found : " + mn)         
+      }
+      mn
+  } 
+  private def chompAssoc(mn:String) = {
+    mn.substring(5, mn.length - 5)
+  }
+  private def fmtAssocKey(mn:String) = {
+    "dbio_" + mn + "_fkey"
+  }
+    
   private def getCol(obj:Any, m:Method) = {
     nsb ( m.invoke(obj) )
   }
@@ -207,51 +224,47 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     }
   }
 
-  private def mkAssoc(z:Class[_], obj:Any, m:Method, rhs:Class[_], m2m:Boolean) {
-    val fkey = nsb( m.invoke( obj ))
-    val rt = if (rhs.isAssignableFrom(z)) {
-      // assoc target is a parent of this class, switch to be this class instead
-      Utils.getTable(z)
-    } else {
-      Utils.getTable( rhs)
-    }
-    if (rt == null) {
+  private def mkAssoc(z:Class[_], obj:Any, fkm:Method, m:Method) {
+    val fkey = nsb( fkm.invoke( obj ))
+    val rhs = if (hasM2M(m)) {
+      getM2M(m).rhs()
+    } else if (hasO2M(m)) { getO2M(m).rhs() } else if (hasO2O(m)) {
+      getO2O(m).rhs()
+    } else { throw new Exception("never!" ) }
+    
+    // assoc target is a parent of this class, switch to be this class instead
+    // to do with inheritance
+    val lt = Utils.getTable(z)
+    val rt = if (rhs.isAssignableFrom(z)) { lt } else {  Utils.getTable( rhs)  }
+    
+    if ( rt==null) {
       throw new Exception("RHS of assoc must have Table annotated: " + rhs)
     }
+    
     if (STU.isEmpty(fkey)) {      
       throw new Exception("Invalid foreign key on method: " + m.getName)
-    }    
-    val rtb= rt.table.toUpperCase()
-    if (! _assocs.contains(rtb)) {
-      _assocs.put(rtb, new AssocMetaHolder() )      
     }
-    _assocs.get(rtb).get.add(m2m, z, rhs, fkey)
+    val owner = if (hasO2O(m) && getO2O(m).bias() < 0) { lt } else { rt }
+    val akey= owner.table.toUpperCase()
+    if (! getAssocMetas().contains( akey)) {
+      putAssocMeta( akey, new AssocMetaHolder() )      
+    }
+    
+    getAssocMetas().get(akey).get.add( hasM2M(m), z, rhs, fkey)
   }
   
     // scan for "assoc(s)" ...
   private def scanAssocs(z:Class[_], obj:Any, ms:Array[Method], allMtds:Map[String, Method] ) {
-    ms.filter(_.getName().startsWith("get")).foreach { (m) =>
-      val m2m= m.getAnnotation(classOf[Many2Many])
-      val o2o= m.getAnnotation(classOf[One2One])
-      val o2m= m.getAnnotation(classOf[One2Many])
+    ms.filter( (m) => m.getName.startsWith("get") && hasAssoc(m) ).foreach { (m) =>
       val mn= m.getName()
-      var count=0
-      var rhs:Class[_] = null
-
-      if (m2m != null) { count += 1; rhs=m2m.rhs()  }
-      if (o2o != null) { count += 1; rhs= o2o.rhs() }
-      if (o2m != null) { count += 1; rhs= o2m.rhs() }
-      if (count > 1 ) {
-        throw new Exception("Too many assocs bound to: " + mn)
+      allMtds.get( fmtAssocKey(mn) ) match {
+        case Some(x) =>
+          ensureFKeyType(x)
+          mkAssoc(z, obj, x, m)
+        case _ => throw new Exception("Missing assoc-fkey getter for: " + mn)
       }
-      if (count==1) allMtds.get(mn+"FKey") match {
-        case Some(x) => mkAssoc(z, obj, x, rhs, m2m!=null)
-        case _ =>
-      }
-      
     }
-
-
+    
   }
 
 }

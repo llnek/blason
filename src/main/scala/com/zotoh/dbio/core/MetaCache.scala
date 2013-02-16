@@ -37,6 +37,11 @@ import com.zotoh.frwk.db.TableMetaHolder
 
 object MetaCache {
   private val _log=LoggerFactory.getLogger(classOf[MetaCache])
+  private val _assocs= mutable.HashMap[ String,AssocMetaHolder]()
+  def getAssocMetas() = _assocs.toMap  
+  def putAssocMeta(table:String, meta: AssocMetaHolder) {
+    _assocs += table -> meta
+  }
 }
 
 /**
