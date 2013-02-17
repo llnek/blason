@@ -91,8 +91,8 @@ class ClassMetaHolder(private val _meta:MetaCache, z:Class[_]) extends CoreImpli
     }
   }
 
-  def getUniques() = {
-    val rc= mutable.HashSet[String]()
+  def getIndexes() = {
+    val rc= mutable.ArrayBuffer[SIndex]()
     _info.foreach { (en) =>
       val ii= en._2
       val m = if (ii.isUniqueKey()) ii.getGetter() else null
@@ -309,4 +309,15 @@ class FMap extends mutable.HashMap[String, FldMetaHolder] with CoreImplicits {
   }
 
 }
+
+class SIndex(private val _name:String, private val _unique:Boolean) {
+  private val _cols=mutable.HashSet[String]
+  def name() = _name
+  def unique() = _unique
+  def add(s:String) {
+    _cols += s.toUpperCase
+  }
+  def getCols() = _cols.toSet
+}
+
 

@@ -35,7 +35,7 @@ abstract class M2MTable extends AbstractModel {
   import DBPojo._
 
   def dbio_getLHS_column = COL_LHS
-  @Column( unique=true)
+  @Column( unique_index="u1")
   def getLHS() = {
     readData( dbio_getLHS_column ) match {
       case Some(s:String) => s
@@ -47,7 +47,7 @@ abstract class M2MTable extends AbstractModel {
   }
 
   def dbio_getRHS_column = COL_RHS
-  @Column( unique=true)
+  @Column( unique_index="u1")
   def getRHS() = {
     readData( dbio_getRHS_column ) match {
       case Some(s:String) => s
@@ -59,7 +59,7 @@ abstract class M2MTable extends AbstractModel {
   }
 
   def dbio_getLHSObjID_column = COL_LHSOID
-  @Column(unique=true)
+  @Column( unique_index="u1")
   def getLHSObjID() = {
     readData( dbio_getLHSObjID_column ) match {
       case Some(n:Long) => n
@@ -71,7 +71,7 @@ abstract class M2MTable extends AbstractModel {
   }
 
   def dbio_getRHSObjID_column = COL_RHSOID
-  @Column(unique=true)
+  @Column( unique_index="u1")
   def getRHSObjID() = {
     readData( dbio_getRHSObjID_column ) match {
       case Some(n:Long) => n
