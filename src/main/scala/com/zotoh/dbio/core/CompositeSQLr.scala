@@ -58,8 +58,10 @@ class CompositeSQLr(private val _db : DB) {
   def execWith[T](f: Transaction => T): T =  {
     val c= begin
     try {
-      val rc= f ( new Transaction(c,_db) )
+      val tx= new Transaction(c,_db)
+      val rc= f ( tx)
       commit(c)
+      tx.reset()
       rc
     } catch {
       case e: Throwable => { rollback(c) ; tlog.warn("",e) ; throw e }
@@ -95,11 +97,14 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
 
   val _log= LoggerFactory.getLogger(classOf[Transaction])
   val _meta =  _db.getMeta
+  val _items= mutable.ArrayBuffer[DBPojo]()
   
   def getDB() = _db
 
   def insert(obj : DBPojo): Int = {
-    doInsert(obj)
+    val rc= doInsert(obj)
+    rego(obj)
+    rc
   }
 
   def select[T]( sql: String, params:Any* )(f: ResultSet => T ): Seq[T] = {
@@ -111,11 +116,15 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
   }
 
   def delete( obj : DBPojo): Int = {
-    doDelete(obj)    
+    val rc = doDelete(obj)
+    rego(obj)
+    rc
   }
 
   def update(obj : DBPojo, cols : Set[String]): Int = {
-    doUpdate(obj, cols)    
+    val rc= doUpdate(obj, cols)
+    rego(obj)
+    rc
   }
 
   def doCount(sql:String, f: ResultSet => Int) = {
@@ -125,6 +134,15 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
   
   def doPurge(sql:String) {
     execute(sql)
+  }
+  
+  private def rego(obj:DBPojo) {
+    _items += obj
+  }
+  
+  protected[core] def reset() {
+    _items.foreach(_.asInstanceOf[AbstractModel].reset )
+    _items.clear
   }
   
 }

@@ -52,15 +52,21 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
   }
   
   def update(obj : DBPojo, cols : Set[String]): Int = {
-    doUpdate(obj, cols)
+    val rc= doUpdate(obj, cols)
+    reset(obj)
+    rc
   }
 
   def delete(obj : DBPojo): Int = {
-    doDelete(obj)
+    val rc =doDelete(obj)
+    reset(obj)
+    rc
   }
 
   def insert(obj : DBPojo): Int = {
-    doInsert(obj)
+    val rc = doInsert(obj)
+    reset(obj)
+    rc
   }
 
   def select[T]( sql: String, params:Any* )(f: ResultSet => T): Seq[T] = {
@@ -96,5 +102,8 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
     execute(sql)
   }
   
+  private def reset(obj:DBPojo) {
+    obj.asInstanceOf[AbstractModel].reset()
+  }
   
 }
