@@ -30,7 +30,7 @@ import com.zotoh.frwk.db.JDBCUtils._
 @Table(table="TBL_COMPANY")
 class Company extends AbstractModel {
 
-  def dbio_getAddress_fkey = "FK_COMPANY"
+  def dbio_getAddress_fkey = "FK_ADDRESS"
   @One2One(rhs=classOf[Address] )
   def getAddress(db:SQLProc) = {
     db.getO2O(this, classOf[Address], dbio_getAddress_fkey )
@@ -39,7 +39,7 @@ class Company extends AbstractModel {
     db.setO2O(this, a, dbio_getAddress_fkey  )
   }
 
-  def dbio_getCompanyName_column = "COMPANY_NAME"
+  def dbio_getCompanyName_column = "COMPANY_ID"
   @Column(size=255, unique=true)
   def getCompanyName() = {
     readData( dbio_getCompanyName_column ) match {

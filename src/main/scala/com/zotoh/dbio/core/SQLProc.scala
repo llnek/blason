@@ -30,6 +30,7 @@ import com.zotoh.frwk.db.TableMetaHolder
 import com.zotoh.dbio.meta.Table
 import org.apache.commons.lang3.{StringUtils=>STU}
 import com.zotoh.frwk.util.CoreImplicits
+import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.db.DBVendor
 import com.zotoh.frwk.db.JDBCUtils._
@@ -37,6 +38,11 @@ import org.apache.commons.dbutils.{DbUtils=>DBU}
 import java.sql.Statement
 import com.zotoh.frwk.util.Nichts
 import com.zotoh.frwk.db.JDBCInfo
+import java.sql.Blob
+import java.sql.Clob
+import java.io.InputStream
+import java.io.Reader
+import com.zotoh.frwk.io.IOUtils
 
 
 /**
@@ -71,12 +77,13 @@ trait SQLProc extends CoreImplicits {
     update(obj, Set("*"))
   }
 
-  private def row2Obj[T](z:Class[T], row:ResultSet) = {
+  private def row2Obj[T <: DBPojo](z:Class[T], res:ResultSet) = {
     val obj:T = z.getConstructor().newInstance()
+    buildOneRow(z,obj, res)
     obj
   }
 
-  def findSome[T](cz:Class[T], filter:NameValues): Seq[T] = {
+  def findSome[T <: DBPojo ](cz:Class[T], filter:NameValues): Seq[T] = {
     val s= "SELECT * FROM " + throwNoTable(cz).table().uc
     val wc= filter.toFilterClause
     val cb: ResultSet => T = { row : ResultSet => row2Obj(cz, row) }
@@ -86,35 +93,48 @@ trait SQLProc extends CoreImplicits {
       select[T]( s)(cb)
     }
   }
-  def findSome[T](cz:Class[T]): Seq[T] = findSome(cz, new NameValues)
-  def findOne[T](cz:Class[T], filter:NameValues): Option[T] = {
+  def findSome[T <: DBPojo ](cz:Class[T]): Seq[T] = findSome(cz, new NameValues)
+  def findOne[T <: DBPojo ](cz:Class[T], filter:NameValues): Option[T] = {
     val rc = findSome(cz, filter)
     if (rc.size == 0) None else Option( rc(0) )
   }  
   
-  def findAll[T](cz:Class[T]): Seq[T] = {
+  def findAll[T <: DBPojo ](cz:Class[T]): Seq[T] = {
     findSome(cz, new NameValues )
   }
+  
+  def findViaSQL[T <: DBPojo ](cz:Class[T], sql:String, params:Any* ): Seq[T] = {
+    val cb: ResultSet => T = { row : ResultSet => row2Obj(cz, row) }
+    select(sql,params:_*)(cb)
+  }
 
-  protected def doUpdate(obj:DBPojo, cols:Set[String]): Int = {
+  protected def doUpdate(pojo:DBPojo, cols:Set[String]): Int = {
     val (all,none) = if (cols.size==0) (false,true) else (cols.head=="*",false)
+    if (none) { return 0 }
+    val obj= pojo.asInstanceOf[AbstractModel]
+    val ds= obj.getDirtyFields()
     val lst= mutable.ArrayBuffer[Any]()
     val sb1= new StringBuilder(1024)
     val cz= throwNoCZMeta(obj.getClass)
-    if (none) {} else {
-      obj.setLastModified(new JDate)
-      cz.getFldMetas.values.filter( f => all || f.isInternal || cols.contains(f.getId) ).foreach { (fld) =>
-        if ( fld.isPK || fld.isAutoGen) {} else {
-          addAndDelim(sb1, ",", fld.getId)
-          obj.get(fld.getId) match {
+    val flds= cz.getFldMetas()
+    
+    obj.setLastModified(nowJTS() )
+    ds.filter( all || cols.contains(_) ).foreach { (dn) =>
+      val go= flds.get(dn) match {
+        case Some(fld) =>
+          if ( ! fld.isUpdatable|| fld.isAutoGen ) false else true
+        case _ => true
+      }
+      if (go) {
+          addAndDelim(sb1, ",", dn)
+          obj.get(dn) match {
             case Some(Nichts.NICHTS) | None => sb1.append("=NULL")
             case Some(v) =>
               sb1.append("=?")
               lst += v
-          }
-        }
+          }        
       }
-    }
+    }        
     if (sb1.length > 0) {
       lst += obj.getRowID
       execute("UPDATE " + cz.getTable.uc + " SET " + sb1 + " WHERE " + COL_ROWID + "=?" , lst:_*)
@@ -130,20 +150,26 @@ trait SQLProc extends CoreImplicits {
             " WHERE " + COL_ROWID + "=?" , obj.getRowID )
   }
 
-  protected def doInsert(obj:DBPojo): Int = {
+  protected def doInsert(pojo:DBPojo): Int = {
     val lst = mutable.ArrayBuffer[Any]()
     val s2 = new StringBuilder(1024)
     val s1= new StringBuilder(1024)
-    val cz= throwNoCZMeta(obj.getClass)
-    val t= throwNoTable(obj.getClass)
-
-    obj.setLastModified(new JDate)
-    cz.getFldMetas.foreach { (en) =>
-
-      if (en._2.isPK ||en._2.isAutoGen ) {} else {
-        addAndDelim(s1, ",", en._1)
+    val cz= throwNoCZMeta(pojo.getClass)
+    val t= throwNoTable(pojo.getClass)
+    val obj= pojo.asInstanceOf[AbstractModel]
+    val flds= cz.getFldMetas()
+    
+    obj.setLastModified(nowJTS() )    
+    obj.getDirtyFields.foreach { (dn) =>
+      val go = flds.get(dn) match {
+        case Some(fld) =>
+          if (fld.isPK ||fld.isAutoGen || fld.isInternal ) false else true      
+        case _ => true
+      }
+      if (go) {
+        addAndDelim(s1, ",", dn)
         if (s2.length > 0) { s2.append(",") }
-        obj.get(en._1) match {
+        obj.get(dn) match {
           case Some(Nichts.NICHTS) | None => s2.append("NULL")
           case Some(v) =>
             s2.append("?")
@@ -161,10 +187,6 @@ trait SQLProc extends CoreImplicits {
     }
   }
 
-  private def fetchObjs[T]( target:Class[T], values:NameValues ) = {
-    findSome( target, values)
-  }
-
 //////////////// assoc-stuff
 
   private def throwNoCZMeta(z:Class[_]) = {
@@ -180,8 +202,8 @@ trait SQLProc extends CoreImplicits {
     t
   }
 
-  def getO2O[T](lhs:DBPojo, rhs:Class[T], fkey:String): Option[T] = {
-    val rc = findSome( rhs, new NameValues(COL_ROWID, lhs.get(fkey)) )    
+  def getO2O[T <: DBPojo ](lhs:DBPojo, rhs:Class[T], fkey:String): Option[T] = {
+    val rc = findSome( rhs, new NameValues(COL_ROWID, lhs.get(fkey).getOrElse(-1L)) )    
     if (rc.size == 0) None else Option( rc(0) )
   }
 
@@ -198,7 +220,7 @@ trait SQLProc extends CoreImplicits {
     }
   }
 
-  def getO2M[T](lhs:DBPojo, rhs:Class[T], fkey:String): Seq[T] = {
+  def getO2M[T <: DBPojo ](lhs:DBPojo, rhs:Class[T], fkey:String): Seq[T] = {
     findSome( rhs, new NameValues(fkey, lhs.getRowID ))
   }
 
@@ -221,10 +243,10 @@ trait SQLProc extends CoreImplicits {
 
   def linkO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
     rhs.set(fkey, Some(lhs.getRowID) )
-    update(rhs, Set(fkey))
+    0
   }
 
-  def getM2M[T](lhs:DBPojo, rhs:Class[T]): Seq[T] = {
+  def getM2M[T <: DBPojo](lhs:DBPojo, rhs:Class[T]): Seq[T] = {
     val jc= _meta.findJoined(lhs.getClass,rhs)
     val jn= throwNoTable(jc).table.uc
     val rn= Utils.getTable(rhs).table.uc
@@ -233,9 +255,7 @@ trait SQLProc extends CoreImplicits {
     val sql = "SELECT DISTINCT RES.* FROM " + rn + " RES JOIN " + jn + " MM  ON " +
     "MM." + COL_LHS + "=? AND " + "MM." + COL_RHS + "=? AND " +
     "MM." + COL_LHSOID + "=? AND " + "MM." + COL_RHSOID + " = RES." + COL_ROWID
-
-    //fetchViaSQL(rhs, sql, ln, rn, lhs.getRowID)
-    Nil
+    findViaSQL(rhs, sql, ln, rn, lhs.getRowID)
   }
 
   def unlinkM2M(lhs:DBPojo, rhs:DBPojo): Int = {
@@ -326,6 +346,41 @@ trait SQLProc extends CoreImplicits {
 
   protected def doCount(sql:String, f: ResultSet => Int ): Int
   protected def doPurge(sql:String): Unit
+  
+
+  private def buildOneRow[T <: DBPojo](z:Class[T], row:DBPojo, rset:ResultSet) {
+    val flds= throwNoCZMeta(z).getFldMetas()
+    val meta= rset.getMetaData()
+    
+    (1 to meta.getColumnCount ).foreach { (i) =>
+      val cn= meta.getColumnName(i).uc
+      readOneCol(cn, i, row,rset)
+    }
+    
+    row.asInstanceOf[AbstractModel].reset
+  }
+
+  private def readOneCol(cn:String, pos:Int, row:DBPojo,rset:ResultSet) {
+      var obj=rset.getObject(pos)
+      var inp = obj match {
+        case bb:Blob => bb.getBinaryStream()
+        case s:InputStream => s
+        case _ => null
+      }
+      var rdr = obj match {
+        case cc:Clob => cc.getCharacterStream()
+        case r:Reader => r
+        case _ => null
+      }
+      if (inp != null) using(inp) { (inp) =>
+        obj= IOUtils.readBytes(inp)
+      }
+      if (rdr != null) using(rdr) { (rdr) =>
+        obj= IOUtils.readChars( rdr)
+      }
+      row.set( cn, Option(obj) )    
+  }
+  
   
 }
 

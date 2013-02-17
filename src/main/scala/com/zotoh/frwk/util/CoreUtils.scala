@@ -147,6 +147,9 @@ object CoreUtils extends Constants  with CoreImplicits {
     }
   }
 
+  def nowJTS() = new java.sql.Timestamp(nowJDate().getTime )
+  def nowJDate() = new java.util.Date()
+  
   /**
    *
    */

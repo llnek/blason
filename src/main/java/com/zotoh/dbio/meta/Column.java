@@ -67,9 +67,10 @@ public @interface Column {
     public boolean readonly() default false;
     public boolean viewable() default true;
     
-    public String dft() default "";
+    public boolean dft() default false;
+    public String dftValue() default "";
     
     public boolean system() default false;
-    
+    public boolean updatable() default true;
     
 }

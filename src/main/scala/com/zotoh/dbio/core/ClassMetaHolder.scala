@@ -44,7 +44,7 @@ object ClassMetaHolder {
  * @author kenl
  *
  */
-class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
+class ClassMetaHolder(private val _meta:MetaCache, z:Class[_]) extends CoreImplicits {
 
   private val _info= new FMap()
   private var _table=""
@@ -59,7 +59,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
   /**
    *
    */
-  def this() { this(null) }
+  def this(m:MetaCache) { this(m,null) }
 
   def getCZ() = z 
     
@@ -138,7 +138,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
   }
   
   private def ensureMarker(mn:String) = {
-      if ( mn.startsWith("dbio_") && mn.endsWith("_column") && mn.length >12 ) {} else {
+      if ( mn.startsWith("dbio_") && mn.endsWith("_column") && mn.length > 12 ) {} else {
         throw new Exception("Invalid marker:  found : " + mn)         
       }
       mn
@@ -159,7 +159,7 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     }
   }
   private def ensureAssoc(mn:String) = {
-      if ( mn.startsWith("dbio_") && mn.endsWith("_fkey") && mn.length >10 ) {} else {
+      if ( mn.startsWith("dbio_") && mn.endsWith("_fkey") && mn.length > 10 ) {} else {
         throw new Exception("Invalid assoc-fkey marker:  found : " + mn)         
       }
       mn
@@ -169,6 +169,9 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
   }
   private def fmtAssocKey(mn:String) = {
     "dbio_" + mn + "_fkey"
+  }
+  private def fmtMarkerKey(mn:String) = {
+    "dbio_" + mn + "_column"
   }
     
   private def getCol(obj:Any, m:Method) = {
@@ -189,21 +192,21 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
   private def scanAllMarkers( obj:Any, ms:Array[Method], allMtds:Map[String,Method]) {
     
     ms.filter( hasColumn(_) ).foreach { (m) =>
-      val mn= ensureMarker( m.getName)
-      ensureMarkerType( m )
-      val cn = getCol(obj, m).toUpperCase()
-      val gn= chompMarker(mn)
+      val kn= fmtMarkerKey(m.getName )
+      val km= allMtds.get(kn) match {
+        case Some(x) => x
+        case _ => throw new Exception("Column getter not found: " + kn)
+      }
+      ensureMarkerType( km )
+      val cn = getCol(obj, km).toUpperCase()
+      val rt = m.getReturnType()
+      val gn= m.getName
       val c = getColumn(m)      
       _info.get(cn) match {
-        case Some(x) =>throw new Exception("Found duplicate marker: " + mn)
+        case Some(x) =>throw new Exception("Found duplicate col-def: " + cn)
         case _ => _info.put(cn, mkFldMeta(c, cn,gn))
       }
-      val rt= allMtds.get( gn) match {
-        case Some(x) =>
-          _info.get(cn).get.setGetter(x)
-          x.getReturnType()
-        case _ =>throw new Exception("Missing getter: " + gn)
-      }
+      _info.get(cn).get.setGetter(m)
 
       if (c.autogen) if ( ! isInt(rt) &&  ! isLong(rt) ) {
           throw new Exception("Invalid return-type for: " + gn) 
@@ -236,10 +239,10 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     }
     val lt= Utils.getTable(z)    
     val jn= sortAndJoin(rt.table.uc, lt.table().uc)
-    getMMS().get(jn) match {
+    _meta.getMMS().get(jn) match {
       case Some(x) =>
       case _ =>
-        putMMS(jn, jc)
+        _meta.putMMS(jn, jc)
     }
   }
   
@@ -260,13 +263,13 @@ class ClassMetaHolder(z:Class[_]) extends CoreImplicits {
     if (STU.isEmpty(fkey)) {      
       throw new Exception("Invalid foreign key on method: " + m.getName)
     }
-    val owner = if (hasO2O(m) && getO2O(m).bias() < 0) { lt } else { rt }
+    val (owner, fcz) = if (hasO2O(m) && getO2O(m).bias() < 0) { ( lt, z) } else { ( rt, rhs) }
     val akey= owner.table.toUpperCase()
-    if (! getAssocMetas().contains( akey)) {
-      putAssocMeta( akey, new AssocMetaHolder() )      
+    if (! _meta.getAssocMetas().contains( akey)) {
+      _meta.putAssocMeta( akey, new AssocMetaHolder() )      
     }
     
-    getAssocMetas().get(akey).get.add( z, rhs, fkey)
+    _meta.getAssocMetas().get(akey).get.add( z, rhs, fkey)
   }
   
     // scan for "assoc(s)" ...

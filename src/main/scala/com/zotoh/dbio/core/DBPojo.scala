@@ -22,7 +22,7 @@
 package com.zotoh.dbio
 package core
 
-import java.util.{Date=>JDate}
+import java.sql.{Timestamp=>JTS}
 
 
 
@@ -49,8 +49,8 @@ trait DBPojo {
   def set(field:String, value: Option[Any] ): Unit
   def get(field:String): Option[Any]
   
-  def setLastModified(dt:JDate): Unit
-  def getLastModified(): JDate
+  def setLastModified(dt:JTS): Unit
+  def getLastModified(): JTS
   
 }
 

@@ -34,8 +34,8 @@ import com.zotoh.dbio.meta.Table
 abstract class M2MTable extends AbstractModel {
   import DBPojo._
 
-  @Column( unique=true)
   def dbio_getLHS_column = COL_LHS
+  @Column( unique=true)
   def getLHS() = {
     readData( dbio_getLHS_column ) match {
       case Some(s:String) => s
@@ -46,8 +46,8 @@ abstract class M2MTable extends AbstractModel {
     writeData( dbio_getLHS_column, Option(s))
   }
 
-  @Column( unique=true)
   def dbio_getRHS_column = COL_RHS
+  @Column( unique=true)
   def getRHS() = {
     readData( dbio_getRHS_column ) match {
       case Some(s:String) => s
@@ -58,8 +58,8 @@ abstract class M2MTable extends AbstractModel {
     writeData( dbio_getRHS_column, Option(s))
   }
 
-  @Column(unique=true)
   def dbio_getLHSObjID_column = COL_LHSOID
+  @Column(unique=true)
   def getLHSObjID() = {
     readData( dbio_getLHSObjID_column ) match {
       case Some(n:Long) => n
@@ -70,8 +70,8 @@ abstract class M2MTable extends AbstractModel {
     writeData( dbio_getLHSObjID_column, Option(id) )
   }
 
-  @Column(unique=true)
   def dbio_getRHSObjID_column = COL_RHSOID
+  @Column(unique=true)
   def getRHSObjID() = {
     readData( dbio_getRHSObjID_column ) match {
       case Some(n:Long) => n

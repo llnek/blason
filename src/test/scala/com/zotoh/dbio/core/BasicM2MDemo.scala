@@ -62,7 +62,7 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
   private def add_depts() {
     _db.execWith { (tx) =>
 
-      val company= fetch_company()
+      val company= fetch_company(tx)
       val d1= new Department(); d1.setDeptID("Finance")
       val d2= new Department(); d2.setDeptID("Sales")
       val d3= new Department(); d3.setDeptID("Marketing")
@@ -86,7 +86,7 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
   private def add_employees() {
     _db.execWith { (tx) =>
 
-      val company= fetch_company()
+      val company= fetch_company(tx)
 
       val e1= iniz_employee( "No1", "Coder", "no1")
       val e2= iniz_employee( "No2", "Coder", "no2")
@@ -102,6 +102,7 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
       tx.update(e1)
       tx.update(e2)
       tx.update(e3)
+      tx.update(company)
 
       println("Added 3 employees to Company. OK.")
     }
@@ -111,18 +112,18 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
   private def bind_dept_employees() {
     _db.execWith { (tx) =>
 
-      val dept= fetch_dept("Finance")
+      val dept= fetch_dept(tx,"Finance")
 
       // get the many2many association to link to employees
 
-      val e1= fetch_emp("no1")
-      val e2= fetch_emp("no2")
-      val e3= fetch_emp("no3")
+      val e1= fetch_emp(tx,"no1")
+      val e2= fetch_emp(tx,"no2")
+      val e3= fetch_emp(tx,"no3")
 
       dept.addEmployee(tx, e1) 
       dept.addEmployee(tx, e2) 
       dept.addEmployee(tx, e3) 
-
+      
       println("Finance department now has 3 members. OK.")
     }
   }
@@ -131,11 +132,11 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
     _db.execWith { (tx) =>
 
       // get the many2many association and bind to some departments
-      val emp= fetch_emp("no3") 
+      val emp= fetch_emp(tx,"no3") 
 
-      val d1= fetch_dept("Marketing")
-      val d2= fetch_dept("Sales")
-      val d3= fetch_dept("Finance")
+      val d1= fetch_dept(tx,"Marketing")
+      val d2= fetch_dept(tx,"Sales")
+      val d3= fetch_dept(tx,"Finance")
 
       emp.addDept(tx, d1)
       emp.addDept(tx, d2)
@@ -149,9 +150,9 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
   private def verify_m2m() {
 //        val company= fetch_company()
     _db.execWith { (tx) =>
-      val dept = fetch_dept("Finance") 
+      val dept = fetch_dept(tx,"Finance") 
       val emps= dept.getEmployees(tx)
-      if (emps.size==3)        {
+      if (emps.size==3) {
         println("Finance department indeed has 3 members. OK.")
       }
       emps.find { _.getLogin == "no3" } match {
@@ -165,24 +166,20 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
     }
   }
 
-  private def fetch_emp(login:String) = {
-    _db.execWith { (tx) =>
+  private def fetch_emp(tx:Transaction, login:String) = {
       val rc= tx.findSome(classOf[Employee], new NameValues("LOGIN", login))
       if (rc.size==0) null else rc(0)
-    }
   }
 
-  private def fetch_dept(name:String ) = {
-    _db.execWith { (tx) =>
+  private def fetch_dept( tx:Transaction, name:String ) = {
       val rc= tx.findSome(classOf[Department], new NameValues("DNAME", name))
       if (rc.size==0) null else rc(0)
-    }
   }
 
   private def cleanup()    {
     _db.execWith { (tx) =>
 
-      val company= fetch_company()
+      val company= fetch_company(tx)
       val depts= company.getDepts(tx)
       depts.foreach { (d) =>
           d.removeEmployees(tx)
@@ -200,16 +197,10 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
     }
   }
 
-  private def fetch_company() = {
-    _db.execWith { (tx) =>
+  private def fetch_company(tx:Transaction) = {
       val rc = tx.findSome(classOf[Company], 
         new NameValues("COMPANY_ID", "ACME Web 2.0 Inc."))
       if (rc.size == 0 ) null else rc(0)
-    }
   }
-
-
-
-
 
 }

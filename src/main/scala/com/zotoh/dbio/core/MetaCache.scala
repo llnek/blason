@@ -37,17 +37,7 @@ import com.zotoh.frwk.db.TableMetaHolder
 
 
 object MetaCache {
-  private val _assocs= mutable.HashMap[ String,AssocMetaHolder]()
   private val _log=LoggerFactory.getLogger(classOf[MetaCache])
-  private val _mms= mutable.HashMap[ String,Class[_] ]()
-  def getMMS() = _mms.toMap
-  def putMMS(key:String, z:Class[_]) {
-    _mms += key -> z
-  }
-  def getAssocMetas() = _assocs.toMap
-  def putAssocMeta(table:String, meta: AssocMetaHolder) {
-    _assocs += table -> meta
-  }
 }
 
 /**
@@ -61,6 +51,16 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
 
   private val _classes = mutable.HashMap[ Class[_], ClassMetaHolder]()
   private val _meta= mutable.HashMap[ String, TableMetaHolder]()
+  private val _assocs= mutable.HashMap[ String,AssocMetaHolder]()
+  private val _mms= mutable.HashMap[ String,Class[_] ]()
+  def getMMS() = _mms.toMap
+  def putMMS(key:String, z:Class[_]) {
+    _mms += key -> z
+  }
+  def getAssocMetas() = _assocs.toMap
+  def putAssocMeta(table:String, meta: AssocMetaHolder) {
+    _assocs += table -> meta
+  }
 
   def tlog() = MetaCache._log
 
@@ -71,7 +71,7 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
     val rn= throwNoTable( rhs).table().uc
     val ln= throwNoTable( lhs).table().uc
     val jn= sortAndJoin(ln,rn)
-    MetaCache.getMMS().get(jn) match {
+    getMMS().get(jn) match {
       case Some(z) => z
       case _ => null
     }
@@ -104,7 +104,7 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
 
   private def loadClassMeta( z:Class[_]) = synchronized {
     try {
-      val rc= new ClassMetaHolder().scan(z)
+      val rc= new ClassMetaHolder(this).scan(z)
       _classes.put(z, rc)
       rc
     } catch {

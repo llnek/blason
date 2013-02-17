@@ -95,7 +95,7 @@ abstract class DBDriver protected() {
   protected def genOneClass(zm:ClassMetaHolder ) = {
     val n= zm.getTable()
     if (STU.isEmpty(n)) "" else {
-      genOneTable(n, zm.getFldMetas, MetaCache.getAssocMetas )
+      genOneTable(n, zm.getFldMetas, _meta.getAssocMetas )
     }
   }
 
@@ -165,7 +165,7 @@ abstract class DBDriver protected() {
     var iix=1
     if (asoc.isDefined) asoc.get.getInfo.foreach { (t) =>
       val cn = t._3.toUpperCase()
-      val col = genColDef(cn, getLongKeyword() , true)
+      val col = genColDef(cn, getLongKeyword() , true, "")
       if (bf.length() > 0) { bf.append(",\n") }
       bf.append(col)
       inx.append( "CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + 
@@ -213,57 +213,69 @@ abstract class DBDriver protected() {
     getPad() + "UNIQUE(" + b + ")"
   }
 
-  protected def genColDef(col:String , ty:String , optional:Boolean) = {
-    new StringBuilder(256).
+  protected def genColDef(col:String , ty:String , optional:Boolean, dft:String) = {
+    val b=new StringBuilder(256).
       append(getPad).append(col ).append(" ").
       append( ty).
       append(" ").
-      append(nullClause( optional )).toString
+      append(nullClause( optional ))
+    if (!STU.isEmpty(dft)) {
+        b.append(" DEFAULT ").append(dft)
+    }
+    b.toString
   }
 
   protected def genBytes(fld:FldMetaHolder ) = {
-    genColDef(fld.getId, getBlobKeyword, fld.isNullable )
+    genColDef(fld.getId, getBlobKeyword, fld.isNullable,"" )
   }
 
   protected def genString(fld:FldMetaHolder ) = {
     genColDef(fld.getId,
       getStringKeyword + "(" + fld.getSize().toString + ")",
-      fld.isNullable )
+      fld.isNullable,
+      if (fld.getDft) fld.getDftValue else "" )
   }
 
   protected def genInteger(fld:FldMetaHolder ) = {
-    genColDef(fld.getId, getIntKeyword, fld.isNullable)
+    genColDef(fld.getId, getIntKeyword, fld.isNullable,
+        if (fld.getDft) fld.getDftValue else "" )
   }
 
   protected def genAutoInteger(table:String , fld:FldMetaHolder ) = ""
 
   protected def genDouble(fld:FldMetaHolder )  = {
-    genColDef(fld.getId, getDoubleKeyword, fld.isNullable)
+    genColDef(fld.getId, getDoubleKeyword, fld.isNullable,
+        if (fld.getDft) fld.getDftValue else "" )
   }
 
   protected def genFloat(fld:FldMetaHolder ) = {
-    genColDef(fld.getId, getFloatKeyword, fld.isNullable)
+    genColDef(fld.getId, getFloatKeyword, fld.isNullable,
+        if (fld.getDft) fld.getDftValue else "" )
   }
 
   protected def genLong(fld:FldMetaHolder ) = {
-    genColDef(fld.getId, getLongKeyword, fld.isNullable)
+    genColDef(fld.getId, getLongKeyword, fld.isNullable,
+        if (fld.getDft) fld.getDftValue else "")
   }
 
   protected def genAutoLong(table:String , fld:FldMetaHolder ) = ""
 
   protected def genTimestamp(fld:FldMetaHolder ) = {
-    genColDef(fld.getId, getTSKeyword, fld.isNullable)
+    genColDef(fld.getId, getTSKeyword, fld.isNullable, 
+        if (fld.getDft) getTSDefault() else "" )
   }
 
   protected def genDate(fld:FldMetaHolder ) = {
-    genColDef(fld.getId, getDateKeyword, fld.isNullable)
+    genColDef(fld.getId, getDateKeyword, fld.isNullable,
+        if (fld.getDft) getTSDefault() else "" )        
   }
 
   protected def genBool(fld:FldMetaHolder ) = {
-    genColDef(fld.getId, getBoolKeyword, fld.isNullable)
+    genColDef(fld.getId, getBoolKeyword, fld.isNullable,
+        if (fld.getDft) fld.getDftValue else "" )    
   }
 
-  protected def getTSDefault() = "DEFAULT CURRENT_TIMESTAMP"
+  protected def getTSDefault() = "CURRENT_TIMESTAMP"
 
   protected def getPad() = "    "
 

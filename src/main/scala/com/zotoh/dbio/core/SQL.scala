@@ -114,6 +114,7 @@ class SQuery(
         case b: scala.Array[Byte] => ps.setBytes(pos, b)
         case b: Boolean => ps.setBoolean(pos, b)
         case d: Double => ps.setDouble(pos, d)
+        case f: Float => ps.setFloat(pos, f)
         case t: STimestamp => ps.setTimestamp(pos, t)
         case dt: JDate => ps.setDate(pos, new SDate(dt.getTime()))
 

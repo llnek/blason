@@ -59,13 +59,9 @@ class TLocalDBIO(private val _ji:JDBCInfo, private val _props:JPS) {
 /**
  * @author kenl
  */
-class TLocalJDBC(ji:JDBCInfo, props:JPS) extends ThreadLocal[TLocalDBIO] {
+class TLocalJDBC() extends ThreadLocal[TLocalDBIO] {
   
-  def this() {
-    this(null, new JPS())
-  }
-  
-  override def initialValue() = new TLocalDBIO(ji,new JPS() )
+  //override def initialValue() = new TLocalDBIO(ji,new JPS() )
   
 }
 

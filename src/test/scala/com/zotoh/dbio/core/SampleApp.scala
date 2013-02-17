@@ -53,7 +53,7 @@ object SampleApp {
 
   private def parseArgs(args:Array[String]) = {
     val m= Set("all","crud","sql","o2o","o2m","m2m","ddl")
-    val opt= if (args.length > 0) args(0) else ""
+    val opt= if (args.length > 0) args(0) else "all"
     m.contains(opt)
   }
 
@@ -72,22 +72,27 @@ object SampleApp {
 
     _log.info("Starting sample application") 
 
-    val dbdir= if (args.length > 1) new File(args(1)) else genTmpDir()
+    val dbdir= genTmpDir()
     initialize(dbdir)
 
-    val all = "all" == args(0)
     val proc= new CompositeSQLr(_db)
+    var a0=""
+    val all = if (args.length==0) true else {
+      a0=args(0)
+      false
+    }
 
     new BasicGenSQLDemo(proc).start()
     // load DDL only ?
 
-    if (args(0) == "ddl") {} else {
-      if (all || "sql"==args(0)) { new BasicSQLDemo( proc).start() }
-//      if ( all || "crud"== args(0)) { new BasicCRUDDemo(io).start() }
-//      if (all || "o2o"== args(0)) { new BasicO2ODemo(io).start() }
-//      if ( all || "o2m" == args(0)) { new BasicO2MDemo(io).start() }
-//      if ( all || "m2m" == args(0)) { new BasicM2MDemo(io).start() }
+    if (a0 == "ddl") {} else {
+      if (all || "sql"==a0) { new BasicSQLDemo( proc).start() }
+      if ( all || "crud"== a0) { new BasicCRUDDemo(proc).start() }
+      if (all || "o2o"== a0) { new BasicO2ODemo(proc).start() }
+      if ( all || "o2m" == a0) { new BasicO2MDemo(proc).start() }
+      if ( all || "m2m" == a0) { new BasicM2MDemo(proc).start() }
     }
+    
     _log.info("Done.") 
   }
 
