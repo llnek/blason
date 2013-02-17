@@ -55,6 +55,13 @@ trait SQLProc extends CoreImplicits {
   def delete( obj:DBPojo): Int
   def update( obj:DBPojo, cols:Set[String] ): Int
   
+  def count(z:Class[_]) = {
+    val f = { (rset:ResultSet) =>
+      if (rset != null && rset.next()) rset.getInt(1) else 0    
+    }
+    doCount( "SELECT COUNT(*) FROM " + throwNoTable(z).table().uc , f)
+  }
+  
   def update( obj:DBPojo): Int = {
     update(obj, Set("*"))
   }
@@ -144,11 +151,6 @@ trait SQLProc extends CoreImplicits {
     }
   }
 
-  def execUpdateSQL(sql:String, params:Any*) = {
-    0
-  }
-
-
   private def fetchObjs[T]( target:Class[T], values:NameValues ) = {
     findSome( target, values)
   }
@@ -181,7 +183,7 @@ trait SQLProc extends CoreImplicits {
     val t= throwNoTable(rhs)
     val sql="DELETE FROM " + t.table.uc + " WHERE " + COL_ROWID + "=?"
     lhs.get(fkey) match {
-      case Some(v) => execUpdateSQL(sql, v)
+      case Some(v) => execute(sql, v)
       case _ => 0
     }
   }
@@ -204,7 +206,7 @@ trait SQLProc extends CoreImplicits {
   def purgeO2M(lhs:DBPojo, rhs:Class[_], fkey:String) = {
     val t= throwNoTable(rhs)
     val sql="DELETE FROM " + t.table.uc + " WHERE " + fkey + "=?"
-    execUpdateSQL(sql, lhs.getRowID )
+    execute(sql, lhs.getRowID )
   }
 
   def linkO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
@@ -236,7 +238,7 @@ trait SQLProc extends CoreImplicits {
             " WHERE " + COL_RHS + "=? AND " + COL_LHS + "=? AND " +
             COL_RHSOID + "=? AND " + COL_LHSOID + "=?"
 
-    execUpdateSQL(sql, rn, ln, rhs.getRowID, lhs.getRowID)
+    execute(sql, rn, ln, rhs.getRowID, lhs.getRowID)
   }
 
   def purgeM2M(lhs:DBPojo, rhs:Class[_]): Int = {
@@ -249,7 +251,7 @@ trait SQLProc extends CoreImplicits {
             " WHERE " + COL_RHS + "=? AND " + COL_LHS + "=? AND " +
             COL_LHSOID + "=?"
 
-    execUpdateSQL(sql, rn, ln, lhs.getRowID )
+    execute(sql, rn, ln, lhs.getRowID )
   }
 
   def linkM2M(lhs:DBPojo, rhs:DBPojo): Int = {
@@ -262,7 +264,7 @@ trait SQLProc extends CoreImplicits {
             " ( " + COL_VERID + ", " + COL_RHS + ", " + COL_LHS + ", " +
             COL_RHSOID + ", " + COL_LHSOID + ") VALUES (?,?,?,?,?)"
 
-    execUpdateSQL(sql, 1L, rn, ln, rhs.getRowID, lhs.getRowID )
+    execute(sql, 1L, rn, ln, rhs.getRowID, lhs.getRowID )
   }
 
   private def getMetas( conn:Connection, z:Class[_]) = {
@@ -311,6 +313,8 @@ trait SQLProc extends CoreImplicits {
   protected def doExecute(conn:Connection, sql:String, pms:Any*): Int  = {
         new SQuery(conn, sql, pms.toSeq ).execute()  
   }
+
+  protected def doCount(sql:String, f: ResultSet => Int ): Int
   
 }
 

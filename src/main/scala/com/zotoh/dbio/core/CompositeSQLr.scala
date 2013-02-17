@@ -113,5 +113,10 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
     doUpdate(obj, cols)    
   }
 
+  def doCount(sql:String, f: ResultSet => Int) = {
+    val rc = new SQuery(_conn, sql ).select(f)
+    if (rc.size == 0) 0 else rc(0)
+  }  
+  
 }
 

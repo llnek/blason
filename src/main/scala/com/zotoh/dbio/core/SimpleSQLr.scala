@@ -76,4 +76,16 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
     }
   }
 
+  def doCount(sql:String, f: ResultSet => Int) = {
+    val c= _db.open
+    try {
+      val rc = new SQuery(c, sql).select(f)
+      if (rc.size == 0) 0 else rc(0)
+    }  finally {
+      _db.close(c)
+    }    
+  }
+  
+  
+  
 }
