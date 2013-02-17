@@ -70,6 +70,9 @@ class PoolableDB( ji:JDBCInfo,
   
   private val _pool = JDBCPool.mkSingularPool( ji, _props)
 
+  def getProperties() = _props
+  def getInfo() = ji
+  
   def open()  = _pool.nextFree
   def finz() {
     _pool.finz

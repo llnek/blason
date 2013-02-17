@@ -67,4 +67,7 @@ trait DB {
   def open(): Connection
   def finz(): Unit
 
+  def getInfo(): JDBCInfo
+  def getProperties(): JPS
+  
 }

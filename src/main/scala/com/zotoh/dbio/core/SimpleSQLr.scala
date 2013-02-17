@@ -45,6 +45,12 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
   val _log= LoggerFactory.getLogger(classOf[SimpleSQLr])
   val _meta= _db.getMeta()
   
+  def getDB() = _db
+  
+  def execWith[T](f: Transaction => T)  {
+    throw new UnsupportedOperationException("no transactions.")
+  }
+  
   def update(obj : DBPojo, cols : Set[String]): Int = {
     doUpdate(obj, cols)
   }
@@ -86,6 +92,9 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
     }    
   }
   
+  def doPurge(sql:String) {
+    execute(sql)
+  }
   
   
 }

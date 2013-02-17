@@ -53,13 +53,16 @@ class CompositeSQLr(private val _db : DB) {
 
   def tlog() = CompositeSQLr._log
 
-  def execWith[T](f: Transaction => T) = {
+  def getDB() = _db
+
+  def execWith[T](f: Transaction => T): T =  {
     val c= begin
     try {
-      f ( new Transaction(c,_db) )
+      val rc= f ( new Transaction(c,_db) )
       commit(c)
+      rc
     } catch {
-      case e: Throwable => { rollback(c) ; tlog.warn("",e) }
+      case e: Throwable => { rollback(c) ; tlog.warn("",e) ; throw e }
     } finally {
       close(c)
     }
@@ -93,6 +96,8 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
   val _log= LoggerFactory.getLogger(classOf[Transaction])
   val _meta =  _db.getMeta
   
+  def getDB() = _db
+
   def insert(obj : DBPojo): Int = {
     doInsert(obj)
   }
@@ -117,6 +122,10 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
     val rc = new SQuery(_conn, sql ).select(f)
     if (rc.size == 0) 0 else rc(0)
   }  
+  
+  def doPurge(sql:String) {
+    execute(sql)
+  }
   
 }
 

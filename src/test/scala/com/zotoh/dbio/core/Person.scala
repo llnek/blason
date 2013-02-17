@@ -31,6 +31,18 @@ import com.zotoh.frwk.db.JDBCUtils._
 @Table(table="TBL_PERSON")
 class Person extends AbstractModel {
 
+  def dbio_getFirst_column="first_name"
+  @Column(optional=false)
+  def getFirst() = {
+    readData( dbio_getFirst_column) match {
+      case Some(v) => nsb(v)
+      case _ => ""
+    }
+  }
+  def setFirst(n:String ) {
+    writeData( dbio_getFirst_column, Option(n))
+  }
+  
   def dbio_getLast_column="last_name"
   @Column(optional=false)
   def getLast() = {
@@ -82,7 +94,7 @@ class Person extends AbstractModel {
 
   def dbio_getSpouse_fkey = "FK_SPOUSE"
   @One2One(rhs=classOf[Person] )
-  def getSpouse[T <: Person](db:SQLProc, rhs:Class[T] ) = {
+  def getSpouse[T <: Person](db:SQLProc, rhs:Class[T] ): Option[T] = {
     db.getO2O(this, rhs, dbio_getSpouse_fkey  )
   }
   def setSpouse[T <: Person](db:SQLProc, p:T ) {

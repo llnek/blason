@@ -25,7 +25,7 @@ package core
 import scala.collection.mutable
 import com.zotoh.dbio.meta.Column
 import java.util.{Date=>JDate}
-import com.zotoh.dbio.core.DBPojo
+
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.Nichts
 import com.zotoh.dbio.core.DBPojo.COL_ROWID

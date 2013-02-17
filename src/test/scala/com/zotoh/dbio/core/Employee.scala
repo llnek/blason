@@ -32,7 +32,7 @@ class Employee extends Person {
 
   def dbio_getDepts_fkey=  "FK_EMPS"
   @Many2Many(rhs=classOf[Department], joined=classOf[DeptEmp])
-  def getDepts( db:SQLProc) {
+  def getDepts( db:SQLProc) = {
     db.getM2M(this, classOf[Department] )
   }
   def removeDepts(db:SQLProc) {

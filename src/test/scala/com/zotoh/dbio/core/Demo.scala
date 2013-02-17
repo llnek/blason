@@ -33,7 +33,7 @@ object Demo {
  * @author kenl
  *
  */
-abstract class Demo protected(protected val _db:SQLProc) {
+abstract class Demo protected(protected val _db:CompositeSQLr) {
 
   def tlog() = Demo._log
 
@@ -41,7 +41,7 @@ abstract class Demo protected(protected val _db:SQLProc) {
     tlog.debug("\n")
     tlog.debug("==============================================================")
     tlog.debug("Start Demo Run: " + getClass().getName())
-    tlog.run()
+    run()
     tlog.debug("==============================================================")
     tlog.debug("\n")
   }
@@ -49,9 +49,11 @@ abstract class Demo protected(protected val _db:SQLProc) {
   protected def run(): Unit
 
   protected def fetch_employee(login:String) = {
-    val rc= _db.findSome(classOf[Employee],
+    _db.execWith { (tx) =>
+    val rc= tx.findSome(classOf[Employee],
               new NameValues("LOGIN", login) )
-    if ( rc.size == 0) null else rc(0)
+    if ( rc.size == 0) null else rc(0)      
+    }
   }
 
   protected def iniz_employee(  fname:String , lname:String, login:String) = {
@@ -73,17 +75,21 @@ abstract class Demo protected(protected val _db:SQLProc) {
 
   protected def demo_no_objects() {
 
-    var c= _db.count( classOf[Company] )
-    tlog.debug("Company count = " + c)
-
-    c= _db.count( classOf[Department] )
-    tlog.debug("Department count = " + c)
-
-    c= _db.count( classOf[Employee] )
-    tlog.debug("Employee count = " + c)
-
-    c= _db.count( classOf[Person] )
-    tlog.debug("Person count = " + c)
+    _db.execWith { (tx) =>
+      
+      var c= tx.count( classOf[Company] )
+      tlog.debug("Company count = " + c)
+  
+      c= tx.count( classOf[Department] )
+      tlog.debug("Department count = " + c)
+  
+      c= tx.count( classOf[Employee] )
+      tlog.debug("Employee count = " + c)
+  
+      c= tx.count( classOf[Person] )
+      tlog.debug("Person count = " + c)
+      
+    }
 
   }
 

@@ -36,6 +36,7 @@ import com.zotoh.frwk.db.JDBCUtils._
 import org.apache.commons.dbutils.{DbUtils=>DBU}
 import java.sql.Statement
 import com.zotoh.frwk.util.Nichts
+import com.zotoh.frwk.db.JDBCInfo
 
 
 /**
@@ -49,12 +50,16 @@ trait SQLProc extends CoreImplicits {
 
   import DBPojo._
 
+  def getDB(): DB
+  
   def select[T]( sql:String, params:Any* )(f: ResultSet => T): Seq[T]
   def execute(sql:String, params:Any* ): Int
   def insert( obj:DBPojo): Int
   def delete( obj:DBPojo): Int
   def update( obj:DBPojo, cols:Set[String] ): Int
-  
+  def purge(cz:Class[_]) {
+    doPurge("delete from " + throwNoTable(cz).table.uc )
+  }
   def count(z:Class[_]) = {
     val f = { (rset:ResultSet) =>
       if (rset != null && rset.next()) rset.getInt(1) else 0    
@@ -81,7 +86,12 @@ trait SQLProc extends CoreImplicits {
       select[T]( s)(cb)
     }
   }
-
+  def findSome[T](cz:Class[T]): Seq[T] = findSome(cz, new NameValues)
+  def findOne[T](cz:Class[T], filter:NameValues): Option[T] = {
+    val rc = findSome(cz, filter)
+    if (rc.size == 0) None else Option( rc(0) )
+  }  
+  
   def findAll[T](cz:Class[T]): Seq[T] = {
     findSome(cz, new NameValues )
   }
@@ -170,9 +180,9 @@ trait SQLProc extends CoreImplicits {
     t
   }
 
-  def getO2O[T](lhs:DBPojo, rhs:Class[T], fkey:String) = {
+  def getO2O[T](lhs:DBPojo, rhs:Class[T], fkey:String): Option[T] = {
     val rc = findSome( rhs, new NameValues(COL_ROWID, lhs.get(fkey)) )    
-    if (rc.size == 0) null else rc(0)
+    if (rc.size == 0) None else Option( rc(0) )
   }
 
   def setO2O(lhs:DBPojo, rhs:DBPojo, fkey:String) {
@@ -315,6 +325,7 @@ trait SQLProc extends CoreImplicits {
   }
 
   protected def doCount(sql:String, f: ResultSet => Int ): Int
+  protected def doPurge(sql:String): Unit
   
 }
 

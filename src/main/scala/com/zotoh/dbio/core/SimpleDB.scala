@@ -59,7 +59,14 @@ class SimpleDB(ji:JDBCInfo, s:Schema, pps:JPS) extends DB {
     _props.put("password", nsb( ji.pwd))
   }
 
+  def getProperties() = _props
+  def getInfo() = ji
+  
   def finz() {
+    Option(_jdb.get) match {
+      case Some(x:TLocalDBIO) => x.finz
+      case _ =>
+    }
   }
 
   def open() = {
