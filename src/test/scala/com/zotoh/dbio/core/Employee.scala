@@ -27,7 +27,7 @@ import com.zotoh.dbio.meta._
 import com.zotoh.frwk.db.JDBCUtils._
 
 
-@Table(table="TBL_EMPLOYEE")
+@Table(table="TBL_EMPLOYEE", uniqueIndexes=Array("loginid"))
 class Employee extends Person {
 
   def dbio_getDepts_fkey=  "FK_EMPS"
@@ -46,7 +46,7 @@ class Employee extends Person {
   }
 
   def dbio_getLogin_column= "login"
-  @Column(size=128,unique=true)
+  @Column(size=128, index="loginid")
   def getLogin() = {
     readData( dbio_getLogin_column) match {
       case Some(s) => nsb(s)

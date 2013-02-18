@@ -27,7 +27,7 @@ import com.zotoh.dbio.meta._
 import com.zotoh.frwk.db.JDBCUtils._
 
 
-@Table(table="TBL_COMPANY")
+@Table(table="TBL_COMPANY", uniqueIndexes=Array("companyid"))
 class Company extends AbstractModel {
 
   def dbio_getAddress_fkey = "FK_ADDRESS"
@@ -40,7 +40,7 @@ class Company extends AbstractModel {
   }
 
   def dbio_getCompanyName_column = "COMPANY_ID"
-  @Column(size=255, unique=true)
+  @Column(size=255, index="companyid")
   def getCompanyName() = {
     readData( dbio_getCompanyName_column ) match {
       case Some(v) => nsb(v)

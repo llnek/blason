@@ -22,6 +22,7 @@
 package com.zotoh.dbio
 package core
 
+import scala.language.existentials
 import org.apache.commons.lang3.{StringUtils=>STU}
 import scala.collection.mutable
 import java.lang.reflect.Method
@@ -44,9 +45,10 @@ object ClassMetaHolder {
  * @author kenl
  *
  */
-class ClassMetaHolder(private val _meta:MetaCache, z:Class[_]) extends CoreImplicits {
+class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
 
   private val _info= new FMap()
+  private var _cz:Class[_] = null
   private var _table=""
 
   def tlog() =  ClassMetaHolder._log
@@ -54,14 +56,8 @@ class ClassMetaHolder(private val _meta:MetaCache, z:Class[_]) extends CoreImpli
   import MetaCache._
   import DBPojo._
   import Utils._
-  iniz(z)
 
-  /**
-   *
-   */
-  def this(m:MetaCache) { this(m,null) }
-
-  def getCZ() = z 
+  def getCZ() = _cz
     
   def scan(z:Class[_] ): this.type = {
     iniz(z)
@@ -91,17 +87,29 @@ class ClassMetaHolder(private val _meta:MetaCache, z:Class[_]) extends CoreImpli
     }
   }
 
-  def getIndexes() = {
-    val rc= mutable.ArrayBuffer[SIndex]()
-    _info.foreach { (en) =>
-      val ii= en._2
-      val m = if (ii.isUniqueKey()) ii.getGetter() else null
-      val c= if (m==null) null else m.getAnnotation(classOf[Column])
-      if (c != null) {
-        rc += ii.getId().uc
+  def getIndexes( wantUnique:Boolean = false) = {
+    val rc= mutable.HashMap[String,SIndex]()
+    val t = Utils.throwNoTable( getCZ )
+    val mmz= classOf[M2MTable]
+    val arr = if ( mmz.isAssignableFrom(_cz)) {
+      val tt=Utils.getTable(mmz)
+      if (wantUnique) tt.uniqueIndexes() else tt.indexes()
+    } else {
+      if (wantUnique) t.uniqueIndexes() else t.indexes()      
+    }   
+    val ss= arr.map( _.toUpperCase ).toSet
+    _info.values.filter( _.isIndex ).foreach { (fld) =>
+      val nn= fld.getIndexName.uc
+      if (ss.contains( nn )) {        
+        if ( rc.get(nn).isEmpty) {
+          rc += nn -> new SIndex(nn, wantUnique)
+        }
+        rc.get(nn).get.add(fld.getId )
+      } else {
+//        throw new Exception("Unknown index referenced: " + nn + " on table: " + t.table )
       }
-    }
-    rc.toSeq
+    }      
+    rc.toMap
   }
 
   def getGetters() = {
@@ -134,7 +142,7 @@ class ClassMetaHolder(private val _meta:MetaCache, z:Class[_]) extends CoreImpli
         _table= t.table().toUpperCase()
       case _ =>
     }
-    
+    _cz = z    
   }
   
   private def ensureMarker(mn:String) = {
@@ -311,7 +319,7 @@ class FMap extends mutable.HashMap[String, FldMetaHolder] with CoreImplicits {
 }
 
 class SIndex(private val _name:String, private val _unique:Boolean) {
-  private val _cols=mutable.HashSet[String]
+  private val _cols= mutable.HashSet[String]()
   def name() = _name
   def unique() = _unique
   def add(s:String) {

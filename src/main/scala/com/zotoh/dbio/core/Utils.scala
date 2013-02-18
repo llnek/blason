@@ -46,6 +46,19 @@ object Utils {
   def hasO2O(m:Method) = getO2O(m) != null
   def hasO2M(m:Method) = getO2M(m) != null
   
+  def throwNoTable(z:Class[_]) = {
+    getTable(z) match {
+      case x:Table => x
+      case _ => throw new Exception("No table annotation for class: " + z)
+    }
+  }
+  
+  def throwNoColumn(m:Method) = {
+    getColumn(m) match {
+      case x:Column => x
+      case _ => throw new Exception("No column annotation for class: " + m.getName)
+    }
+  }
   
 }
 

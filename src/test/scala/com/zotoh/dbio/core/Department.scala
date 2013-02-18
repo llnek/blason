@@ -30,11 +30,11 @@ import com.zotoh.frwk.util.StrUtils._
  * @author kenl
  *
  */
-@Table(table="TBL_DEPT")
+@Table(table="TBL_DEPT", uniqueIndexes=Array("deptid"))
 class Department extends AbstractModel {
 
   def dbio_getDeptID_column = "dname"
-  @Column(size=128,unique=true)
+  @Column(size=128, index="deptid")
   def getDeptID() = {
     readData( dbio_getDeptID_column ) match {
       case Some(v) => nsb(v)

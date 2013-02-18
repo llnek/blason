@@ -37,8 +37,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface Column {
 
-  public String unique_index() default "";
-  public String basic_index() default "";
+  public String index() default "";
 
   /**
    * Flag to reflect column's nullability.

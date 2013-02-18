@@ -23,6 +23,8 @@
 package com.zotoh.dbio
 package core
 
+import org.apache.commons.lang3.{StringUtils=>STU}
+
 import java.lang.reflect.Method
 import com.zotoh.dbio.meta.Column
 
@@ -48,19 +50,10 @@ class FldMetaHolder(private val _name:String, private val _col:Column) {
   def setSetter(m:Method ) { _mtds(1)=m }
 
   def isIndex() = if (_col == null) false else {
-    !STU.isEmpty(_col.unique_index() ) ||
-    !STU.isEmpty(_col.basic_index() )
+    !STU.isEmpty(_col.index() )
   }
 
-  def isUniqueIndex() = if (_col == null) false else {
-    !STU.isEmpty(_col.unique_index() )
-  }
-
-  def getIndexName() = if (_col == null) "" else {
-    val u=_col.unique_index()
-    val b=_col.basic_index()
-    if (!STU.isEmpty(u)) u else if (!STU.isEmpty(b)) b else ""
-  }
+  def getIndexName() = if (_col == null) "" else _col.index()
 
   def isAutoGen() = if (_col == null) false else _col.autogen()
 

@@ -26,6 +26,7 @@ import org.apache.commons.lang3.{StringUtils=>STU}
 import java.sql.SQLException
 import java.util.{TreeSet=>JTreeSet,Date=>JDate}
 import com.zotoh.frwk.util.MetaUtils._
+import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.db.DBVendor._
 import com.zotoh.dbio.meta._
 import com.zotoh.frwk.db.DBVendor
@@ -37,6 +38,7 @@ import com.zotoh.dbio.core.AssocMetaHolder
 import com.zotoh.dbio.core.M2MTable
 import com.zotoh.dbio.core.Schema
 import com.zotoh.dbio.core.DBPojo
+import com.zotoh.dbio.core.SIndex
 
 
 
@@ -95,18 +97,17 @@ abstract class DBDriver protected() {
   protected def genOneClass(zm:ClassMetaHolder ) = {
     val n= zm.getTable()
     if (STU.isEmpty(n)) "" else {
-      genOneTable(n, zm.getFldMetas, _meta.getAssocMetas )
+      genOneTable(n, zm, _meta.getAssocMetas )
     }
   }
 
-  protected def genOneTable(table:String, cols:Map[String,FldMetaHolder], 
+  protected def genOneTable(table:String, zm:ClassMetaHolder, 
       assocs:Map[String,AssocMetaHolder] )  = {
-    
     val ddl= new StringBuilder(10000)
     val inx= new StringBuilder(256)
     //ddl.append( genDrop(table))
     ddl.append( genBegin(table))
-    ddl.append(genBody(table, cols, assocs, inx))
+    ddl.append(genBody(table, zm, assocs, inx))
     ddl.append(genEnd)
     if (inx.length() > 0) {
       ddl.append(inx.toString)
@@ -123,12 +124,13 @@ abstract class DBDriver protected() {
     new StringBuilder(256).append("CREATE TABLE ").append(tbl).append("\n(\n").toString
   }
 
-  protected def genBody(table:String, cols:Map[String,FldMetaHolder],
+  protected def genBody(table:String, zm:ClassMetaHolder,
     assocs:Map[String,AssocMetaHolder], inx:StringBuilder) = {
 
     val pkeys= new JTreeSet[String]()
     val keys= new JTreeSet[String]()
     val bf= new StringBuilder(512)
+    val cols = zm.getFldMetas()
 
     cols.foreach { (en) =>
       val fld= en._2
@@ -137,8 +139,6 @@ abstract class DBDriver protected() {
       val dt= fld.getColType
 
       if (fld.isPK) { pkeys.add(cn) }
-      else
-      if (fld.isUniqueKey) { keys.add(cn) }
 
       if ( isBoolean(dt)) { col= genBool(fld) }
       else if ( classOf[java.sql.Timestamp] == dt ) { col= genTimestamp(fld) }
@@ -163,22 +163,24 @@ abstract class DBDriver protected() {
     val asoc= assocs.get(table)
     inx.setLength(0)
     var iix=1
+    
     if (asoc.isDefined) asoc.get.getInfo.foreach { (t) =>
       val cn = t._3.toUpperCase()
       val col = genColDef(cn, getLongKeyword() , true, "")
       if (bf.length() > 0) { bf.append(",\n") }
       bf.append(col)
-      inx.append( "CREATE INDEX " + table + "_IDX_" + iix + " ON " + table + 
+      inx.append( "CREATE INDEX " + table.toLowerCase + "_x" + iix + " ON " + table + 
         " ( "  + cn + " )" + genExec + "\n\n" )
       iix += 1
     }
-
+    genExIndexes(table, zm, inx)
+    
     if (bf.length() > 0) {
       var s= if(pkeys.size ==0 ) "" else genPrimaryKey(pkeys.toArray )
       if ( !STU.isEmpty(s)) {
         bf.append(",\n").append(s)
       }
-      s= if (keys.size == 0) "" else genUniques(keys.toArray)
+      s= genUniques(zm)
       if ( !STU.isEmpty(s)) {
         bf.append(",\n").append(s)
       }
@@ -204,13 +206,29 @@ abstract class DBDriver protected() {
     getPad() + "PRIMARY KEY(" + b + ")"
   }
 
-  protected def genUniques(keys:Array[Object]) = {
-    Arrays.sort(keys)
-    val b=keys.foldLeft(new StringBuilder) { (b,k) =>
-      if (b.length() > 0) { b.append(",") }
-      b.append(k)
+  private def genExIndexes(table:String, zm:ClassMetaHolder, inx:StringBuilder) {
+    
+    zm.getIndexes().values.foreach { (si) =>
+      val arr=si.getCols.toArray[Object]
+      Arrays.sort(arr)
+      if (arr.length > 0) {
+        inx.append( "CREATE INDEX " + table.toLowerCase + "_" + si.name.toLowerCase + " ON " + table + 
+              " ( "  + join(arr,",") + " )" + genExec + "\n\n" )        
+      }
     }
-    getPad() + "UNIQUE(" + b + ")"
+  }
+  
+  protected def genUniques(zm:ClassMetaHolder) = {
+    val bf= new StringBuilder(4096)
+    zm.getIndexes(true).values.foreach { (si) =>
+      val arr=si.getCols.toArray[Object]
+      Arrays.sort(arr)
+      if (arr.length > 0) {
+        if (bf.length() > 0) { bf.append(",\n") }
+        bf.append( getPad() + "UNIQUE(" + join(arr,",") + ")" )
+      }
+    }
+    bf.toString()
   }
 
   protected def genColDef(col:String , ty:String , optional:Boolean, dft:String) = {
