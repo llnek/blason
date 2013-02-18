@@ -30,7 +30,7 @@ import com.zotoh.frwk.util.StrUtils._
  * @author kenl
  *
  */
-@Table(table="TBL_DEPT", uniqueIndexes=Array("deptid"))
+@Table(table="TBL_DEPT", uniques=Array("deptid"))
 class Department extends AbstractModel {
 
   def dbio_getDeptID_column = "dname"

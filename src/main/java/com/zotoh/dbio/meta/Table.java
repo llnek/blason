@@ -44,7 +44,7 @@ public @interface Table {
      */
     public String table();
     
-    public String[] uniqueIndexes() default {} ;    
+    public String[] uniques() default {} ;    
     public String[] indexes() default {} ;
     
 }

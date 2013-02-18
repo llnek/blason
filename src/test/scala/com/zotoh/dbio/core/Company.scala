@@ -27,7 +27,7 @@ import com.zotoh.dbio.meta._
 import com.zotoh.frwk.db.JDBCUtils._
 
 
-@Table(table="TBL_COMPANY", uniqueIndexes=Array("companyid"))
+@Table(table="TBL_COMPANY", uniques=Array("companyid"))
 class Company extends AbstractModel {
 
   def dbio_getAddress_fkey = "FK_ADDRESS"

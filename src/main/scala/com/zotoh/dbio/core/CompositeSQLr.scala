@@ -98,7 +98,7 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
   val _log= LoggerFactory.getLogger(classOf[Transaction])
   val _meta =  _db.getMeta
   val _items= mutable.ArrayBuffer[DBPojo]()
-  
+
   def getDB() = _db
 
   def insert(obj : DBPojo): Int = {
@@ -130,20 +130,20 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
   def doCount(sql:String, f: ResultSet => Int) = {
     val rc = new SQuery(_conn, sql ).select(f)
     if (rc.size == 0) 0 else rc(0)
-  }  
-  
+  }
+
   def doPurge(sql:String) {
     execute(sql)
   }
-  
+
   private def rego(obj:DBPojo) {
     _items += obj
   }
-  
+
   protected[core] def reset() {
-    _items.foreach(_.asInstanceOf[AbstractModel].reset )
+    _items.foreach(_.asInstanceOf[AbstractModel].commit() )
     _items.clear
   }
-  
+
 }
 

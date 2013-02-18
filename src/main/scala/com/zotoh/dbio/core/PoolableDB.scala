@@ -30,6 +30,7 @@ import com.jolbox.bonecp.BoneCP
 import com.zotoh.frwk.db.{JDBCPool,JDBCInfo,TLocalDBIO,TLocalJDBC}
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.CoreImplicits
 import org.slf4j._
 
 
@@ -54,12 +55,14 @@ class PoolableDB( ji:JDBCInfo,
 //  private val maxPartitions: Int,
 //  private val maxWaitForConnMillis: Long,
   s:Schema,
-  pps:JPS) extends DB {
+  pps:JPS) extends DB with CoreImplicits {
 
   val _log= LoggerFactory.getLogger(classOf[PoolableDB])
   val _meta= new MetaCache(s)
   
   private val _props = new JPS()
+  private var _optLock=false
+  
   _props.putAll(pps)
   
   if (!STU.isEmpty(ji.user)) {
@@ -78,5 +81,9 @@ class PoolableDB( ji:JDBCInfo,
     _pool.finz
   }
 
+  def supportsOptimisticLock() = {
+    true || _props.getb("opt_lock")
+  }
+  
 }
 

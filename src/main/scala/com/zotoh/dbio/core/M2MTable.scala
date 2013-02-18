@@ -31,7 +31,7 @@ import com.zotoh.dbio.meta.Table
  *
  */
 
-@Table(table="definedbysubclass", uniqueIndexes=Array("u1") )
+@Table(table="definedbysubclass", uniques=Array("u1") )
 abstract class M2MTable extends AbstractModel {
   import DBPojo._
 

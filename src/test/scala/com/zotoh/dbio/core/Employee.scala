@@ -27,7 +27,7 @@ import com.zotoh.dbio.meta._
 import com.zotoh.frwk.db.JDBCUtils._
 
 
-@Table(table="TBL_EMPLOYEE", uniqueIndexes=Array("loginid"))
+@Table(table="TBL_EMPLOYEE", uniques=Array("loginid"))
 class Employee extends Person {
 
   def dbio_getDepts_fkey=  "FK_EMPS"

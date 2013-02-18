@@ -68,7 +68,12 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   protected def readData(col:String): Option[Any] = {
     _storage.get(col.uc)
   }
-  
+
+  def commit() {
+    setVerID( getVerID() + 1)
+    reset()
+  }
+
   def reset() {
     _dirtyFields.clear()
   }
@@ -89,7 +94,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
   
   def dbio_getVerID_column = COL_VERID
-  @Column( optional=false,system=true,dft=true,dftValue="0")
+  @Column( optional=false,system=true,dft=true,updatable=false,dftValue="0")
   def getVerID() = {
     readData(dbio_getVerID_column ) match {
       case Some(x:Long) => x

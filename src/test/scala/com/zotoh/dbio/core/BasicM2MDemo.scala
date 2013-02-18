@@ -69,13 +69,14 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
       tx.insert(d1)
       tx.insert(d2)
       tx.insert(d3)
-
-      company.addDept(tx, d1) 
-      company.addDept(tx, d2) 
-      company.addDept(tx, d3) 
-      tx.update(d1)
-      tx.update(d2)
-      tx.update(d3)
+    }
+    
+    _db.execWith { (tx) =>
+      val company= fetch_company(tx)
+      tx.findAll(classOf[Department]).foreach { (d) =>
+        company.addDept(tx, d)         
+        tx.update(d)
+      }
       tx.update(company)
 
       println("Added 3 departments to Company. OK.")
@@ -94,14 +95,15 @@ class BasicM2MDemo(io:CompositeSQLr) extends Demo(io) {
       tx.insert(e1)
       tx.insert(e2)
       tx.insert(e3)
-
-      company.addEmployee(tx, e1)
-      company.addEmployee(tx, e2)
-      company.addEmployee(tx, e3)
-
-      tx.update(e1)
-      tx.update(e2)
-      tx.update(e3)
+    }
+    
+    _db.execWith { (tx) =>
+    
+      val company= fetch_company(tx)
+      tx.findAll(classOf[Employee]).foreach { (e) =>
+        company.addEmployee(tx, e)
+        tx.update(e)
+      }
       tx.update(company)
 
       println("Added 3 employees to Company. OK.")

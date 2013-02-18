@@ -93,9 +93,9 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
     val mmz= classOf[M2MTable]
     val arr = if ( mmz.isAssignableFrom(_cz)) {
       val tt=Utils.getTable(mmz)
-      if (wantUnique) tt.uniqueIndexes() else tt.indexes()
+      if (wantUnique) tt.uniques() else tt.indexes()
     } else {
-      if (wantUnique) t.uniqueIndexes() else t.indexes()      
+      if (wantUnique) t.uniques() else t.indexes()      
     }   
     val ss= arr.map( _.toUpperCase ).toSet
     _info.values.filter( _.isIndex ).foreach { (fld) =>

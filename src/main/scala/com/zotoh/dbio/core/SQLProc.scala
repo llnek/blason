@@ -117,7 +117,10 @@ trait SQLProc extends CoreImplicits {
     val sb1= new StringBuilder(1024)
     val cz= throwNoCZMeta(obj.getClass)
     val flds= cz.getFldMetas()
-    
+    val cver= pojo.getVerID()
+    val nver= cver+1
+    val lock= getDB().supportsOptimisticLock()
+
     obj.setLastModified(nowJTS() )
     ds.filter( all || cols.contains(_) ).foreach { (dn) =>
       val go= flds.get(dn) match {
@@ -132,16 +135,33 @@ trait SQLProc extends CoreImplicits {
             case Some(v) =>
               sb1.append("=?")
               lst += v
-          }        
+          }
       }
-    }        
+    }
     if (sb1.length > 0) {
+      if (lock) {
+        addAndDelim(sb1, ",", COL_VERID).append("=?")
+        lst += nver
+      }
+      // for where clause
       lst += obj.getRowID
-      execute("UPDATE " + cz.getTable.uc + " SET " + sb1 + " WHERE " + COL_ROWID + "=?" , lst:_*)
+      if (lock) { lst += cver }
+      val tbl= cz.getTable.uc
+      val cnt= execute("UPDATE " + tbl + " SET " + sb1 + " WHERE " +
+        fmtUpdateWhere(lock) , lst:_*)
+      if (lock) {
+        lockError(cnt, tbl, obj.getRowID )
+      }
+      cnt
     }
     else {
       0
     }
+  }
+
+  private def fmtUpdateWhere(lock:Boolean) = {
+    val s1= COL_ROWID + "=?"
+    if (lock) s1 + " AND " + COL_VERID + "=?" else s1
   }
 
   protected def doDelete( obj:DBPojo): Int = {
@@ -320,7 +340,7 @@ trait SQLProc extends CoreImplicits {
 
   private def lockError(cnt:Int, table:String, rowID:Long ) {
     if (cnt==0) {
-       throw new SQLEx("Possible Optimistic lock failure for table: " +
+       throw new OptLockError("Possible Optimistic lock failure for table: " +
                table + ", rowid= " + rowID)
     }
   }

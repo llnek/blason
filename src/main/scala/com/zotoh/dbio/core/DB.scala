@@ -69,5 +69,6 @@ trait DB {
 
   def getInfo(): JDBCInfo
   def getProperties(): JPS
+  def supportsOptimisticLock(): Boolean
   
 }

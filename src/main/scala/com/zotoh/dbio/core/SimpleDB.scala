@@ -30,6 +30,7 @@ import com.jolbox.bonecp.BoneCP
 import com.zotoh.frwk.db.{JDBCPool,JDBCInfo,TLocalDBIO,TLocalJDBC}
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.CoreImplicits
 import org.slf4j._
 
 /**
@@ -46,7 +47,7 @@ object SimpleDB {
 /**
  * @author kenl
  */
-class SimpleDB(ji:JDBCInfo, s:Schema, pps:JPS) extends DB {
+class SimpleDB(ji:JDBCInfo, s:Schema, pps:JPS) extends DB with CoreImplicits {
   import SimpleDB._
   val _log= LoggerFactory.getLogger(classOf[SimpleDB])
   val _meta= new MetaCache(s)
@@ -59,6 +60,10 @@ class SimpleDB(ji:JDBCInfo, s:Schema, pps:JPS) extends DB {
     _props.put("password", nsb( ji.pwd))
   }
 
+  def supportsOptimisticLock() = {
+    true || pps.getb("opt_lock")
+  }
+  
   def getProperties() = _props
   def getInfo() = ji
   
