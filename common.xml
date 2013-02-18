@@ -254,8 +254,8 @@
             <include name="bin/**"/>
         </tarfileset>
     </tar>
-    <!--
     <gzip destfile="${distrib.dir}/${PID-DISTRO}-${build.version}.tar.gz" src="${distrib.dir}/${PID-DISTRO}.tar"/>
+    <!--
     <zip destfile="${distrib.dir}/${PID-DISTRO}.zip"><fileset dir="${pack.dir}"/></zip>
   -->
   </target>
