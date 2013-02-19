@@ -166,7 +166,7 @@ class DefaultConfiguration(private var _node:JMap[_,_],p:Configuration=null) ext
 
   private def iniz(cfgUrl:URL) {
     val p = new JsonFactory().createParser( cfgUrl )
-    _node= new ObjectMapper().readValue(p, classOf[JMap[_,_]])
+    _node= new ObjectMapper().readValue(p, classOf[JMap[String,_]])
   }
 
 }

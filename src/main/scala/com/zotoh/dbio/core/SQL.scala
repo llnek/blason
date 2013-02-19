@@ -59,6 +59,9 @@ class SQuery(
   private val _sql: String,
   private val _params: Seq[Any] = Nil ) {
 
+  private val _out= mutable.HashMap[String,Any]()
+  private val _sqllc= _sql.toLowerCase
+  
   def tlog() = SQuery._log
 
   private def using[X](f : PreparedStatement => X): X = {
@@ -87,13 +90,31 @@ class SQuery(
 
   def execute(): Int = {
     using { stmt =>
-      stmt.executeUpdate()
+      val rc= stmt.executeUpdate()
+      if (_sqllc.startsWith("insert")) {
+          val rs=stmt.getGeneratedKeys()
+          var cnt=0
+          if (rs != null) {
+              val sm= rs.getMetaData()
+              cnt= sm.getColumnCount()
+          }
+          if (cnt==1 && rs.next()) {
+              _out += "1" -> rs.getObject(1)
+          }
+      }
+      rc
     }
   }
 
+  def getOutput() = _out.values.toSeq
+  
   private def buildStmt(c: Connection, sql: String, params: Seq[Any] ): PreparedStatement = {
-      tlog.debug("SQL Stmt: {}", sql)
-      val ps = c.prepareStatement(sql)
+      val ps= if (_sqllc.startsWith("insert")) {
+        c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+      }  else {
+        c.prepareStatement(sql)
+      }
+      tlog.debug("SQL: {}", sql)
       var pos=1
       params.foreach { p => setBindVar(ps, pos, p); pos += 1  }
       ps

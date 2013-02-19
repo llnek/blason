@@ -325,7 +325,8 @@
 
 
   <target name="clean4distro">
-    <delete dir="${myivycache}/com.zotoh/${ant.project.name}" quiet="true"/>
+    <delete dir="${ivy.lcache.dir}/com.zotoh/${ant.project.name}" quiet="true"/>
+    <delete dir="${ivy.lrepos.dir}/com.zotoh/${ant.project.name}" quiet="true"/>
   </target>
 
 </project>

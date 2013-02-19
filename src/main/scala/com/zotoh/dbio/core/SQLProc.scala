@@ -61,6 +61,7 @@ trait SQLProc extends CoreImplicits {
   def getDB(): DB
   
   def select[T]( sql:String, params:Any* )(f: ResultSet => T): Seq[T]
+  def executeWithOutput( sql: String, params:Any* ): (Int, Seq[Any])  
   def execute(sql:String, params:Any* ): Int
   def insert( obj:DBPojo): Int
   def delete( obj:DBPojo): Int
@@ -202,8 +203,15 @@ trait SQLProc extends CoreImplicits {
     }
 
     if (s1.length > 0) {
-      execute( "INSERT INTO " + t.table.uc + 
-        "(" + s1 + ") VALUES (" + s2 + ")" , lst:_* )
+      val ( rc, out) = executeWithOutput( "INSERT INTO " + t.table.uc + "(" + s1 + ") VALUES (" + s2 + ")" , lst:_* )
+      if (out.length == 0) {
+        throw new SQLEx("Insert require row-id to be returned.")
+      }
+      out(0) match {
+        case n:Long => obj.setRowID(n)
+        case _ => throw new SQLEx("RowID data-type must be Long.")
+      }
+      rc
     } else {
       0
     }
@@ -362,10 +370,16 @@ trait SQLProc extends CoreImplicits {
       rc
   }
 
-  protected def doExecute(conn:Connection, sql:String, pms:Any*): Int  = {
-        new SQuery(conn, sql, pms.toSeq ).execute()  
+  protected def doExecuteWithOutput(conn:Connection, sql:String, pms:Any*): (Int, Seq[Any])  = {
+    val s = new SQuery(conn, sql, pms.toSeq )
+    val rc= s.execute()
+    (rc, s.getOutput )
   }
-
+  
+  protected def doExecute(conn:Connection, sql:String, pms:Any*): Int  = {
+    new SQuery(conn, sql, pms.toSeq ).execute()
+  }
+  
   protected def doCount(sql:String, f: ResultSet => Int ): Int
   protected def doPurge(sql:String): Unit
   

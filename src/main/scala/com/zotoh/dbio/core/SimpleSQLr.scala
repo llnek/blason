@@ -78,6 +78,16 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
     }
   }
 
+  def executeWithOutput( sql: String, params:Any* ): (Int, Seq[Any]) = {
+    val c= _db.open
+    try {
+      c.setAutoCommit(true)
+      doExecuteWithOutput(c, sql, params:_*)
+    } finally {
+      _db.close(c)
+    }
+  }
+  
   def execute( sql: String, params:Any* ): Int = {
     val c= _db.open
     try {

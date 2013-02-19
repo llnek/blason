@@ -113,7 +113,7 @@ object DDLUtils extends Constants with CoreImplicits {
       using(mkConnection(jp)) { (con) =>
         loadDDL(con, ddl)
       }
-      tlog().debug(ddl)
+      tlog().debug("{}{}{}","\n",ddl,"")
     }
   }
 

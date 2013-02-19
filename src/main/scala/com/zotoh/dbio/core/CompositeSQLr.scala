@@ -111,8 +111,12 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
     new SQuery(_conn, sql, params.toSeq ).select(f)
   }
 
+  def executeWithOutput( sql: String, params:Any* ): (Int, Seq[Any]) = {
+      doExecuteWithOutput(_conn, sql, params:_*)
+  }
+  
   def execute( sql: String, params:Any* ): Int = {
-    new SQuery(_conn, sql, params.toSeq ).execute()
+      doExecute(_conn, sql, params:_*)
   }
 
   def delete( obj : DBPojo): Int = {
