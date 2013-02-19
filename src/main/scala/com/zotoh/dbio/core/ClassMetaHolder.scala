@@ -32,6 +32,7 @@ import com.zotoh.frwk.util.MetaUtils._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreUtils._
 import org.slf4j._
+import java.util.Calendar
 
 
 
@@ -215,6 +216,13 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
         case _ => _info.put(cn, mkFldMeta(c, cn,gn))
       }
       _info.get(cn).get.setGetter(m)
+      
+      // something special for calendar type
+      if ( classOf[Calendar].isAssignableFrom(rt)) {
+        // need to add extra ad-hoc field to store timezone
+        val n= cn+"_TZ"
+        _info.put( n, new AdhocFldMetaHolder(n, classOf[String] ))        
+      }
 
       if (c.autogen) if ( ! isInt(rt) &&  ! isLong(rt) ) {
           throw new Exception("Invalid return-type for: " + gn) 
@@ -227,12 +235,16 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
     // scan for corresponding "setter(s)"
   private def scanSetters( z:Class[_], ms:Map[String,Method] ) {    
     _info.foreach { (en) =>
-      val gn = en._2.getGetter.getName()
-      val cn = en._1
-      val sn = "set" + gn.substring(3)
-      ms.get(sn) match {
-        case Some(x) => en._2.setSetter(x)
-        case _ => tlog.warn("No setter defined for getter: " + gn + " for class: " + z)
+      en._2 match {
+        case x:AdhocFldMetaHolder =>
+        case x =>
+          val gn = en._2.getGetter.getName()
+          val cn = en._1
+          val sn = "set" + gn.substring(3)
+          ms.get(sn) match {
+            case Some(x) => en._2.setSetter(x)
+            case _ => tlog.warn("No setter defined for getter: " + gn + " for class: " + z)
+          }
       }
     }
   }

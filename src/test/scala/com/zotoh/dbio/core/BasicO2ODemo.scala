@@ -24,6 +24,8 @@ package core
 
 import java.text.SimpleDateFormat
 import com.zotoh.dbio.meta.Table
+import java.util.Calendar
+import java.util.TimeZone
 
 /**
  * @author kenl
@@ -51,8 +53,11 @@ class BasicO2ODemo(io:CompositeSQLr) extends Demo(io) {
 
     _db.execWith { (tx) =>
 
+      val cal= Calendar.getInstance( TimeZone.getDefault())
+      cal.setTime(new SimpleDateFormat("yyyyMMdd").parse("19701220"))
+    
       val person= new Person()
-      person.setBDay( new SimpleDateFormat("yyyyMMdd").parse("19701220"))
+      person.setBDay( cal)
       person.setFirst("Marian")
       person.setLast( "Jones")
       person.setIQ(250)
@@ -65,9 +70,11 @@ class BasicO2ODemo(io:CompositeSQLr) extends Demo(io) {
   private def create_joe_blogg() {
 
     _db.execWith { (tx) =>
+      val cal= Calendar.getInstance( TimeZone.getDefault())
+      cal.setTime(new SimpleDateFormat("yyyyMMdd").parse("19650202"))
 
       val employee= iniz_employee("Joe", "Blogg", "jblogg")
-      employee.setBDay(new SimpleDateFormat("yyyyMMdd").parse("19650202"))
+      employee.setBDay( cal)
       employee.setIQ(290)
       employee.setSex( "male")
       tx.insert(employee)

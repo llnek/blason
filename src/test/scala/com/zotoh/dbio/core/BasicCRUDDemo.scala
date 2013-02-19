@@ -23,6 +23,10 @@ package com.zotoh.dbio
 package core
 
 import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.{Date=>JDate,TimeZone }
+import com.zotoh.frwk.util.DateUtils
+import java.util.GregorianCalendar
 
 
 /**
@@ -52,9 +56,12 @@ class BasicCRUDDemo(io:CompositeSQLr) extends Demo(io) {
   private def demo_basic_object_create() {
 
     _db.execWith { (tx) =>
+      val cal= new GregorianCalendar( TimeZone.getTimeZone("Europe/Paris"))
+      cal.setTime(new SimpleDateFormat("yyyyMMdd hh:mm:ss").parse("19990601 13:14:15"))
+      println( DateUtils.dbgCal(cal) )
 
       val employee=  iniz_employee("Joe", "Blogg", "jblogg") 
-      employee.setBDay(new SimpleDateFormat("yyyyMMdd").parse("19990601"))
+      employee.setBDay(cal)
       employee.setIQ(5)
       employee.setSex( "male")
       tx.insert(employee)
@@ -74,6 +81,8 @@ class BasicCRUDDemo(io:CompositeSQLr) extends Demo(io) {
       }
 
       println("Fetched Employee: Joe Blogg. OK.")
+      println( DateUtils.dbgCal(  rc(0).getBDay ) )
+      
       println("Joe Blogg's object-id is: " + rc(0).getRowID() )
 
     }

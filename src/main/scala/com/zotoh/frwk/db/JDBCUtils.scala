@@ -23,29 +23,26 @@ package com.zotoh.frwk
 package db
 
 import scala.collection.mutable
-
 import java.io.{InputStream,OutputStream,IOException, Reader}
 import java.math.{BigDecimal,BigInteger}
 import java.sql.{Clob,Blob,PreparedStatement,ResultSet=>RSET}
 import java.sql.{ResultSetMetaData,SQLException}
-
 import java.sql.{Time=>JSTime,Timestamp=>JSTStamp,Date=>JSDate}
 import java.util.{Date=>JUDate}
-
 import com.zotoh.frwk.io.{IOUtils,XData}
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.FileUtils._
 import com.zotoh.frwk.io.IOUtils._
-
 import org.apache.commons.io.{FileUtils=>FUS}
 import org.apache.commons.io.{IOUtils=>IOU}
-
 import com.zotoh.frwk.util.CoreImplicits
 import org.slf4j._
-
 import com.zotoh.frwk.security.Password
 import com.zotoh.frwk.util.Nichts._
 import java.sql.Types._
+import java.util.Calendar
+import java.util.TimeZone
+import java.util.GregorianCalendar
 
 
 
@@ -365,6 +362,19 @@ object JDBCUtils extends CoreImplicits {
     }
   }
 
+  def javaToCalendar(obj:Any, tz:TimeZone) = {
+    val cal= new GregorianCalendar(tz)
+    obj match {
+      case d:JSDate => 
+        cal.setTimeInMillis(d.getTime)
+        cal
+      case d:JUDate =>
+        cal.setTimeInMillis(d.getTime)
+        cal
+      case _ => null
+    }
+  }
+  
   def javaToJDate(obj:Any) = {
     obj match {
       case d:JSDate => new JUDate(d.getTime())

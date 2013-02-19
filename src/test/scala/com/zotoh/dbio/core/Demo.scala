@@ -24,6 +24,8 @@ package core
 
 import java.util.{Date=>JDate}
 import org.slf4j._
+import java.util.Calendar
+import java.util.TimeZone
 
 object Demo {
   private val _log= LoggerFactory.getLogger(classOf[Demo] )
@@ -58,8 +60,9 @@ abstract class Demo protected(protected val _db:CompositeSQLr) {
 
   protected def iniz_employee(  fname:String , lname:String, login:String) = {
     val employee= new Employee()
-
-    employee.setBDay(new JDate )
+    val cal= Calendar.getInstance( TimeZone.getDefault())
+    cal.setTime(new JDate)
+    employee.setBDay( cal)
     employee.setLogin(login) 
 
     employee.setFirst(fname) 

@@ -43,6 +43,8 @@ import java.sql.Clob
 import java.io.InputStream
 import java.io.Reader
 import com.zotoh.frwk.io.IOUtils
+import java.util.GregorianCalendar
+import java.util.TimeZone
 
 
 /**
@@ -373,14 +375,28 @@ trait SQLProc extends CoreImplicits {
     val meta= rset.getMetaData()
     
     (1 to meta.getColumnCount ).foreach { (i) =>
-      val cn= meta.getColumnName(i).uc
-      readOneCol(cn, i, row,rset)
+      val cn= meta.getColumnName(i).uc      
+      readOneCol(meta.getColumnType(i), cn, i, row, rset)
     }
     
     row.asInstanceOf[AbstractModel].reset
   }
 
-  private def readOneCol(cn:String, pos:Int, row:DBPojo,rset:ResultSet) {
+  private def gmtCal() = {
+    new GregorianCalendar( TimeZone.getTimeZone("GMT") )
+  }
+  
+  private def readOneCol(sqlType:Int, cn:String, pos:Int, row:DBPojo,rset:ResultSet) {
+    import java.sql.Types._
+    val obj = sqlType match {
+      case TIMESTAMP =>rset.getTimestamp(pos,  gmtCal)
+      case DATE =>rset.getDate(pos, gmtCal )
+      case _ => readCol( sqlType, cn, pos, row,rset )
+    }
+    row.set(cn, Option(obj))
+  }
+  
+  private def readCol(sqlType:Int, cn:String, pos:Int, row:DBPojo,rset:ResultSet) = {
       var obj=rset.getObject(pos)
       var inp = obj match {
         case bb:Blob => bb.getBinaryStream()
@@ -398,7 +414,8 @@ trait SQLProc extends CoreImplicits {
       if (rdr != null) using(rdr) { (rdr) =>
         obj= IOUtils.readChars( rdr)
       }
-      row.set( cn, Option(obj) )    
+      
+      obj  
   }
   
   

@@ -170,6 +170,20 @@ object DateUtils extends Constants with CoreImplicits {
    */
   def addDays(d:JDate, days:Int) = add(d, Calendar.DAY_OF_YEAR, days)
 
+  def dbgCal(cal:Calendar) = {
+    import Calendar._
+    "{" + cal.getTimeZone().getDisplayName() + "} " + 
+    "{" + cal.getTimeZone().getID() + "} " + 
+    "[" + cal.getTimeInMillis() + "] " +
+    cal.get(YEAR) + "/" + 
+   ( cal.get(MONTH) +1 ) + "/" + 
+    cal.get(DAY_OF_MONTH) + " " + 
+    cal.get(HOUR_OF_DAY) + ":" +
+//    cal.get(HOUR) + ":" +
+    cal.get(MINUTE) + ":" +
+    cal.get(SECOND)
+  }
+  
   private def add(d:JDate, calendarField:Int, amount:Int) = {
     if (d!= null) {
       val c = Calendar.getInstance

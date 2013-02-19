@@ -35,6 +35,10 @@ import java.sql.{Date => SDate, Timestamp => STimestamp, Blob => Bloby, Clob => 
 import java.io.{Reader, InputStream}
 import org.apache.commons.dbutils.{DbUtils=>DBU}
 import com.zotoh.frwk.db.SQLStmt
+import java.util.Calendar
+import java.util.TimeZone
+import java.util.SimpleTimeZone
+import java.util.GregorianCalendar
 
 
 
@@ -43,6 +47,8 @@ import com.zotoh.frwk.db.SQLStmt
 */
 object SQuery {
   private val _log= LoggerFactory.getLogger(classOf[SQuery])
+  private val _gmtTZ= TimeZone.getTimeZone("GMT")
+  def gmtTZ() = _gmtTZ
 }
 
 /**
@@ -115,8 +121,15 @@ class SQuery(
         case b: Boolean => ps.setBoolean(pos, b)
         case d: Double => ps.setDouble(pos, d)
         case f: Float => ps.setFloat(pos, f)
-        case t: STimestamp => ps.setTimestamp(pos, t)
-        case dt: JDate => ps.setDate(pos, new SDate(dt.getTime()))
+        
+        case t: STimestamp => 
+          ps.setTimestamp(pos, t, new GregorianCalendar( SQuery.gmtTZ ))        
+          
+        case dt: JDate =>
+          ps.setDate(pos, new SDate(dt.getTime ), new GregorianCalendar( SQuery.gmtTZ ))            
+        
+        case dt:Calendar =>
+          ps.setTimestamp(pos, new STimestamp(dt.getTimeInMillis), new GregorianCalendar( SQuery.gmtTZ ))
 
         case _ => throw new SQLException("Unsupported param type: " + param)
     }
@@ -124,5 +137,4 @@ class SQuery(
 
 }
 
-object NullAny { val typeVal =  -1 }
 

@@ -74,3 +74,10 @@ class FldMetaHolder(private val _name:String, private val _col:Column) {
   def isUpdatable() = if (_col==null) false else _col.updatable()
   
 }
+
+
+class AdhocFldMetaHolder(cn:String, private val _coType:Class[_]) extends FldMetaHolder(cn,null) {
+  override def getColType() = _coType
+  override def isUpdatable() = true
+  override def getSize() = 255
+}

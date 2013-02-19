@@ -32,6 +32,8 @@ import java.io.{CharArrayWriter, ByteArrayOutputStream=>ByteArrayOS, InputStream
 import java.math.{ BigDecimal => JBigDec , BigInteger => JBigInt }
 import org.slf4j._
 
+object NullAny { val typeVal =  -1 }
+
 
 /**
  * @author kenl

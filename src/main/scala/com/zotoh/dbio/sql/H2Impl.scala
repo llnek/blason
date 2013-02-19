@@ -70,4 +70,6 @@ class H2Impl extends DBDriver {
     append( if (fld.isPK) " IDENTITY( 1 ) " else " AUTO_INCREMENT( 1 ) " ).toString
   }
 
+  override protected def getDateKeyword() = "TIMESTAMP"
+
 }

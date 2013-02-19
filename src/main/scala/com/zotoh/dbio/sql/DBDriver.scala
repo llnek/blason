@@ -39,6 +39,7 @@ import com.zotoh.dbio.core.M2MTable
 import com.zotoh.dbio.core.Schema
 import com.zotoh.dbio.core.DBPojo
 import com.zotoh.dbio.core.SIndex
+import java.util.Calendar
 
 
 
@@ -142,7 +143,8 @@ abstract class DBDriver protected() {
 
       if ( isBoolean(dt)) { col= genBool(fld) }
       else if ( classOf[java.sql.Timestamp] == dt ) { col= genTimestamp(fld) }
-      else if ( classOf[JDate] == dt) { col= genDate(fld) }
+      else if ( classOf[JDate].isAssignableFrom(dt) ) { col= genDate(fld) }
+      else if ( classOf[Calendar].isAssignableFrom( dt)  ) { col= genCal(fld) }
       else if ( isInt(dt)) {
         col= if (fld.isAutoGen) genAutoInteger(table, fld) else genInteger(fld)
       }
@@ -288,6 +290,10 @@ abstract class DBDriver protected() {
         if (fld.getDft) getTSDefault() else "" )        
   }
 
+  protected def genCal(fld:FldMetaHolder ) = {
+    genDate(fld)
+  }
+  
   protected def genBool(fld:FldMetaHolder ) = {
     genColDef(fld.getId, getBoolKeyword, fld.isNullable,
         if (fld.getDft) fld.getDftValue else "" )    

@@ -37,4 +37,5 @@ import java.lang.annotation.Target;
 public @interface Many2Many {
   public Class<?> joined();
 	public Class<?> rhs();
+  public String desc() default "";	
 }

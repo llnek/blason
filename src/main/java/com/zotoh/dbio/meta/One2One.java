@@ -35,6 +35,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface One2One {
+    public String desc() default "";
 		public Class<?> rhs();
 //		public int bias() default 1;  // lean right
     public int bias() default -1;  // lean left

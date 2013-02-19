@@ -26,11 +26,13 @@ import java.util.{Date=>JDate}
 import com.zotoh.dbio.meta._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.db.JDBCUtils._
+import java.util.Calendar
+import java.util.TimeZone
 
 
 @Table(table="TBL_PERSON")
 class Person extends AbstractModel {
-
+  
   def dbio_getFirst_column="first_name"
   @Column(optional=false)
   def getFirst() = {
@@ -71,11 +73,14 @@ class Person extends AbstractModel {
   @Column(optional=false)
   def getBDay() = {
     readData( dbio_getBDay_column ) match {
-      case Some(v) => javaToJDate(v)
+      case Some(v) =>
+        val tz = nsb ( readData(dbio_getBDay_column + "_tz").getOrElse("GMT") )
+        javaToCalendar(v, TimeZone.getTimeZone(tz) )
       case _ => null
     }
   }
-  def setBDay(d:JDate) {
+  def setBDay(d:Calendar) {
+    writeData( dbio_getBDay_column+"_tz" , Option(d.getTimeZone().getID() ) )
     writeData( dbio_getBDay_column , Option(d))
   }
 

@@ -36,5 +36,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface One2Many {
 	public Class<?> rhs();
+  public String desc() default "";
 
 }
