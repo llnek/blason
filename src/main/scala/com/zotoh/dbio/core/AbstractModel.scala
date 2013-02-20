@@ -58,25 +58,27 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
   protected def readInt(col:String, dft:Int = 0) = {
     readData(col) match {
-      case Some(n) => n
+      case Some(n:Int) => n
       case _ => dft
     }
   }
   protected def readLong(col:String, dft:Long = 0L) = {
     readData(col) match {
-      case Some(n) => n
+      case Some(n:Long) => n
       case _ => dft
     }
   }
   protected def readDouble(col:String, dft:Double = 0.0) = {
     readData(col) match {
-      case Some(d) => d
+      case Some(d:Double) => d
+      case Some(d:Float) => d.toDouble
       case _ => dft
     }
   }
   protected def readFloat(col:String, dft:Float= 0.0f) = {
     readData(col) match {
-      case Some(f) => f
+      case Some(f:Double) => f.toDouble
+      case Some(f:Float) => f
       case _ => dft
     }
   }
