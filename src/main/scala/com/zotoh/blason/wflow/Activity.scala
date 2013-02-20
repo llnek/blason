@@ -46,6 +46,8 @@ abstract class Activity protected[wflow]() extends Loggable {
    */
   def chain( a:Activity ) =  new Group(this, a)
 
+  def +(a:Activity) = chain(a) 
+  
   /**
    * Instantiate a *live* version of this work unit as it becomes
    * part of the Workflow.

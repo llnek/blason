@@ -143,6 +143,10 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     _storage.get(col.uc)
   }
 
+  protected def setO2O(rhs:DBPojo, fkey:String) {
+    set(fkey, if (rhs==null) None else Option(rhs.getRowID ) )
+  }
+  
   def commit() {
     setVerID( getVerID() + 1)
     reset()

@@ -43,6 +43,8 @@ class Group extends Composite {
     this
   }
 
+  override def +(a:Activity): this.type = chain(a) 
+  
   def reify(cur:FlowStep ) = reifyGroup(cur, this)
 
   def realize( cur:FlowStep ) {
