@@ -223,8 +223,12 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
   }
   
   def processTemplate(ri:RouteInfo, model:JMap[_,_]): (XData, String)  = {
-    val s= if ( STU.isEmpty( ri.template) ) "" else {
-      resolveTemplate( ri.template, model).toString()
+    processTemplate(ri.template, model)
+  }
+  
+  def processTemplate(tpl:String, model:JMap[_,_]): (XData, String)  = {
+    val s= if ( STU.isEmpty( tpl) ) "" else {
+      resolveTemplate( tpl, model).toString()
     }
     ( new XData(s), "text/html" )    
   }
