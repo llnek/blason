@@ -98,6 +98,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
       case Some(x:JDate) =>
         cal.setTimeInMillis( x.getTime)
         cal
+      case Some(x:Calendar) => x
       case _ => dft
     }
   }

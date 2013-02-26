@@ -193,7 +193,7 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
         _params += Tuple2(p, s)
         s
     } 
-    r.add(nsb(v))
+    r.add(nsb(v) )
   }
 
   def attrs() = _attrs.toMap
