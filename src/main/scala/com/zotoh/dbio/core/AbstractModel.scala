@@ -134,11 +134,19 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def getDirtyFields() = _dirtyFields.toSet
 
   protected def writeData(col:String, value:Option[Any]) {
-    col.uc match {
+    
+    val cuc = col.uc match {
       case s =>
       _storage.put(s, value.getOrElse(Nichts.NICHTS))
       _dirtyFields += s
+      s
     }
+    // when we store a calendar, we need to store the timezone also
+    value match {
+      case Some(x:Calendar) => writeData(cuc + "_tz", Option( x.getTimeZone().getID ) )        
+      case _ =>
+    }
+    
   }
 
   protected def readData(col:String): Option[Any] = {
