@@ -143,7 +143,7 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
 
   private def onBuild(args:Array[String]) {
     if (args.size >=2 ) {
-      val t = if (args.size > 2) args(2) else "release"
+      val t = if (args.size > 2) args(2) else "devmode"
       runTargetExtra("build-app", 
           new JPS().add(PF_BLASON_APPID, args(1)).add(PF_BLASON_APPTASK, t) )
     } else {
