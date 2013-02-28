@@ -47,7 +47,7 @@ abstract class BasicHTTPMsgIO protected[net]() extends HTTPMsgIO {
   
   def onPreamble(mtd:String, uri:String, hds:Map[String,StrArr]) {}
 
-  def onError(code:Int, reason:String) = {
+  def onError(code:Int, reason:String)  {
     tlog.error("Error: status= {}, reason= {}" , asJObj(code), reason, "")
   }
 
