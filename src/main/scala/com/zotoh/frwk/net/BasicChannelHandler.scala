@@ -72,10 +72,11 @@ object BasicChannelHandler {
  */
 class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelHandler with CoreImplicits {
 
-  import BasicChannelHandler._
-  def tlog() = _log
+  def tlog() = BasicChannelHandler._log
 
-  private var _thold= HTTPUtils.dftThreshold()
+  import HTTPUtils._
+  
+  private var _thold= dftThreshold()
   private val _props= new JPS()
   private var _clen=0L
   private var _keepAlive=false
@@ -91,7 +92,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
     if (c != null) { _grp.remove(c) }
     super.channelClosed(ctx, ev)
 
-    tlog.debug("{}: channelClosed - ctx {}, channel {}", "BasicChannelHandler", ctx, if(c==null) "?" else c )
+    tlog.debug("BasicChannelHandler: channelClosed - ctx {}, channel {}",  ctx, if(c==null) "?" else c , "")
   }
 
   override def channelOpen(ctx:ChannelHandlerContext, ev:ChannelStateEvent) {
@@ -99,7 +100,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
     if (c != null) { _grp.add(c) }
     super.channelOpen(ctx, ev)
 
-    tlog().debug("{}: channelOpen - ctx {}, channel {}", "BasicChannelHandler", ctx, if (c==null) "?" else c)
+    tlog().debug("BasicChannelHandler: channelOpen - ctx {}, channel {}", ctx, if (c==null) "?" else c, "")
   }
 
   override def exceptionCaught(ctx:ChannelHandlerContext, ev:ExceptionEvent) {
@@ -134,7 +135,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
         val s= res.getStatus()
         val r= s.getReasonPhrase()
         val c= s.getCode()
-        tlog().debug("{}: got a response: code {} {}", "BasicChannelHandler",asJObj(c), asJObj(r))
+        tlog().debug("BasicChannelHandler: got a response: code {} {}", asJObj(c), asJObj(r), "")
         _props.add("reason", r).add("dir", -1).add("code", c)
         if (c >= 200 && c < 300) {
           onRes(s,ctx,ev,res)
@@ -149,7 +150,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
         tlog().debug("BasicChannelHandler: got a request: ")
         onReqIniz(ctx,ev, req)
         _keepAlive = HttpHeaders.isKeepAlive(req)
-        _props.put("dir", asJObj(1))
+        _props.put("dir", asJObj(1) )
         if ( onRecvRequest(ctx,ev,req) ) {
           onReq(ctx,ev,req)
         }
@@ -157,8 +158,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
       case x:HttpChunk => onChunk(ctx,ev,x)
 
       case _ =>
-        throw new IOException( "BasicChannelHandler:  unexpected msg type: " +
-            safeGetClzname(msg))
+        throw new IOException( "BasicChannelHandler:  unexpected msg type: " +  safeGetClzname(msg))
     }
 
   }
@@ -185,7 +185,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
   protected def onReqIniz(ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest ) {
     val m= msg.getMethod().getName
     val uri= msg.getUri
-    tlog.debug("{}: onReqIniz: Method {}, Uri {}", "BasicChannelHandler",m, uri)
+    tlog.debug("BasicChannelHandler: onReqIniz: Method {}, Uri {}",m, uri, "")
     onReqPreamble(m, uri, iterHeaders(msg))
   }
 

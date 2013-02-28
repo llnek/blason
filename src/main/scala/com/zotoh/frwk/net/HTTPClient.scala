@@ -67,13 +67,13 @@ object HTTPClient {
     try {
       val data= new XData(new File("/tmp/play.zip")).setDeleteFile(false)
       val c= new HTTPClient()
-      c.connect(new URI("http://localhost:8080/p.zip"))
-      c.post(new BasicHTTPMsgIO(){
+      c.connect(new URI("http://www.yahoo.com"))
+      c.get(new BasicHTTPMsgIO(){
         def onOK(code:Int, reason:String, resOut:XData) {
-          println("COOL")
+          println( resOut.toString )          
           c.wake()
         }
-      }, data)
+      } )
       c.block()
       c.finz()
     } catch {
@@ -91,14 +91,15 @@ object HTTPClient {
  */
 class HTTPClient {
 
-  import HTTPClient._
-  def tlog() = _log
+  def tlog() = HTTPClient._log
 
   private var _curScope:(URI,ChannelFuture) = null
   private var _boot:ClientBootstrap = null
   private var _chs:ChannelGroup = null
   private val _lock= new Object()
 
+  import HTTPUtils._
+  
   iniz()
 
   /**
@@ -129,7 +130,7 @@ class HTTPClient {
     var port= remote.getPort
     if (port < 0) { port = if(ssl) 443 else 80 }
 
-    tlog.debug("{}: connecting to host: {}, port: {}", "HTTPClient", host, asJObj(port))
+    tlog.debug("HTTPClient: connecting to host: {}, port: {}{}", host, asJObj(port),"")
     inizPipeline(ssl)
 
     val cf= _boot.connect(new InetSocketAddress(host, port))
@@ -143,7 +144,7 @@ class HTTPClient {
       onError(cf.getCause)
     }
 
-    tlog.debug("{}: connected OK to host: {}, port: {}", "HTTPClient", host, asJObj(port))
+    tlog.debug("HTTPClient: connected OK to host: {}, port: {}{}", host, asJObj(port),"")
 
   }
 
@@ -165,9 +166,10 @@ class HTTPClient {
     send( create_request(HttpMethod.GET), cfg, new XData() )
   }
 
+
   private def send(req:HttpRequest, io:HTTPMsgIO, data:XData) {
 
-    tlog.debug("{}: {} {}", "HTTPClient", (if(data.hasContent) "POST" else "GET"), _curScope._1)
+    tlog.debug("HTTPClient: {} {}", (if(data.hasContent) "POST" else "GET"), _curScope._1,"")
 
     val clen= if (data.hasContent) data.size else 0L
     val uri= _curScope._1
@@ -192,34 +194,27 @@ class HTTPClient {
     req.setHeader("content-length", clen.toString)
 
     req.setHeader(HttpHeaders.Names.HOST, uri.getHost)
+    // allow for extra settings via the input object
     cfg.configMsg(req)
 
     val cc= cf.getChannel
-    val h= cc.getPipeline().get("handler").asInstanceOf[HTTPResponseHdlr]
+    val h= cc.getPipeline.get("handler").asInstanceOf[HTTPResponseHdlr]
     h.bind(cfg)
 
     tlog.debug("HTTPClient: about to flush out request (headers)")
     var f= cc.write(req)
-    f.addListener(new ChannelFutureListener() {
-      def operationComplete(fff:ChannelFuture) {
-        tlog.debug("HTTPClient: req headers flushed")
-      }
-    })
+    f.addListener( newChFLnr ( (x) => tlog.debug("HTTPClient: req headers flushed")  ) )
 
     if (clen > 0L) {
-      f=if (clen > HTTPUtils.dftThreshold ) {
+      f= if (clen > HTTPUtils.dftThreshold ) {
         cc.write(new ChunkedStream( data.stream))
       } else {
         data.bytes match {
           case Some(b) => cc.write( new ByteBufferBackedChannelBuffer( ByteBuffer.wrap( b) ))
           case _ => throw new IOException("Bad input data")
         }
-      }
-      f.addListener(new ChannelFutureListener() {
-        def operationComplete(fff:ChannelFuture) {
-          tlog.debug("HTTPClient: req payload flushed")
-        }
-      })
+      }      
+      f.addListener( newChFLnr ( (x) => tlog.debug("HTTPClient: req payload flushed")  ) )
     }
 
   }
@@ -238,7 +233,7 @@ class HTTPClient {
    */
   def close() {
     tlog.debug("HTTPClient: close()")
-    if (_curScope != null) try { _chs.close() } finally {  _curScope=null  }
+    if (_curScope != null) try { _chs.close } finally {  _curScope=null  }
   }
 
   private def create_request(m:HttpMethod) = {

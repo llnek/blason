@@ -25,6 +25,17 @@ package net
 
 import org.jboss.netty.handler.codec.http.HttpMessage
 import com.zotoh.frwk.util.StrArr
+import com.zotoh.frwk.util.CoreUtils._
+
+import org.slf4j._
+
+/**
+ * @author kenl
+ */
+object BasicHTTPMsgIO  {
+  
+  private val _log= LoggerFactory.getLogger(classOf[BasicHTTPMsgIO])
+}
 
 /**
  * @author kenl
@@ -32,10 +43,12 @@ import com.zotoh.frwk.util.StrArr
  */
 abstract class BasicHTTPMsgIO protected[net]() extends HTTPMsgIO {
 
+  def tlog() = BasicHTTPMsgIO._log
+  
   def onPreamble(mtd:String, uri:String, hds:Map[String,StrArr]) {}
 
   def onError(code:Int, reason:String) = {
-    println("Error: status=" + code + ", reason=" + reason)
+    tlog.error("Error: status= {}, reason= {}" , asJObj(code), reason, "")
   }
 
   def keepAlive() = false

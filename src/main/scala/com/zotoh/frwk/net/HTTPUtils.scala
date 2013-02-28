@@ -32,9 +32,10 @@ import java.io.IOException
 import java.net.ConnectException
 import java.net.URI
 import java.net.URISyntaxException
-
 import javax.mail.Header
 import javax.net.ssl.SSLContext
+import org.jboss.netty.channel.ChannelFuture
+import org.jboss.netty.channel.ChannelFutureListener
 
 
 /**
@@ -51,6 +52,14 @@ object HTTPUtils extends CoreImplicits {
 
   iniz()
 
+  def newChFLnr( cb: ( ChannelFuture ) => Unit ) = {
+    new ChannelFutureListener() {
+      def operationComplete(fff:ChannelFuture) {
+        cb (fff)
+      }
+    }    
+  }
+  
   /**
    * @return
    */
