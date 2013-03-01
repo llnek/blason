@@ -42,6 +42,10 @@ object StrUtils extends CoreImplicits {
     }
   }
   
+  def strim(s:String) = {
+    nsb(s).trim
+  }
+  
   /**
    * Append to a string-builder, optionally inserting a delimiter if the buffer is not
    * empty.
