@@ -46,6 +46,20 @@ object MimeUtils extends Constants with CoreImplicits {
   private val _log= LoggerFactory.getLogger(classOf[MimeUtils])
   def tlog() = _log
 
+  def getCharset(ct:String) = {
+    var pos = nsb(ct).indexOf("charset=")
+//    var rc= "ISO-8859-1"
+    var rc="utf-8"
+    if (pos > 0) {
+      val s = ct.substring(pos+8)
+      pos = STU.indexOfAny(s, "; \t\r\n")
+      if (pos > 0) {
+        rc=s.substring(0, pos)
+      }
+    }
+    rc
+  }
+  
   /**
    * @param cType
    * @return

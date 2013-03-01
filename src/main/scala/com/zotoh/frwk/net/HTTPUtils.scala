@@ -84,7 +84,7 @@ object HTTPUtils extends CoreImplicits {
 
     val cr= new HTTPClient()
     cr.connect(url)
-    cr.post(cb,in)
+    cr.post( "application/octet-stream", in,cb)
     cr
   }
 

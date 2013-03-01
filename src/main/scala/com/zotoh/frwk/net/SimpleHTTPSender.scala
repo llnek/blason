@@ -83,7 +83,7 @@ class SimpleHTTPSender  {
           println("Error: code =" + code + ", reason=" + r)
         }
       })
-      _client.block()
+      _client.join()
     }
   }
 

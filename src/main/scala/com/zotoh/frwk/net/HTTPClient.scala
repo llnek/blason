@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -56,9 +56,20 @@ import org.jboss.netty.handler.stream.ChunkedWriteHandler
 import org.jboss.netty.handler.codec.http.HttpClientCodec
 
 
-
+/**
+ * @author kenl
+ */
 object HTTPClient {
 
+  val _netty = new ThreadLocal[NettyClientIO]() {
+    lazy val _io=new NettyClientIO
+    override def initialValue() = _io
+    override def finalize {
+      block { () => _io._http.releaseExternalResources }       
+      block { () => _io._ssl.releaseExternalResources }       
+    }
+  }
+  
   /**
    * test
    *
@@ -67,14 +78,18 @@ object HTTPClient {
     try {
       val data= new XData(new File("/tmp/play.zip")).setDeleteFile(false)
       val c= new HTTPClient()
-      c.connect(new URI("http://www.yahoo.com"))
+      // uri input is assumed to be encoded!
+      val uri = new URI("http://www.yahoo.com/?abc=123+567&c=d")
+      println( uri.toString)
+      println( uri.toASCIIString())
+      c.connect(uri)
       c.get(new BasicHTTPMsgIO(){
         def onOK(code:Int, reason:String, resOut:XData) {
           println( resOut.toString )          
           c.wake()
         }
       } )
-      c.block()
+      c.join()
       c.finz()
     } catch {
       case e:Throwable => e.printStackTrace()
@@ -82,98 +97,81 @@ object HTTPClient {
     sys.exit(0)
   }
 
-  private val _log= LoggerFactory.getLogger(classOf[HTTPClient])
+//  private val _log= LoggerFactory.getLogger(classOf[HTTPClient])
 }
 
 /**
  * @author kenl
  *
  */
-class HTTPClient {
+class HTTPClient extends HTTPClientBase {
 
-  def tlog() = HTTPClient._log
-
-  private var _curScope:(URI,ChannelFuture) = null
-  private var _boot:ClientBootstrap = null
-  private var _chs:ChannelGroup = null
+  private var _CH:Channel = null
   private val _lock= new Object()
 
+  import HTTPClient._
   import HTTPUtils._
-  
-  iniz()
-
-  /**
-   *
-   */
-  def block()  {
-    freeze(_lock)
-  }
-
-  /**
-   *
-   */
-  def wake() {
-    thaw(_lock)
-  }
-
-  override def finalize() {
-    if (_boot != null) { _boot.releaseExternalResources }
-    super.finalize()
-  }
-
-  /**
-   * @param remote
-   */
-  def connect(remote:URI) {
-    val ssl= "https" == remote.getScheme()
-    val host= remote.getHost
-    var port= remote.getPort
-    if (port < 0) { port = if(ssl) 443 else 80 }
-
-    tlog.debug("HTTPClient: connecting to host: {}, port: {}{}", host, asJObj(port),"")
-    inizPipeline(ssl)
-
-    val cf= _boot.connect(new InetSocketAddress(host, port))
-    // wait until the connection attempt succeeds or fails.
-    cf.awaitUninterruptibly
-
-    if (cf.isSuccess) {
-      _curScope= (remote, cf)
-      _chs.add(cf.getChannel)
-    } else {
-      onError(cf.getCause)
-    }
-
-    tlog.debug("HTTPClient: connected OK to host: {}, port: {}{}", host, asJObj(port),"")
-
-  }
 
   /**
    * @param cfg
    * @param data
    */
-  def post(cfg:HTTPMsgIO, data:XData) {
-    tstObjArg("scope-data", _curScope)
+  def post( contentType:String, data:XData, cfg:HTTPMsgIO ) {
+    tstObjArg("payload-callback", cfg)
     tstObjArg("payload-data", data)
-    send( create_request(HttpMethod.POST) , cfg, data)
+    send( contentType, create_request(HttpMethod.POST) , cfg, data)
   }
 
   /**
    * @param cfg
    */
-  def get(cfg:HTTPMsgIO) {
-    tstObjArg("scope-data", _curScope)
-    send( create_request(HttpMethod.GET), cfg, new XData() )
+  def get(cfg:HTTPMsgIO ) {
+    tstObjArg("payload-callback", cfg)
+    send( "", create_request(HttpMethod.GET), cfg, new XData() )
   }
 
+  
+  /**
+   *
+   */
+  def join()  {    freeze(_lock)  }
 
-  private def send(req:HttpRequest, io:HTTPMsgIO, data:XData) {
+  /**
+   *
+   */
+  def wake() {    thaw(_lock)  }
 
-    tlog.debug("HTTPClient: {} {}", (if(data.hasContent) "POST" else "GET"), _curScope._1,"")
+//  override def finalize() {
+//    if (_boot != null) { _boot.releaseExternalResources }
+//    super.finalize()
+//  }
+
+  /**
+   * @param remote
+   */
+  protected def connect(host:String,port:Int) {
+    
+    val (bs, cg) = inizPipeline()
+
+    val cf= bs.connect(new InetSocketAddress(host, port))
+    // wait until the connection attempt succeeds or fails.
+    cf.awaitUninterruptibly
+
+    if (cf.isSuccess) {
+      cg.add( cf.getChannel )
+      _CH= cf.getChannel 
+      tlog.debug("HTTPClient: connected OK to host: {}, port: {}{}", host, asJObj(port),"")
+    } else {
+      onError(cf.getCause)
+    }
+
+  }
+
+  private def send(contentType:String, req:HttpRequest, io:HTTPMsgIO, data:XData) {
+
+    tlog.debug("HTTPClient: {} {}", (if(data.hasContent) "POST" else "GET"), _remote.toString, "")
 
     val clen= if (data.hasContent) data.size else 0L
-    val uri= _curScope._1
-    val cf= _curScope._2
     var cfg:HTTPMsgIO = if (io == null) {
       new BasicHTTPMsgIO() {
         def onOK(code:Int, reason:String, res:XData) {}
@@ -186,31 +184,31 @@ class HTTPClient {
     req.setHeader(HttpHeaders.Names.CONNECTION,
       if (cfg.keepAlive) HttpHeaders.Values.KEEP_ALIVE else HttpHeaders.Values.CLOSE)
 
-    if (data.hasContent && STU.isEmpty( req.getHeader("content-type"))) {
-      req.setHeader("content-type", "application/octet-stream")
-    }
-
     tlog.debug("HTTPClient: content has length: {}", asJObj(clen))
     req.setHeader("content-length", clen.toString)
 
-    req.setHeader(HttpHeaders.Names.HOST, uri.getHost)
+    req.setHeader(HttpHeaders.Names.HOST, _remote.getHost)
     // allow for extra settings via the input object
     cfg.configMsg(req)
 
-    val cc= cf.getChannel
-    val h= cc.getPipeline.get("handler").asInstanceOf[HTTPResponseHdlr]
+    if (data.hasContent &&   STU.isEmpty( req.getHeader("content-type")) &&
+        !STU.isEmpty(contentType)) {        
+      req.setHeader("content-type", contentType)
+    }
+
+    val h= _CH.getPipeline.get("handler").asInstanceOf[HTTPResponseHdlr]
     h.bind(cfg)
 
     tlog.debug("HTTPClient: about to flush out request (headers)")
-    var f= cc.write(req)
+    var f= _CH.write(req)
     f.addListener( newChFLnr ( (x) => tlog.debug("HTTPClient: req headers flushed")  ) )
 
     if (clen > 0L) {
       f= if (clen > HTTPUtils.dftThreshold ) {
-        cc.write(new ChunkedStream( data.stream))
+        _CH.write(new ChunkedStream( data.stream))
       } else {
         data.bytes match {
-          case Some(b) => cc.write( new ByteBufferBackedChannelBuffer( ByteBuffer.wrap( b) ))
+          case Some(b) => _CH.write( new ByteBufferBackedChannelBuffer( ByteBuffer.wrap( b) ))
           case _ => throw new IOException("Bad input data")
         }
       }      
@@ -219,33 +217,26 @@ class HTTPClient {
 
   }
 
-  /**
-   *
-   */
-  def finz() {
-    tlog.debug("HTTPClient: finz()")
-    close()
-    try { _boot.releaseExternalResources } finally { _boot=null }
-  }
-
-  /**
-   *
-   */
   def close() {
     tlog.debug("HTTPClient: close()")
-    if (_curScope != null) try { _chs.close } finally {  _curScope=null  }
+    block { () =>
+      _CH.close
+    }
   }
 
   private def create_request(m:HttpMethod) = {
-    new DefaultHttpRequest( HttpVersion.HTTP_1_1, m, _curScope._1.toASCIIString())
+    new DefaultHttpRequest( HttpVersion.HTTP_1_1, m, _remote.toASCIIString())
   }
 
-  private def inizPipeline(ssl:Boolean) {
+  private def inizPipeline() = {
 
-    _boot.setPipelineFactory(new ChannelPipelineFactory() {
+    val bs= if (_ssl) _netty.get._ssl else _netty.get._http
+    val cg= if (_ssl) _netty.get._scg else _netty.get._pcg
+    
+    bs.setPipelineFactory(new ChannelPipelineFactory() {
       def getPipeline() = {
         val pl= org.jboss.netty.channel.Channels.pipeline()
-        if (ssl) {
+        if (_ssl) {
           val eng = HTTPUtils.clientSSL().createSSLEngine
           eng.setUseClientMode(true)
           pl.addLast("ssl", new SslHandler(eng))
@@ -254,11 +245,12 @@ class HTTPClient {
 //        pipe.addLast("inflater", new HttpContentDecompressor())
         //pipeline.addLast("aggregator", new HttpChunkAggregator(1048576))
         pl.addLast("chunker", new ChunkedWriteHandler())
-        pl.addLast("handler", new HTTPResponseHdlr(_chs))
+        pl.addLast("handler", new HTTPResponseHdlr( cg))
         pl
       }
     })
 
+    (bs, cg)
   }
 
   private def onError(t:Throwable) {
@@ -270,13 +262,23 @@ class HTTPClient {
     }
   }
 
-  private def iniz() {
-    _boot = new ClientBootstrap( new NioClientSocketChannelFactory (
+}
+
+sealed class NettyClientIO {
+    
+    val _http = new ClientBootstrap( new NioClientSocketChannelFactory (
         Executors.newCachedThreadPool(),
         Executors.newCachedThreadPool()))
-    _boot.setOption("tcpNoDelay" , true)
-    _boot.setOption("keepAlive", true)
-    _chs= new DefaultChannelGroup(uid )
-  }
-
+    val _ssl = new ClientBootstrap( new NioClientSocketChannelFactory (
+        Executors.newCachedThreadPool(),
+        Executors.newCachedThreadPool()))
+    val _pcg= new DefaultChannelGroup(uid )
+    val _scg= new DefaultChannelGroup(uid )
+    
+    _http.setOption("tcpNoDelay" , true)
+    _http.setOption("keepAlive", true)    
+    _ssl.setOption("tcpNoDelay" , true)
+    _ssl.setOption("keepAlive", true)
+    
 }
+

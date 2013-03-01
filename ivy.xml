@@ -34,6 +34,9 @@
     <dependency org="com.google.guava" name="guava" rev="13.0.1" conf="libjar->default"/>
     <dependency org="com.google.code.findbugs" name="jsr305" rev="2.0.1" conf="libjar->default"/>
 
+    <!-- xml, dom -->
+    <dependency org="org.jdom" name="jdom2" rev="2.0.4" conf="libjar->default"/>
+
     <!-- JSON -->
     <dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.1.1" conf="libjar->default"/>
     <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.1.1" conf="libjar->default"/>
@@ -75,11 +78,9 @@
     <dependency org="org.apache.empire-db" name="empire-db" rev="2.4.1" conf="libjar->default"/>
 
     <!-- network stuff -->
-    <!--
-    <dependency org="org.apache.httpcomponents" name="httpcore-nio" rev="4.2.2" conf="libjar->default"/>
-    <dependency org="org.apache.httpcomponents" name="httpcore" rev="4.2.2" conf="libjar->default"/>
-    <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.2.2" conf="libjar->default"/>
-    -->
+    <dependency org="org.apache.httpcomponents" name="httpcore-nio" rev="4.2.3" conf="libjar->default"/>
+    <dependency org="org.apache.httpcomponents" name="httpcore" rev="4.2.3" conf="libjar->default"/>
+    <dependency org="org.apache.httpcomponents" name="httpclient" rev="4.2.3" conf="libjar->default"/>
     <dependency org="io.netty" name="netty" rev="3.6.3.Final" conf="libjar->default"/>
     <dependency org="org.eclipse.jetty.orbit" name="javax.servlet" rev="3.0.0.v201112011016"  conf="libjar->default">
       <artifact name="javax.servlet" type="orbit" ext="jar"/>
