@@ -79,7 +79,7 @@ class SyncHTTPClient extends HTTPClientBase with CoreImplicits {
     _cli = new DefaultHttpClient()
   }
 
-  def post(contentType:String, data:XData ) {
+  def post(contentType:String, data:XData ) = {
     try {      
       val ent = new InputStreamEntity( data.stream, data.size)
       ent.setContentType(contentType)
@@ -126,13 +126,15 @@ class SyncHTTPClient extends HTTPClientBase with CoreImplicits {
     
     val ct= ent.getContentType match {
       case x:Header => nsb ( x.getValue ).trim 
-      case _ => "???"
+      case _ => "text/html"
     }
 //    tlog.debug("content-length: {}", asJObj(ent.getContentLength) )
     tlog.debug("content-type: {}", ct )
     tlog.debug("content-encoding: {}", ent.getContentEncoding )
     ct.lc match {
       case s if s.startsWith("text/") => Option(EntityUtils.toString(ent, "utf-8") ) 
+      case "???" => null
+        //ent.getContent()
       case _ => Option(EntityUtils.toByteArray(ent) ) 
     }
     
