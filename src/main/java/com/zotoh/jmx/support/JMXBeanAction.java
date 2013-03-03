@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -46,9 +46,7 @@ public enum JMXBeanAction {
     return UNKNOWN;
   }
 
-  public int infoValue() {
-    return _value;
-  }
+  public int infoValue() { return _value; }
 
   private JMXBeanAction(int v) {
     _value=v;

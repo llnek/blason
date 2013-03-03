@@ -131,11 +131,18 @@ class SyncHTTPClient extends HTTPClientBase with CoreImplicits {
 //    tlog.debug("content-length: {}", asJObj(ent.getContentLength) )
     tlog.debug("content-type: {}", ct )
     tlog.debug("content-encoding: {}", ent.getContentEncoding )
-    ct.lc match {
-      case s if s.startsWith("text/") => Option(EntityUtils.toString(ent, "utf-8") ) 
-      case "???" => null
-        //ent.getContent()
-      case _ => Option(EntityUtils.toByteArray(ent) ) 
+    val isstr= ct.lc match {
+      case s if s.startsWith("text/") => true
+      case "application/xml" => true
+      case "application/json" =>true
+      case "???" => false
+      case _ => false
+    }
+    
+    if (isstr) {
+        Option(EntityUtils.toString(ent, "utf-8") )
+    } else {
+        Option(EntityUtils.toByteArray(ent) )  
     }
     
   }

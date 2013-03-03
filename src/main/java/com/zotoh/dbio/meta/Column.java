@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012-13 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
 
 /**
  *  Use it to provide extra information relating to a database column.
- *  The annotation is expected to be associated with the column's
+ *  The annotation MUST ONLY be associated with the column's
  *  getter method.
  *
  * @author kenl

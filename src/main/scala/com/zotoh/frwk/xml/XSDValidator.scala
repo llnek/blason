@@ -40,6 +40,7 @@ import javax.xml.validation.Validator
 import org.xml.sax.ErrorHandler
 import org.xml.sax.SAXException
 
+
 object XSDValidator {
 
   private val _xsdFac= SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
@@ -60,28 +61,26 @@ object XSDValidator {
  *
  */
 class XSDValidator extends SaxHandler  {
-
-
-  /**
-   * @param doc
-   * @param sd
-   * @return
-   * @throws MalformedURLException
-   */
-  def scan(doc:InputStream, sd:File):Boolean = check(doc, sd.toURI().toURL() )
-
+  import XSDValidator._
 
   /**
    * @param doc
    * @param sd
    * @return
    */
-  def scan(doc:InputStream, sd:URL):Boolean = check(doc, sd)
+  def scan(doc:InputStream, sd:File): Boolean = check(doc, sd.toURI.toURL )
+
+
+  /**
+   * @param doc
+   * @param sd
+   * @return
+   */
+  def scan(doc:InputStream, sd:URL): Boolean = check(doc, sd)
 
   private def check(doc:InputStream, xsd:URL) = {
-    try    {
-      XSDValidator.getSV(xsd, this).
-      validate( new SAXSource( sourceToInputSource( new StreamSource( doc))))
+    try {
+      getSV(xsd, this).validate( new SAXSource( sourceToInputSource( new StreamSource( doc))))
     } catch {
       case e:SAXException => push(e)
       case e:Exception => push( new SAXException(e))

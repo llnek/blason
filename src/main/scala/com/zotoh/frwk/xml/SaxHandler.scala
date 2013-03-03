@@ -51,8 +51,7 @@ object SaxHandler {
  */
 class SaxHandler extends DefaultHandler with ErrorHandler  {
 
-  import SaxHandler._
-  def tlog() = _log
+  def tlog() = SaxHandler._log
 
   protected var _errors:JSTK[SAXException] = null
   protected var _warns:JSTK[SAXException] = null
@@ -89,7 +88,7 @@ class SaxHandler extends DefaultHandler with ErrorHandler  {
   /**
    * @param trim
    */
-  def setTrimCDATA(trim:Boolean) = {
+  def setTrimCDATA(trim:Boolean): this.type = {
     _trimCDATA= trim
     this
   }
@@ -130,14 +129,8 @@ class SaxHandler extends DefaultHandler with ErrorHandler  {
     }
   }
 
-  /**
-   * @return
-   */
   def warningsAsString() = exceptionsAsString(_warns)
 
-  /**
-   * @return
-   */
   def errorsAsString() = exceptionsAsString( _errors)
 
 
@@ -170,32 +163,15 @@ class SaxHandler extends DefaultHandler with ErrorHandler  {
     _errors.push(e)
   }
 
-  /**
-   * @param uri
-   * @param lname
-   * @param qname
-   * @param atts
-   * @throws SAXException
-   */
   protected def onStartElement(uri:String, lname:String,
     qname:String, atts:Map[String,String] ) {
     // subclass do the work
   }
 
-  /**
-   * @param uri
-   * @param lname
-   * @param qname
-   * @param cdata
-   * @throws SAXException
-   */
   protected def onEndElement(uri:String, lname:String, qname:String, cdata:String) {
     // subclass do the work
   }
 
-  /**
-   * @param curr
-   */
   protected def attachHandler(curr:SaxHandler) {
     if (curr != null) {
       _elemData= curr._elemData
@@ -209,14 +185,8 @@ class SaxHandler extends DefaultHandler with ErrorHandler  {
     }
   }
 
-  /**
-   * @return
-   */
   protected def hasErrors() = _errors.size() > 0
 
-  /**
-   *
-   */
   protected def iniz()  {
     _errors= new JSTK[SAXException]()
     _warns= new JSTK[SAXException]()

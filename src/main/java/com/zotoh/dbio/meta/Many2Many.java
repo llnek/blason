@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012-13 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE, 
@@ -35,7 +35,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Many2Many {
+  // the shared joined table mapped to this class
   public Class<?> joined();
-	public Class<?> rhs();
-  public String desc() default "";	
+  // the other object type
+  public Class<?> rhs();
+  public String desc() default "";
 }

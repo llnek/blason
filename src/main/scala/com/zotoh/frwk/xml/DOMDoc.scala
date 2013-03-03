@@ -39,9 +39,9 @@ import org.jdom2.Document
 object DOMDoc {
   private val _log=LoggerFactory.getLogger(classOf[DOMDoc] )
   val _sax= new ThreadLocal[SAXBuilder]() {
-    override def initialValue() = new SAXBuilder( XMLReaders.NONVALIDATING ) 
+    override def initialValue() = new SAXBuilder( XMLReaders.NONVALIDATING )
   }
-  
+
 }
 
 /**
@@ -51,9 +51,9 @@ class DOMDoc {
 
   def tlog() = DOMDoc._log
   import DOMDoc._
-  
-  def parse(fp:File)( cb: ( Document ) => Any ) { parse(fp.toURI().toURL()) ( cb ) }
- 
+
+  def parse(fp:File)( cb: ( Document ) => Any ) { parse(fp.toURI.toURL) ( cb ) }
+
   def parse(fp:URL)( cb: ( Document ) => Any ) {
     using (fp.openStream ) { (inp) =>
       parse(inp) (cb)
@@ -62,10 +62,10 @@ class DOMDoc {
 
   def parse(s:String) ( cb: ( Document ) => Any) {
     using ( new StringReader(s) ) { (r) =>
-      cb( _sax.get.build(r) )      
+      cb( _sax.get.build(r) )
     }
   }
-  
+
   def parse(inp:InputStream) ( cb: ( Document ) => Any) {
     cb( _sax.get.build(inp) )
   }

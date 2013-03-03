@@ -1,20 +1,20 @@
 /*??
- * COPYRIGHT (C) 2012-13 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
- * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE, 
+ * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
  * VERSION 2.0 (THE "LICENSE").
  *
  * THIS LIBRARY IS DISTRIBUTED IN THE HOPE THAT IT WILL BE USEFUL,
  * BUT WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
- *   
- * SEE THE LICENSE FOR THE SPECIFIC LANGUAGE GOVERNING PERMISSIONS 
+ *
+ * SEE THE LICENSE FOR THE SPECIFIC LANGUAGE GOVERNING PERMISSIONS
  * AND LIMITATIONS UNDER THE LICENSE.
  *
  * You should have received a copy of the Apache License
- * along with this distribution; if not, you may obtain a copy of the 
- * License at 
+ * along with this distribution; if not, you may obtain a copy of the
+ * License at
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  ??*/
@@ -27,8 +27,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *  Use it to provide extra information relating to a database table.  
- *  The annotation is expected to be associated with the class  
+ *  Use it to provide extra information relating to a database table.
+ *  The annotation MUST ONLY be associated with the class
  *  defined for the table.
  *
  * @author kenl
@@ -36,15 +36,15 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface Table {
-	
-    /**
-     * The name of the database table.
-     * 
-     * @return
-     */
-    public String table();
-    
-    public String[] uniques() default {} ;    
-    public String[] indexes() default {} ;
-    
+
+  /**
+  * The name of the database table.
+  *
+  * @return
+  */
+  public String table();
+
+  public String[] uniques() default {} ;
+  public String[] indexes() default {} ;
+
 }

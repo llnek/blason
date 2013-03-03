@@ -69,16 +69,14 @@ class DOMWriter( @transient private var _wtr:Writer) extends Constants  {
   /**
    *
    */
-  def this()  {
-    this(new StringWriter())
-  }
+  def this()  { this(new StringWriter) }
 
 
   /**
    * @param writer
    * @return
    */
-  def setWriter(w:Writer) =  {
+  def setWriter(w:Writer): this.type =  {
     tstObjArg("writer", w)
     _wtr= w
     this
@@ -96,7 +94,7 @@ class DOMWriter( @transient private var _wtr:Writer) extends Constants  {
    * @return
    * @throws IOException
    */
-  def write(doc:Document) = {
+  def write(doc:Document): this.type = {
 
     if (doc != null) {
       val t= TransformerFactory.newInstance().newTransformer
@@ -107,3 +105,4 @@ class DOMWriter( @transient private var _wtr:Writer) extends Constants  {
   }
 
 }
+

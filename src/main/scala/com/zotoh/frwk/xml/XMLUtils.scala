@@ -51,10 +51,11 @@ import org.xml.sax.InputSource
 import org.xml.sax.SAXException
 
 
-object ValidationStyle {
-    val NONE= "None"
-    val DTD="dtd"
-    val XSD="xsd"
+object ValidationStyle extends Enumeration {
+  type ValidationStyle=Value
+  val NONE= Value(0, "None" )
+  val DTD= Value( 1, "DTD" )
+  val XSD= Value(2, "XSD" )
 }
 
 /**
@@ -70,105 +71,49 @@ object XMLUtils extends Constants {
   private val _log= LoggerFactory.getLogger(classOf[XMLUtils])
   def tlog() = _log
 
-  private val _dfac = DocumentBuilderFactory.newInstance()
-  private var _sfac = SAXParserFactory.newInstance()
+  private val _dfac = DocumentBuilderFactory.newInstance
+  private var _sfac = SAXParserFactory.newInstance
 
-  /**
-   * @return
-   * @throws SAXException
-   */
   def newSaxValidator() = newParser(true, true)
 
-  /**
-   * @return
-   * @throws SAXException
-   */
   def newSaxParser() = newParser(true, false)
 
-  /**
-   * @param s
-   * @return
-   */
-  def mkInputSource(s:InputStream) =
-    new InputSource(new BufferedInputStream(s))
+  def mkInputSource(s:InputStream) = new InputSource(new BufferedInputStream(s))
 
-  /**
-   * @param atts
-   * @return
-   */
   def attrsToLNMap(atts:Attributes) = {
     attrsToMap(atts, false)
   }
 
-  /**
-   * @param atts
-   * @return
-   */
   def attrsToQNMap(atts:Attributes) = attrsToMap(atts, true)
 
 
-  /**
-   * @param atts
-   * @return
-   */
   def attributesToString(atts:Map[String,String]) =  {
-    val buf= new StringBuilder(1024)
-    if (atts != null) atts.foreach { (t) =>
-      buf.append(" ").
-      append(t._1).
-      append("=\"").
-      append(t._2).
-      append("\"")
-    }
-    buf.toString
+    if (atts==null) "" else atts.foldLeft(new StringBuilder) { (buf,t) =>
+      buf.append(" ").append(t._1).append("=\"").append(t._2).append("\"")
+    }.toString
   }
 
 
-  /**
-   * @param out
-   * @param s
-   * @param enc
-   * @throws IOException
-   */
   def write(out:OutputStream, s:String, enc:String) {
     if (! STU.isEmpty(s)) {
       tstObjArg("output-stream", out)
       out.write(asBytes(s,enc))
-      out.flush()
+      out.flush
     }
   }
 
 
-  /**
-   * @param out
-   * @param s
-   * @throws IOException
-   */
   def write(out:OutputStream, s:String) {
     write(out,s, "utf-8")
   }
 
 
-  /**
-   * @param inp
-   * @return
-   * @throws Exception
-   */
   def parseXML(inp:InputStream) = newDOMer(true,false).parse(inp)
 
 
-  /**
-   * @param file
-   * @return
-   * @throws Exception
-   */
   def parseXML(f:File) = newDOMer(true,false).parse( f)
 
 
-  /**
-   * @param xmlString
-   * @return
-   */
   def indexToProlog(xmlString:String)  = {
     var rc=xmlString
     if (! STU.isEmpty(xmlString))    {
@@ -181,28 +126,17 @@ object XMLUtils extends Constants {
   }
 
 
-  /**
-   * @param em
-   * @param a
-   * @return
-   */
   def iterChildren(em:Element, a:String) = {
     listChildren(em, a).iterator
   }
 
 
-  /**
-   * @param em
-   * @param a
-   * @return
-   */
   def listChildren(em:Element, a:String) = {
     tstObjArg("input-element", em)
     tstEStrArg("tag", a)
 
     val lst= em.getElementsByTagName(a)
     val len= if(lst==null) 0 else lst.getLength
-
     val rc= new mutable.ArrayBuffer[Node]()
     for (i <- 0 until len) {
       rc += lst.item(i)
@@ -212,68 +146,41 @@ object XMLUtils extends Constants {
   }
 
 
-  /**
-   * @param em
-   * @param a
-   * @return
-   */
   def getAttr(em:Element, a:String) = {
     if(em==null || a==null) null else em.getAttribute(a)
   }
 
 
-  /**
-   * @param em
-   * @return
-   */
   def getElementName(em:Element) =  {
     if ( em==null) null else escape(getAttr(em, "name"))
   }
 
 
-  /**
-   * @param tag
-   * @param obj
-   * @return
-   */
   def xmle(tag:String, obj:Object)  = {
     if (tag==null) "" else { starte(tag) + escape(nsb(obj)) + ende(tag) }
   }
 
-
-  /**
-   * @param tag
-   * @return
-   */
   def starte(tag:String) =  "<" + nsb(tag) + ">"
 
-  /**
-   * @param tag
-   * @return
-   */
   def ende(tag:String) = "</" + nsb(tag) + ">"
 
 
-  /**
-   * @param inStr
-   * @return
-   */
   def escape(inStr:String)  = {
-    val outBuf= new StringBuilder(256)
-    nsb(inStr).toCharArray.foreach { (c) =>
-      c match {
-        case '\n' => outBuf.append("&#10;")
-        case '\r' => outBuf.append("&#13;")
-        case '<' => outBuf.append("&lt;")
-        case '>' => outBuf.append("&gt;")
-        case '&' => outBuf.append("&amp;")
-        case '\'' => outBuf.append("&apos;")
-        case '"' => outBuf.append("&quot;")
-        case _ => outBuf.append(c)
-      }
-    }
 
-    outBuf.toString
+    nsb(inStr).toCharArray.foldLeft(new StringBuilder) { (buf,c) =>
+      c match {
+        case '\n' => buf.append("&#10;")
+        case '\r' => buf.append("&#13;")
+        case '<' => buf.append("&lt;")
+        case '>' => buf.append("&gt;")
+        case '&' => buf.append("&amp;")
+        case '\'' => buf.append("&apos;")
+        case '"' => buf.append("&quot;")
+        case _ => buf.append(c)
+      }
+      buf
+    }.toString
+
   }
 
   /**
@@ -281,23 +188,17 @@ object XMLUtils extends Constants {
    *
    * @param inp the stream.
    * @return a DOM document.
-   * @throws ParserConfigurationException
-   * @throws IOException
-   * @throws SAXException
    */
   def toDOM(inp:InputStream) = newDOMer(true, false).parse(inp)
 
   private def newParser(nsAware:Boolean, validate:Boolean) = {
-
     val f= getSFac
     f.setNamespaceAware(nsAware)
     f.setValidating(validate)
     f.newSAXParser
-
   }
 
   private def newDOMer(nsAware:Boolean, validate:Boolean) = {
-
     val f= getDFac
     f.setNamespaceAware(nsAware)
     f.setValidating(validate)
@@ -318,8 +219,6 @@ object XMLUtils extends Constants {
     }
     ret.toMap
   }
-
-
 
 }
 

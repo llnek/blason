@@ -43,6 +43,7 @@ import com.zotoh.frwk.io.IOUtils
  *
  */
 class XMLScanner extends SaxHandler  {
+  import XMLUtils._
 
   /**
    * @param doc
@@ -69,7 +70,7 @@ class XMLScanner extends SaxHandler  {
   def scan(doc:InputStream): Boolean = {
 
     try {
-      val rdr= XMLUtils.newSaxParser.getXMLReader
+      val rdr= newSaxParser.getXMLReader
       rdr.setContentHandler(this)
       rdr.setEntityResolver(this)
       rdr.setErrorHandler(this)
