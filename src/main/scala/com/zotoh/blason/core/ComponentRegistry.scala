@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -29,13 +29,13 @@ package core
  */
 trait ComponentRegistry  {
 
-  def lookup( name:String):Option[ Component ]
+  def lookup( name:String): Option[Component]
 
-  def hasComponent( name:String):Boolean
+  def hasComponent( name:String): Boolean
 
-  def release( c:Component):Unit
+  def release( c:Component): Unit
 
-  def add(name:String, c:Component):Unit
+  def add(name:String, c:Component): Unit
 
   def getParent() : Option[ComponentRegistry]
 

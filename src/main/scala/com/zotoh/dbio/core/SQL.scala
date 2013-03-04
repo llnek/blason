@@ -54,14 +54,14 @@ object SQuery {
 /**
  * @author kenl
  */
-class SQuery( 
-  private val _conn: Connection, 
+class SQuery(
+  private val _conn: Connection,
   private val _sql: String,
   private val _params: Seq[Any] = Nil ) {
 
   private val _out= mutable.HashMap[String,Any]()
   private val _sqllc= _sql.toLowerCase
-  
+
   def tlog() = SQuery._log
 
   private def using[X](f : PreparedStatement => X): X = {
@@ -107,52 +107,52 @@ class SQuery(
   }
 
   def getOutput() = _out.values.toSeq
-  
+
   private def buildStmt(c: Connection, sql: String, params: Seq[Any] ): PreparedStatement = {
-      val ps= if (_sqllc.startsWith("insert")) {
-        c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
-      }  else {
-        c.prepareStatement(sql)
-      }
-      tlog.debug("SQL: {}", sql)
-      var pos=1
-      params.foreach { p => setBindVar(ps, pos, p); pos += 1  }
-      ps
+    val ps= if (_sqllc.startsWith("insert")) {
+      c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)
+    }  else {
+      c.prepareStatement(sql)
+    }
+    tlog.debug("SQL: {}", sql)
+    var pos=1
+    params.foreach { p => setBindVar(ps, pos, p); pos += 1  }
+    ps
   }
 
-  private def setBindVar(ps : PreparedStatement, pos : Int, param : Any) = {
+  private def setBindVar(ps:PreparedStatement, pos:Int, param:Any) = {
     param match {
-        case s: String => ps.setString(pos, s)
-        case l: Long => ps.setLong(pos, l)
-        case i: Int => ps.setInt(pos, i)
-        case si: Short => ps.setShort(pos, si)
+      case s: String => ps.setString(pos, s)
+      case l: Long => ps.setLong(pos, l)
+      case i: Int => ps.setInt(pos, i)
+      case si: Short => ps.setShort(pos, si)
 
-        case bi : BigInt => ps.setBigDecimal(pos, new JBigDec(bi.bigInteger))
-        case bd : BigDecimal => ps.setBigDecimal(pos, bd.bigDecimal)
+      case bi : BigInt => ps.setBigDecimal(pos, new JBigDec(bi.bigInteger))
+      case bd : BigDecimal => ps.setBigDecimal(pos, bd.bigDecimal)
 
-        case jbd : JBigDec => ps.setBigDecimal(pos, jbd)
-        case jbi : JBigInt => ps.setBigDecimal( pos, new JBigDec(jbi))
+      case jbd : JBigDec => ps.setBigDecimal(pos, jbd)
+      case jbi : JBigInt => ps.setBigDecimal( pos, new JBigDec(jbi))
 
-        case inp : InputStream => ps.setBinaryStream(pos, inp)
-        case rdr : Reader => ps.setCharacterStream(pos, rdr)
-        case bb : Bloby => ps.setBlob(pos, bb)
-        case cb : Cloby => ps.setClob(pos, cb)
+      case inp : InputStream => ps.setBinaryStream(pos, inp)
+      case rdr : Reader => ps.setCharacterStream(pos, rdr)
+      case bb : Bloby => ps.setBlob(pos, bb)
+      case cb : Cloby => ps.setClob(pos, cb)
 
-        case b: scala.Array[Byte] => ps.setBytes(pos, b)
-        case b: Boolean => ps.setBoolean(pos, b)
-        case d: Double => ps.setDouble(pos, d)
-        case f: Float => ps.setFloat(pos, f)
-        
-        case t: STimestamp => 
-          ps.setTimestamp(pos, t, new GregorianCalendar( SQuery.gmtTZ ))        
-          
-        case dt: JDate =>
-          ps.setDate(pos, new SDate(dt.getTime ), new GregorianCalendar( SQuery.gmtTZ ))            
-        
-        case dt:Calendar =>
-          ps.setTimestamp(pos, new STimestamp(dt.getTimeInMillis), new GregorianCalendar( SQuery.gmtTZ ))
+      case b: scala.Array[Byte] => ps.setBytes(pos, b)
+      case b: Boolean => ps.setBoolean(pos, b)
+      case d: Double => ps.setDouble(pos, d)
+      case f: Float => ps.setFloat(pos, f)
 
-        case _ => throw new SQLException("Unsupported param type: " + param)
+      case t: STimestamp =>
+        ps.setTimestamp(pos, t, new GregorianCalendar( SQuery.gmtTZ ))
+
+      case dt: JDate =>
+        ps.setDate(pos, new SDate(dt.getTime ), new GregorianCalendar( SQuery.gmtTZ ))
+
+      case dt:Calendar =>
+        ps.setTimestamp(pos, new STimestamp(dt.getTimeInMillis), new GregorianCalendar( SQuery.gmtTZ ))
+
+      case _ => throw new SQLException("Unsupported param type: " + param)
     }
   }
 

@@ -27,6 +27,11 @@ import scala.collection.mutable
 import com.zotoh.blason.core.Context
 import com.zotoh.blason.core.Resolvable
 
+import org.slf4j._
+
+object AbstractContext {
+  private val _log=LoggerFactory.getLogger(classOf[AbstractContext])
+}
 
 /**
  * @author kenl
@@ -34,7 +39,8 @@ import com.zotoh.blason.core.Resolvable
 abstract class AbstractContext(private val _par:Context) extends Context {
 
   private val _data= new mutable.HashMap[Any,Any] with mutable.SynchronizedMap[Any,Any]
-
+  def tlog() = AbstractContext._log
+  
   def get( key:Any) = {
     _data.get(key) match {
       case Some(r:Resolvable) => r.resolve(this)
@@ -67,4 +73,10 @@ abstract class AbstractContext(private val _par:Context) extends Context {
     _data.clear()
   }
 
+  def dbgShow() {
+    _data.foreach { (en) =>
+      tlog.info("key: {} , value: {}", en._1, en._2)
+    }
+  }
+  
 }

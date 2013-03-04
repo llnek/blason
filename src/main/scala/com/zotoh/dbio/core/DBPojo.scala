@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -25,7 +25,6 @@ package core
 import java.sql.{Timestamp=>JTS}
 
 
-
 object DBPojo {
 
   val COL_ROWID= "DBIO_ROWID"
@@ -35,7 +34,6 @@ object DBPojo {
   val COL_RHSOID= "DBIO_RHSOID"
   val COL_LHSOID= "DBIO_LHSOID"
 
-  
 }
 
 trait DBPojo {
@@ -45,12 +43,13 @@ trait DBPojo {
 
   def getRowID(): Long
   def getVerID(): Long
-  
+
   def set(field:String, value: Option[Any] ): Unit
   def get(field:String): Option[Any]
-  
+
   def setLastModified(dt:JTS): Unit
   def getLastModified(): JTS
-  
+
 }
+
 

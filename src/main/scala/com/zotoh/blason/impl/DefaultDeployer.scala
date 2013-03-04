@@ -66,7 +66,7 @@ with Initializable with Contextualizable with Loggable with CoreImplicits {
   def tlog() = DefaultDeployer._log
 
   private var _baseDir:File=null
-  private var _appsDir:File=null
+  private var _podsDir:File=null
   private var _playDir:File=null
 
   def name() = "deployer"
@@ -83,10 +83,10 @@ with Initializable with Contextualizable with Loggable with CoreImplicits {
       case _ => throw new ContextError(K_BASEDIR+" undefined")
     }
 
-    c.get(K_APPSDIR ) match {
-      case Some(x:String) => _appsDir=new File(x)
-      case Some(x:File) => _appsDir=x
-      case _ => throw new ContextError(K_APPSDIR+" undefined")
+    c.get(K_PODSDIR ) match {
+      case Some(x:String) => _podsDir=new File(x)
+      case Some(x:File) => _podsDir=x
+      case _ => throw new ContextError(K_PODSDIR+" undefined")
     }
 
     c.get(K_PLAYDIR ) match {
@@ -99,7 +99,7 @@ with Initializable with Contextualizable with Loggable with CoreImplicits {
   // get all application pod files (.pod suffix)
   // and then inspect them and deploy them
   def initialize() {
-    FUT.listFiles(_appsDir, Array("pod"),false).foreach { (f) =>
+    FUT.listFiles(_podsDir, Array("pod"),false).foreach { (f) =>
       deploy(f.toURI.toURL)
     }
   }

@@ -52,15 +52,18 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
   private val _classes = mutable.HashMap[ Class[_], ClassMetaHolder]()
   private val _meta= mutable.HashMap[ String, TableMetaHolder]()
   private val _assocs= mutable.HashMap[ String,AssocMetaHolder]()
+
+  // for m2m, the key is the combo of both lhs/rhs tables(sorted)
   private val _mms= mutable.HashMap[ String,Class[_] ]()
   def getMMS() = _mms.toMap
   def putMMS(key:String, z:Class[_]) {
     _mms += key -> z
   }
-  def getAssocMetas() = _assocs.toMap
+
   def putAssocMeta(table:String, meta: AssocMetaHolder) {
     _assocs += table -> meta
   }
+  def getAssocMetas() = _assocs.toMap
 
   def tlog() = MetaCache._log
 
@@ -76,6 +79,7 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
       case _ => null
     }
   }
+
   def findJoined(lhs:DBPojo, rhs:DBPojo): Class[_] = {
     findJoined(lhs.getClass, rhs.getClass)
   }
@@ -89,7 +93,7 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
   }
 
   def getTableMeta( table:String ): Option[TableMetaHolder] = {
-    if (STU.isEmpty(table)) None else _meta.get(table.lc)
+    if (STU.isEmpty(table)) None else _meta.get(table.uc)
   }
 
   def getClassMeta( target:Class[_]) = {
@@ -115,7 +119,11 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
   }
 
   private def loadTableMeta(con:Connection, table:String) = synchronized {
-    DBUtils.loadTableMeta(con,table)
+    val m= DBUtils.loadTableMeta(con,table)
+    if (m.isDefined) {
+      _meta.put(table.uc, m.get)
+    }
+    m
   }
 
   private def throwNoTable(z:Class[_]) = {
@@ -125,3 +133,4 @@ sealed class MetaCache(models:Schema) extends CoreImplicits {
   }
 
 }
+

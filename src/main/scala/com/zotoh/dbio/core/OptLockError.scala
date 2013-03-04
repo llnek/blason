@@ -30,7 +30,7 @@ import java.sql.SQLException
  * @author kenl
  */
 class OptLockError(msg:String, e:Throwable) extends SQLException(msg,e) {
-  
+
   def this(msg:String) { this(msg,null) }
-  
+
 }

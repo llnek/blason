@@ -70,16 +70,16 @@ class NameValues extends CoreImplicits {
   }
 
   def toFilterClause(): (String, Seq[Any]) = {
-      if (size == 0 ) ("", Nil) else toClause()
+    if (size == 0 ) ("", Nil) else toClause()
   }
-  
+
   private def toClause(): (String, Seq[Any]) = {
     val r= mutable.ArrayBuffer[Any]()
-    val w= new StringBuilder(256)
-    _ps.foreach { (en) =>
+    val w= (new StringBuilder /: _ps) { (w, en) =>
       if (w.length > 0) { w.append(" AND ") }
       w.append(en._1).append("=?")
       r += en._2
+      w
     }
     (w.toString, r.toSeq)
   }

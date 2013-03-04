@@ -27,7 +27,7 @@ import java.sql.{DriverManager, SQLException, Connection}
 import java.util.{Properties=>JPS}
 import com.jolbox.bonecp.BoneCPConfig
 import com.jolbox.bonecp.BoneCP
-import com.zotoh.frwk.db.{JDBCPool,JDBCInfo,TLocalDBIO,TLocalJDBC}
+import com.zotoh.frwk.db.{JDBCPool,JDBCInfo,TLocalDBIO,TLocalJDBC,DBUtils}
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.CoreImplicits
@@ -37,10 +37,9 @@ import org.slf4j._
 /**
  * @author kenl
  */
-class PoolableDBFactory extends DBFactory {  
-  override def apply(
-      ji:JDBCInfo,
-  s:Schema, pps:JPS ): DB = {
+class PoolableDBFactory extends DBFactory {
+
+  override def apply( ji:JDBCInfo, s:Schema, pps:JPS ): DB = {
     new PoolableDB(ji, s, pps)
   }
 
@@ -59,22 +58,24 @@ class PoolableDB( ji:JDBCInfo,
 
   val _log= LoggerFactory.getLogger(classOf[PoolableDB])
   val _meta= new MetaCache(s)
-  
+  private val _vendor=DBUtils.vendor(ji)
+
   private val _props = new JPS()
-  private var _optLock=false
-  
+  //private var _optLock=false
+
   _props.putAll(pps)
-  
+
   if (!STU.isEmpty(ji.user)) {
     _props.put("username", ji.user)
     _props.put("user", ji.user)
     _props.put("password", nsb( ji.pwd))
   }
-  
+
   private val _pool = JDBCPool.mkSingularPool( ji, _props)
 
   def getProperties() = _props
   def getInfo() = ji
+  def getVendor() = _vendor
   
   def open()  = _pool.nextFree
   def finz() {
@@ -82,8 +83,8 @@ class PoolableDB( ji:JDBCInfo,
   }
 
   def supportsOptimisticLock() = {
-    true || _props.getb("opt_lock")
+    if ( _props.containsKey("opt_lock") )  _props.getb("opt_lock") else true
   }
-  
+
 }
 

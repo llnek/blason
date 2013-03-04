@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -22,7 +22,7 @@
 package com.zotoh.frwk
 package util
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 import scala.util.Sorting
 
 import java.io.{IOException,CharArrayWriter,File,OutputStream,OutputStreamWriter,Reader,Writer}
@@ -41,11 +41,11 @@ object StrUtils extends CoreImplicits {
       Arrays.equals(a.toCharArray, b.toCharArray )
     }
   }
-  
+
   def strim(s:String) = {
     nsb(s).trim
   }
-  
+
   /**
    * Append to a string-builder, optionally inserting a delimiter if the buffer is not
    * empty.
@@ -73,7 +73,7 @@ object StrUtils extends CoreImplicits {
    * @return
    */
   def splitIntoChunks(original:String, chunkLength:Int) = {
-    val ret= ArrayBuffer[String]()
+    val ret= mutable.ArrayBuffer[String]()
     var src=original
     if (src != null) {
       while (src.length > chunkLength) {

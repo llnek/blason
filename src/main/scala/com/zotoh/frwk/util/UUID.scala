@@ -33,7 +33,8 @@ import com.zotoh.frwk.util.CoreUtils._
  */
 object UUID {
 
-  private val CHARS= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray()
+  private val CHARS= "0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz".toCharArray()
+  //private val CHARS= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray()
   private val WIDTH=36
 
   /**

@@ -59,9 +59,9 @@ trait SQLProc extends CoreImplicits {
   import DBPojo._
 
   def getDB(): DB
-  
+
   def select[T]( sql:String, params:Any* )(f: ResultSet => T): Seq[T]
-  def executeWithOutput( sql: String, params:Any* ): (Int, Seq[Any])  
+  def executeWithOutput( sql: String, params:Any* ): (Int, Seq[Any])
   def execute(sql:String, params:Any* ): Int
   def insert( obj:DBPojo): Int
   def delete( obj:DBPojo): Int
@@ -71,11 +71,11 @@ trait SQLProc extends CoreImplicits {
   }
   def count(z:Class[_]) = {
     val f = { (rset:ResultSet) =>
-      if (rset != null && rset.next()) rset.getInt(1) else 0    
+      if (rset != null && rset.next()) rset.getInt(1) else 0
     }
     doCount( "SELECT COUNT(*) FROM " + throwNoTable(z).table().uc , f)
   }
-  
+
   def update( obj:DBPojo): Int = {
     update(obj, Set("*"))
   }
@@ -96,35 +96,37 @@ trait SQLProc extends CoreImplicits {
       select[T]( s)(cb)
     }
   }
+
   def findSome[T <: DBPojo ](cz:Class[T]): Seq[T] = findSome(cz, new NameValues)
   def findOne[T <: DBPojo ](cz:Class[T], filter:NameValues): Option[T] = {
     val rc = findSome(cz, filter)
     if (rc.size == 0) None else Option( rc(0) )
-  }  
-  
+  }
+
   def findAll[T <: DBPojo ](cz:Class[T]): Seq[T] = {
     findSome(cz, new NameValues )
   }
-  
+
   def findViaSQL[T <: DBPojo ](cz:Class[T], sql:String, params:Any* ): Seq[T] = {
     val cb: ResultSet => T = { row : ResultSet => row2Obj(cz, row) }
     select(sql,params:_*)(cb)
   }
 
-  protected def doUpdate(pojo:DBPojo, cols:Set[String]): Int = {
-    val (all,none) = if (cols.size==0) (false,true) else (cols.head=="*",false)
+  protected def doUpdate(pojo:DBPojo, updates:Set[String]): Int = {
+    val (all,none) = if (updates.size==0) (false,true) else (updates.head=="*",false)
     if (none) { return 0 }
     val obj= pojo.asInstanceOf[AbstractModel]
-    val ds= obj.getDirtyFields()
+    val ds= obj.getDirtyFields
     val lst= mutable.ArrayBuffer[Any]()
     val sb1= new StringBuilder(1024)
     val cz= throwNoCZMeta(obj.getClass)
-    val flds= cz.getFldMetas()
-    val cver= pojo.getVerID()
+    val flds= cz.getFldMetas
+    val cver= pojo.getVerID
     val nver= cver+1
     val lock= getDB().supportsOptimisticLock()
+    val cols= updates.map( _.toUpperCase )
 
-    obj.setLastModified(nowJTS() )
+    obj.setLastModified(nowJTS )
     ds.filter( all || cols.contains(_) ).foreach { (dn) =>
       val go= flds.get(dn) match {
         case Some(fld) =>
@@ -132,16 +134,19 @@ trait SQLProc extends CoreImplicits {
         case _ => true
       }
       if (go) {
-          addAndDelim(sb1, ",", dn)
-          obj.get(dn) match {
-            case Some(Nichts.NICHTS) | None => sb1.append("=NULL")
-            case Some(v) =>
-              sb1.append("=?")
-              lst += v
-          }
+        addAndDelim(sb1, ",", dn)
+        obj.get(dn) match {
+          case Some(Nichts.NICHTS) | None => sb1.append("=NULL")
+          case Some(v) =>
+            sb1.append("=?")
+            lst += v
+        }
       }
     }
+
     if (sb1.length > 0) {
+      addAndDelim(sb1, ",", obj.dbio_getLastModified_column.uc).append("=?")
+      lst += obj.getLastModified
       if (lock) {
         addAndDelim(sb1, ",", COL_VERID).append("=?")
         lst += nver
@@ -156,8 +161,7 @@ trait SQLProc extends CoreImplicits {
         lockError(cnt, tbl, obj.getRowID )
       }
       cnt
-    }
-    else {
+    } else {
       0
     }
   }
@@ -168,9 +172,16 @@ trait SQLProc extends CoreImplicits {
   }
 
   protected def doDelete( obj:DBPojo): Int = {
+    val lock= getDB().supportsOptimisticLock()
     val t= throwNoTable(obj.getClass)
-    execute( "DELETE FROM " + t.table.uc +
-            " WHERE " + COL_ROWID + "=?" , obj.getRowID )
+    val p= mutable.ArrayBuffer[Any]()
+    var w= COL_ROWID + "=?"
+    p += obj.getRowID
+    if (lock) {
+      w += " AND " + COL_VERID + "=?"
+      p += obj.getVerID
+    }
+    execute("DELETE FROM " + t.table.uc + " WHERE " + w,  p:_* )
   }
 
   protected def doInsert(pojo:DBPojo): Int = {
@@ -180,13 +191,13 @@ trait SQLProc extends CoreImplicits {
     val cz= throwNoCZMeta(pojo.getClass)
     val t= throwNoTable(pojo.getClass)
     val obj= pojo.asInstanceOf[AbstractModel]
-    val flds= cz.getFldMetas()
-    
-    obj.setLastModified(nowJTS() )    
+    val flds= cz.getFldMetas
+
+    obj.setLastModified(nowJTS )
     obj.getDirtyFields.foreach { (dn) =>
       val go = flds.get(dn) match {
         case Some(fld) =>
-          if (fld.isPK ||fld.isAutoGen || fld.isInternal ) false else true      
+          if (fld.isPK ||fld.isAutoGen || fld.isInternal ) false else true
         case _ => true
       }
       if (go) {
@@ -217,7 +228,6 @@ trait SQLProc extends CoreImplicits {
     }
   }
 
-//////////////// assoc-stuff
 
   private def throwNoCZMeta(z:Class[_]) = {
     _meta.getClassMeta(z) match {
@@ -233,7 +243,7 @@ trait SQLProc extends CoreImplicits {
   }
 
   def getO2O[T <: DBPojo ](lhs:DBPojo, rhs:Class[T], fkey:String): Option[T] = {
-    val rc = findSome( rhs, new NameValues(COL_ROWID, lhs.get(fkey).getOrElse(-1L)) )    
+    val rc = findSome( rhs, new NameValues(COL_ROWID, lhs.get(fkey).getOrElse(-1L)) )
     if (rc.size == 0) None else Option( rc(0) )
   }
 
@@ -242,6 +252,7 @@ trait SQLProc extends CoreImplicits {
   }
 
   def purgeO2O(lhs:DBPojo, rhs:Class[_], fkey:String) = {
+    // don't care about lock here for now
     val t= throwNoTable(rhs)
     val sql="DELETE FROM " + t.table.uc + " WHERE " + COL_ROWID + "=?"
     lhs.get(fkey) match {
@@ -356,18 +367,19 @@ trait SQLProc extends CoreImplicits {
   }
 
   private def jiggleSQL( sql:String, ty:Int) = {
-
-      val v:DBVendor = null//v= _pool.getVendor()
-
-      val rc = ty match {
-          case 0 => v.tweakDELETE(sql)
-          case 1 => v.tweakSELECT(sql)
-          case 2 => v.tweakUPDATE(sql)
-        case -1 => v.tweakSQL(sql)
+    val v:DBVendor = getDB.getVendor()
+    val rc = if (DBVendor.SQLSERVER != v) sql else {
+      ty match {
+        case 0 => v.tweakDELETE(sql)
+        case 1 => v.tweakSELECT(sql)
+        case 2 => v.tweakUPDATE(sql)
+        //case -1 => v.tweakSQL(sql)
+        case _ => v.tweakSQL(sql)
       }
+    }
 
-      tlog().debug("jggleSQL= {}", rc)
-      rc
+    tlog().debug("jggleSQL= {}", rc)
+    rc
   }
 
   protected def doExecuteWithOutput(conn:Connection, sql:String, pms:Any*): (Int, Seq[Any])  = {
@@ -375,31 +387,31 @@ trait SQLProc extends CoreImplicits {
     val rc= s.execute()
     (rc, s.getOutput )
   }
-  
+
   protected def doExecute(conn:Connection, sql:String, pms:Any*): Int  = {
     new SQuery(conn, sql, pms.toSeq ).execute()
   }
-  
+
   protected def doCount(sql:String, f: ResultSet => Int ): Int
   protected def doPurge(sql:String): Unit
-  
+
 
   private def buildOneRow[T <: DBPojo](z:Class[T], row:DBPojo, rset:ResultSet) {
-    val flds= throwNoCZMeta(z).getFldMetas()
-    val meta= rset.getMetaData()
-    
+    val flds= throwNoCZMeta(z).getFldMetas
+    val meta= rset.getMetaData
+
     (1 to meta.getColumnCount ).foreach { (i) =>
-      val cn= meta.getColumnName(i).uc      
+      val cn= meta.getColumnName(i).uc
       readOneCol(meta.getColumnType(i), cn, i, row, rset)
     }
-    
-    row.asInstanceOf[AbstractModel].reset
+
+    row.asInstanceOf[AbstractModel].built()
   }
 
   private def gmtCal() = {
     new GregorianCalendar( TimeZone.getTimeZone("GMT") )
   }
-  
+
   private def readOneCol(sqlType:Int, cn:String, pos:Int, row:DBPojo,rset:ResultSet) {
     import java.sql.Types._
     val obj = sqlType match {
@@ -409,7 +421,7 @@ trait SQLProc extends CoreImplicits {
     }
     row.set(cn, Option(obj))
   }
-  
+
   private def readCol(sqlType:Int, cn:String, pos:Int, row:DBPojo,rset:ResultSet) = {
       var obj=rset.getObject(pos)
       var inp = obj match {
@@ -428,10 +440,10 @@ trait SQLProc extends CoreImplicits {
       if (rdr != null) using(rdr) { (rdr) =>
         obj= IOUtils.readChars( rdr)
       }
-      
-      obj  
+
+      obj
   }
-  
-  
+
+
 }
 

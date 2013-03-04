@@ -45,8 +45,8 @@ class TMenuItem(private var _id:String, private var _desc:String) {
   private var _cb:TMenuCB= null
   private var _sub:TMenu= null
 
-  _desc= STU.trim( _desc)
-  _id= STU.trim( _id)
+  _desc= strim( _desc)
+  _id= strim( _id)
 
   /**
    * @param id

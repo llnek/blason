@@ -23,12 +23,12 @@ package com.zotoh.frwk
 package util
 
 import scala.language.existentials
+import scala.collection.mutable
 
 import java.lang.reflect.{Field,InvocationTargetException,Method,Modifier}
 import com.zotoh.frwk.util.CoreUtils._
 
 import org.apache.commons.lang3.{StringUtils=>STU}
-import scala.collection.mutable.{ArrayBuffer,HashMap}
 
 /**
  * Utility functions for class related or reflection related operations.
@@ -40,15 +40,15 @@ object MetaUtils {
 
   type ListOfCzs= List[Class[_]]
 
-  
+
   def isChild(base:Class[_], c:Class[_]): Boolean = {
-    if (c==null) false else base.isAssignableFrom(c)    
+    if (c==null) false else base.isAssignableFrom(c)
   }
-  
+
   def isChild(base:Class[_], obj:Any): Boolean = {
-    if (obj==null) false else isChild(base, obj.getClass)    
+    if (obj==null) false else isChild(base, obj.getClass)
   }
-  
+
   def isBoolean(z:Class[_]) = {
     z.getName match {
       case "boolean" | "Boolean" | "java.lang.Boolean" => true
@@ -62,7 +62,7 @@ object MetaUtils {
       case _ => false
     }
   }
-  
+
   def isInt(z:Class[_]) = {
     z.getName match {
       case "int" | "Int" | "java.lang.Integer" => true
@@ -104,14 +104,14 @@ object MetaUtils {
       case _ => false
     }
   }
-  
+
   def isString(z:Class[_]) = {
     z.getName match {
       case "String" | "java.lang.String" => true
       case _ => false
     }
   }
-  
+
   def isBytes(z:Class[_]) = {
     if (z == classOf[Array[Byte]]) true else false
   }

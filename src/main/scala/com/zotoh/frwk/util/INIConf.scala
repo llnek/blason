@@ -29,7 +29,6 @@ import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import org.apache.commons.lang3.{StringUtils=>STU}
 import java.io.File
-import scala.collection.mutable.LinkedHashMap
 
 
 object INIConf {
@@ -45,10 +44,8 @@ object INIConf {
 @SerialVersionUID(-873895734543L)
 class INIConf(private val _iniFile:String) extends CoreImplicits with Serializable {
 
-  import INIConf._
-
-  private var _secs:LinkedHashMap[String, Section] = null
-  def tlog() = _log
+  private var _secs:mutable.LinkedHashMap[String, Section] = null
+  def tlog() = INIConf._log
 
   parse(_iniFile)
 
@@ -146,7 +143,7 @@ class INIConf(private val _iniFile:String) extends CoreImplicits with Serializab
     _secs = secs
   }
 
-  private def ncFind(m:LinkedHashMap[String,Section], key:String) = {
+  private def ncFind(m:mutable.LinkedHashMap[String,Section], key:String) = {
     m.find((t) => key.eqic(t._1)) match {
       case Some(t) => Some(t._2)
       case _ => None
@@ -155,5 +152,5 @@ class INIConf(private val _iniFile:String) extends CoreImplicits with Serializab
 
 }
 
-sealed class Section() extends mutable.HashMap[String,String] {}
+sealed class Section() extends mutable.LinkedHashMap[String,String] {}
 

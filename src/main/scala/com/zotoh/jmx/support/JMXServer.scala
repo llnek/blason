@@ -23,7 +23,7 @@ package com.zotoh.jmx
 package support
 
 import scala.collection.mutable
-
+import org.apache.commons.lang3.{StringUtils=>STU}
 import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.net.MalformedURLException
@@ -31,20 +31,19 @@ import java.rmi.NoSuchObjectException
 import java.rmi.registry.LocateRegistry
 import java.rmi.registry.Registry
 import java.rmi.server.UnicastRemoteObject
-
 import javax.management.JMException
 import javax.management.MBeanServer
 import javax.management.ObjectName
 import javax.management.remote.JMXConnectorServer
 import javax.management.remote.JMXConnectorServerFactory
 import javax.management.remote.JMXServiceURL
-
 import com.zotoh.frwk.util.CoreUtils._
+import java.net.InetAddress
 
 /**
  * @author kenl
  */
-class JMXServer(private var _host:String="localhost") {
+class JMXServer(private var _host:String="") {
 
   import JMXUtils._
 
@@ -160,8 +159,11 @@ class JMXServer(private var _host:String="localhost") {
   private def startJMX() {
     if (_conn == null) {
       if (_serverPort <= 0) { _serverPort = _registryPort + 1 }
-
-      var endpt = "service:jmx:rmi://"+_host+":" + _serverPort + "/jndi/rmi://:" + _registryPort + "/jmxrmi"
+      var endpt = "service:jmx:rmi://{{host}}:{{sport}}/jndi/rmi://:{{rport}}/jmxrmi"
+      val hn= InetAddress.getLocalHost().getHostName()
+      endpt=STU.replace(endpt, "{{host}}", if (STU.isEmpty(_host)) { hn } else { _host  } )
+      endpt=STU.replace(endpt, "{{sport}}", _serverPort.toString)
+      endpt=STU.replace(endpt, "{{rport}}", _registryPort.toString)
       val url = try {
         new JMXServiceURL(endpt)
       } catch {

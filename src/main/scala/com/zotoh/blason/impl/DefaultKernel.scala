@@ -76,7 +76,7 @@ with Initializable with Contextualizable with Startable with Loggable with Const
   private var _jmx:JMXServer= null
   private var _ctx:Context=null
   private var _baseDir:File=null
-  private var _appsDir:File=null
+  private var _podsDir:File=null
   private var _playDir:File=null
 
   def getActiveItems() = _apps.size
@@ -102,10 +102,10 @@ with Initializable with Contextualizable with Startable with Loggable with Const
       case Some(x:File) => _baseDir=x
       case _ => throw new ContextError(K_BASEDIR+" undefined")
     }
-    c.get(K_APPSDIR ) match {
-      case Some(x:String) => _appsDir=new File(x)
-      case Some(x:File) => _appsDir=x
-      case _ => throw new ContextError(K_APPSDIR+" undefined")
+    c.get(K_PODSDIR ) match {
+      case Some(x:String) => _podsDir=new File(x)
+      case Some(x:File) => _podsDir=x
+      case _ => throw new ContextError(K_PODSDIR+" undefined")
     }
     c.get(K_PLAYDIR ) match {
       case Some(x:String) => _playDir=new File(x)

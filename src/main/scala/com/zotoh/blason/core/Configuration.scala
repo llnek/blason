@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -33,7 +33,7 @@ trait Configuration {
   def getChild(name:String): Option[Configuration]
   def getSequence(name:String): Seq[Any]
 
-  def contains(name:String):Boolean
+  def contains(name:String): Boolean
   def size(): Int
 
   def getString(name:String, dft:String): String
@@ -45,7 +45,7 @@ trait Configuration {
   def getKeys(): Seq[String]
 
   def asJHM: JMap[_,_]
-  
+
 }
 
 

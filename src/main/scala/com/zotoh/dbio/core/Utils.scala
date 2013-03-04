@@ -31,35 +31,35 @@ import com.zotoh.dbio.meta._
  */
 object Utils {
 
-  def getColumn(m:Method) = if (m==null) null else m.getAnnotation(classOf[Column])  
+  def getColumn(m:Method) = if (m==null) null else m.getAnnotation(classOf[Column])
   def hasColumn(m:Method) = getColumn(m) != null
-  
-  def getTable(z:Class[_]) = if(z==null) null else z.getAnnotation(classOf[Table])  
+
+  def getTable(z:Class[_]) = if(z==null) null else z.getAnnotation(classOf[Table])
   def hasTable(z:Class[_]) = getTable(z) != null
-  
+
   def getM2M(m:Method) = if (m==null) null else m.getAnnotation(classOf[Many2Many])
-  def getO2M(m:Method) = if (m==null) null else m.getAnnotation(classOf[One2Many])  
-  def getO2O(m:Method) = if (m==null) null else m.getAnnotation(classOf[One2One])  
-  
-  def hasAssoc(m:Method) = hasO2O(m) || hasO2M(m) || hasM2M(m)    
+  def getO2M(m:Method) = if (m==null) null else m.getAnnotation(classOf[One2Many])
+  def getO2O(m:Method) = if (m==null) null else m.getAnnotation(classOf[One2One])
+
+  def hasAssoc(m:Method) = hasO2O(m) || hasO2M(m) || hasM2M(m)
   def hasM2M(m:Method) = getM2M(m) != null
   def hasO2O(m:Method) = getO2O(m) != null
   def hasO2M(m:Method) = getO2M(m) != null
-  
+
   def throwNoTable(z:Class[_]) = {
     getTable(z) match {
       case x:Table => x
       case _ => throw new Exception("No table annotation for class: " + z)
     }
   }
-  
+
   def throwNoColumn(m:Method) = {
     getColumn(m) match {
       case x:Column => x
       case _ => throw new Exception("No column annotation for class: " + m.getName)
     }
   }
-  
+
 }
 
 

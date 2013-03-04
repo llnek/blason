@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -25,8 +25,8 @@ package core
 import java.sql.{SQLException, Connection}
 import com.zotoh.frwk.db.JDBCInfo
 import org.slf4j._
-
 import java.util.{Properties=>JPS}
+import com.zotoh.frwk.db.DBVendor
 
 
 /**
@@ -52,13 +52,13 @@ trait DB {
   protected val _log:Logger
   def tlog() = _log
 
-  def newCompositeSQLProcessor() = new CompositeSQLr(this)
-  def newSimpleSQLProcessor() = new SimpleSQLr(this)
+  def newCompositeSQLProc() = new CompositeSQLr(this)
+  def newSimpleSQLProc() = new SimpleSQLr(this)
   def getMeta() = _meta
-  
+
   def close(c: Connection) {
     try {
-      c.close()
+      c.close
     } catch {
       case e:Throwable => tlog.error("", e)
     }
@@ -67,8 +67,11 @@ trait DB {
   def open(): Connection
   def finz(): Unit
 
+  def getVendor(): DBVendor
+  
   def getInfo(): JDBCInfo
   def getProperties(): JPS
   def supportsOptimisticLock(): Boolean
-  
+
 }
+

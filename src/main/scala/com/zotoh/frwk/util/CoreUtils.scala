@@ -149,7 +149,7 @@ object CoreUtils extends Constants  with CoreImplicits {
 
   def nowJTS() = new java.sql.Timestamp(nowJDate().getTime )
   def nowJDate() = new java.util.Date()
-  
+
   /**
    *
    */
@@ -294,7 +294,7 @@ object CoreUtils extends Constants  with CoreImplicits {
     Arrays.sort( a )
     StrUtils.join(a, "")
   }
-  
+
   /**
    * Convert string to int.
    *
@@ -695,7 +695,7 @@ object CoreUtils extends Constants  with CoreImplicits {
   /**
    * @return
    */
-  def newRandom() = new SecureRandom( readAsBytes( System.currentTimeMillis()))
+  def newRandom() = new SecureRandom( readAsBytes( System.currentTimeMillis))
 
   def genNumsBetween(start:Int, end:Int, howMany:Int) = {
     if (start >= end || ((end-start) < howMany)) Array[Int]() else {
@@ -820,7 +820,7 @@ import jregex._
     val ini:INIConf= new INIConf("/tmp/test.ini")
     if (ini != null) ini.sections.foreach { (s) =>
       println("++++++++")
-      println(s)      
+      println(s)
       val pp= java.util.regex.Pattern.compile(s)
 //      val m=pp.matcher("/public/a/b/c/d.css")
       val m=pp.matcher("/favicon.png")
@@ -828,9 +828,9 @@ import jregex._
       val gc=m.groupCount()
       val g=m.toMatchResult().group(1)
       println("++++++++")
-    }    
+    }
   }
-  
+
   private def t2(args:Array[String]) {
     val z=MetaUtils.loadClass("com.zotoh.jmx.support.TestOnly")
 //    val c=z.getConstructor(classOf[String])
@@ -853,17 +853,17 @@ import jregex._
     val vvv= "sss"
     val cccc= vvv.getClass()
     println("bye")
-      
-/*    
+
+/*
 r=void
 b=java.lang.Boolean
 v=java.lang.Void
 u=void
 q=int
 ii=java.lang.Integer
-*/    
+*/
   }
-  
+
   private def t3(args:Array[String]) {
     val pp = new Pattern("/test/hello/(a|b)(c*)/({p1}[^/]+)/({p2}[^/]+)")
     val mc=pp.matcher("/test/hello/a/poo/head")

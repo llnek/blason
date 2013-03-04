@@ -43,9 +43,7 @@ class FldMetaHolder(private val _name:String, private val _col:Column) {
   def getGetter() = _mtds(0)
   def getSetter() = _mtds(1)
 
-  def setGetter(m:Method ) {
-    _mtds(0)=m
-  }
+  def setGetter(m:Method ) { _mtds(0)=m }
 
   def setSetter(m:Method ) { _mtds(1)=m }
 
@@ -67,12 +65,12 @@ class FldMetaHolder(private val _name:String, private val _col:Column) {
 
   def getDftValue() = if (_col==null) "" else _col.dftValue()
   def getDft() = if (_col==null) false else _col.dft()
-  
+
   def isPK() = false
 
   def isInternal() = if (_col==null) false else _col.system()
   def isUpdatable() = if (_col==null) false else _col.updatable()
-  
+
 }
 
 
@@ -81,3 +79,4 @@ class AdhocFldMetaHolder(cn:String, private val _coType:Class[_]) extends FldMet
   override def isUpdatable() = true
   override def getSize() = 255
 }
+

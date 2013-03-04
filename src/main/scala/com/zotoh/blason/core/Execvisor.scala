@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -76,7 +76,7 @@ class Execvisor extends Contextualizable with Startable with Initializable with 
   private var _jmxPort=0
 
   @JMXProperty(desc="Up time in milliseconds.")
-  def getUpTimeInMillis() = System.currentTimeMillis() - _startTS
+  def getUpTimeInMillis() = System.currentTimeMillis - _startTS
 
   @JMXProperty(desc="Start time.")
   def getStartTime() = new JDate( _startTS)
@@ -106,11 +106,12 @@ class Execvisor extends Contextualizable with Startable with Initializable with 
     tstObjArg("conf file: registries",regs)
 
     _jmxPort= asInt( jmx.getOrElse("port",""), 7777)
-    _jmxHost= jmx.getOrElse("host","localhost")
+    //_jmxHost= jmx.getOrElse("host","localhost")
+    _jmxHost= jmx.getOrElse("host","")
     _ctx.put(PF_EXECV, this)
 
     System.setProperty("file.encoding", "utf-8")
-    
+
     inizAppEnv()
     startJMX()
 
@@ -194,14 +195,14 @@ class Execvisor extends Contextualizable with Startable with Initializable with 
   private def inizAppEnv() {
     val sandboxes=new File(homeDir, DN_BOXX)
     sandboxes.mkdir
-    val apps=new File(homeDir, DN_APPS)
-    apps.mkdir
+    val pods=new File(homeDir, DN_PODS)
+    pods.mkdir
 
     precondDir(sandboxes)
-    precondDir(apps)
+    precondDir(pods)
 
     _ctx.put(K_PLAYDIR, sandboxes)
-    _ctx.put(K_APPSDIR, apps)
+    _ctx.put(K_PODSDIR, pods)
 
     val bks=new File(homeDir, DN_BLOCKS)
     val tmp=new File(homeDir, DN_TMP)
@@ -227,7 +228,7 @@ class Execvisor extends Contextualizable with Startable with Initializable with 
 
   def homeDir() = maybeDir(K_BASEDIR)
   def confDir() = maybeDir(K_CFGDIR)
-  def appsDir() = maybeDir(K_APPSDIR)
+  def podsDir() = maybeDir(K_PODSDIR)
   def playDir() = maybeDir(K_PLAYDIR)
   def logDir() = maybeDir(K_LOGDIR)
   def tmpDir() = maybeDir(K_TMPDIR)

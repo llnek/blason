@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -50,12 +50,11 @@ object BlockMeta {
  */
 class BlockMeta(private var _url:URL) extends Component with Initializable with Loggable {
   // url points to the meta file
-  import BlockMeta._
-  
+
   private var _desc:BlockDescriptor= null
   private var _meta:INIConf = null
 
-  def tlog() = _log
+  def tlog() = BlockMeta._log
 
   def compose(r:ComponentRegistry, arg:Any*) = {
     val obj= mkRef(_desc.typeId)
@@ -83,9 +82,9 @@ class BlockMeta(private var _url:URL) extends Component with Initializable with 
   }
 
   private def parseInfo( root:Map[String,String] ) {
-    val t= root.getOrElse("block-type","").trim()
-    val v= root.getOrElse("version","").trim()
-    val n= root.getOrElse("name","").trim()
+    val t= strim( root.getOrElse("block-type","") )
+    val v= strim( root.getOrElse("version","") )
+    val n= strim( root.getOrElse("name","") )
     _desc=new BlockDescriptor(t,n,v)
   }
 

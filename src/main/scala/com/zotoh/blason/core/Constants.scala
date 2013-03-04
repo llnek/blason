@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -23,14 +23,14 @@ package com.zotoh.blason
 package core
 
 trait Constants {
-  
+
   val SYS_DEVID_PFX= "system.####"
   val SYS_DEVID_SFX= "####"
-  
+
   val SYS_DEVID_REGEX= SYS_DEVID_PFX+"[0-9A-Za-z_\\-\\.]+"+SYS_DEVID_SFX
   val SHUTDOWN_DEVID= SYS_DEVID_PFX+"kill_9"+SYS_DEVID_SFX
   val SHUTDOWN_URI="/kill9"
-  
+
   val POD_PROTOCOL = "pod:"
   val META_INF = "META-INF"
   val POD_INF = "POD-INF"
@@ -46,7 +46,7 @@ trait Constants {
   val DN_LIB="lib"
   val DN_CFG="etc"
   val DN_BOXX="apps"
-  val DN_APPS="pods"
+  val DN_PODS="pods"
   val DN_LOGS="logs"
   val DN_TMP="tmp"
   val DN_DBS="dbs"
@@ -54,36 +54,36 @@ trait Constants {
   val DN_TEMPLATES = "templates"
   val DN_VIEWS = "views"
   val DN_PAGES = "pages"
-  val DN_PATCH="patch"    
+  val DN_PATCH="patch"
   val DN_IMAGES="images"
   val DN_SCRIPTS="scripts"
   val DN_STYLES="styles"
   val DN_PUBLIC="public"
 
-    
+
   val MN_FILE= META_INF + "/" + "MANIFEST.MF"
   val POD_CLASSES = POD_INF + "/"+ DN_CLASSES
   val POD_PATCH = POD_INF + "/"+ DN_PATCH
   val POD_LIB = POD_INF + "/"+ DN_LIB
-  
+
   val WEB_CLASSES = WEB_INF + "/"+ DN_CLASSES
   val WEB_LIB = WEB_INF + "/"+ DN_LIB
   val WEB_LOG = WEB_INF + "/logs"
   val WEB_XML = WEB_INF + "/web.xml"
-  
+
   val MN_RNOTES= META_INF + "/" + "RELEASE-NOTES.txt"
   val MN_README= META_INF + "/" + "README.md"
   val MN_NOTES= META_INF + "/" + "NOTES.txt"
   val MN_LIC= META_INF + "/" + "LICENSE.txt"
-  
+
   val CFG_ENV_CF = DN_CONF + "/" + "env.conf"
   val CFG_APP_CF = DN_CONF + "/" + "app.conf"
-  
-  
+
+
   val PF_BLASON_APPDOMAIN="blason.app.domain"
   val PF_BLASON_APPID="blason.appid"
   val PF_BLASON_APPTASK="blason.app.task"
-    
+
   val PF_JMXMGM="jmx-management"
   val PF_HOMEDIR="blason.home"
   val PF_PROPS="blason.conf"
@@ -102,7 +102,7 @@ trait Constants {
   val K_EXEC_CZLR="exec.loader"
 
   val K_BASEDIR="base.dir"
-  val K_APPSDIR="apps.dir"
+  val K_PODSDIR="pods.dir"
   val K_CFGDIR="cfg.dir"
   val K_APPDIR="app.dir"
   val K_PLAYDIR="play.dir"
@@ -118,6 +118,6 @@ trait Constants {
   val K_META="meta"
 
 
-  
-    
+
+
 }

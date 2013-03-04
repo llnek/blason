@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -72,7 +72,7 @@ object CLIMain {
 /**
  * @author kenl
  */
-class CLIMain extends  CoreImplicits with Constants {
+class CLIMain extends CoreImplicits with Constants {
 
   private val _envCtx= new DefaultContext()
   private val _mutex=new Object
@@ -104,15 +104,16 @@ class CLIMain extends  CoreImplicits with Constants {
 
     println("About to start Blason...")
 
-    val exec= primordial()
-    exec.start()
+    primordial.start
 
     println("Blason started.")
 
-    hookShutdown()
-    writePID()
-
-    blockAndWait()
+    hookShutdown
+    writePID
+    
+    _envCtx.dbgShow
+    
+    blockAndWait
   }
 
   private def primordial() = {

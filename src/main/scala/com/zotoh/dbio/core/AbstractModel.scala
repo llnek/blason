@@ -27,11 +27,12 @@ import com.zotoh.dbio.meta.Column
 import java.util.{Date=>JDate}
 import java.sql.{Timestamp=>JTS,Time=>JTime}
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.Nichts
 import com.zotoh.dbio.core.DBPojo.COL_ROWID
 import com.zotoh.dbio.core.DBPojo.COL_VERID
-import java.util.{Date => JDate}
+import java.util.{Date =>JDate}
 import java.util.Calendar
 import java.util.GregorianCalendar
 import java.util.TimeZone
@@ -41,30 +42,39 @@ import java.util.TimeZone
  * @author kenl
  */
 abstract class AbstractModel extends DBPojo with CoreImplicits {
+
+  import ClassMetaHolder._
   import DBPojo._
 
   private val _storage= mutable.HashMap[String,Any]()
   private val _dirtyFields= mutable.HashSet[String]()
+  private var _isDBRow=false
   private def iniz() {
     setVerID(0L)
   }
   iniz()
 
+  def isTransient() = ! _isDBRow
+  def isDB() = _isDBRow
+
   protected def readString(col:String, dft:String="") = {
     readData(col) match {
       case Some(s:String) => s
+      case Some(x) => nsb(x)
       case _ => dft
     }
   }
   protected def readInt(col:String, dft:Int = 0) = {
     readData(col) match {
       case Some(n:Int) => n
+      case Some(x) => asInt(nsb(x), dft)
       case _ => dft
     }
   }
   protected def readLong(col:String, dft:Long = 0L) = {
     readData(col) match {
       case Some(n:Long) => n
+      case Some(x) => asLong(nsb(x), dft)
       case _ => dft
     }
   }
@@ -72,6 +82,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     readData(col) match {
       case Some(d:Double) => d
       case Some(d:Float) => d.toDouble
+      case Some(x) => asDouble(nsb(x), dft)
       case _ => dft
     }
   }
@@ -79,6 +90,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     readData(col) match {
       case Some(f:Double) => f.toDouble
       case Some(f:Float) => f
+      case Some(x) => asFloat(nsb(x), dft)
       case _ => dft
     }
   }
@@ -90,7 +102,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     }
   }
   protected def readCalendar(col:String, dft:Calendar) = {
-    val cal = new GregorianCalendar( TimeZone.getTimeZone( readString(col+"_tz","GMT")))
+    val cal = new GregorianCalendar( TimeZone.getTimeZone( readString(toTZCol(col),"GMT")))
     readData(col) match {
       case Some(x:java.sql.Timestamp) =>
         cal.setTimeInMillis( x.getTime)
@@ -125,17 +137,17 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
   def set(field:String, value: Option[Any] ) {
-    writeData( field,value)
+    writeData(field,value)
   }
 
   def get(field:String): Option[Any] = {
-    _storage.get( field.uc)
+    _storage.get(field.uc)
   }
 
   def getDirtyFields() = _dirtyFields.toSet
 
   protected def writeData(col:String, value:Option[Any]) {
-    
+
     val cuc = col.uc match {
       case s =>
       _storage.put(s, value.getOrElse(Nichts.NICHTS))
@@ -144,10 +156,9 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     }
     // when we store a calendar, we need to store the timezone also
     value match {
-      case Some(x:Calendar) => writeData(cuc + "_tz", Option( x.getTimeZone().getID ) )        
+      case Some(x:Calendar) => writeData(toTZCol(cuc), Option(x.getTimeZone.getID))
       case _ =>
     }
-    
   }
 
   protected def readData(col:String): Option[Any] = {
@@ -157,14 +168,20 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   protected def setO2O(rhs:DBPojo, fkey:String) {
     set(fkey, if (rhs==null) None else Option(rhs.getRowID ) )
   }
-  
+
   def commit() {
     setVerID( getVerID() + 1)
+    setAsRow()
     reset()
   }
 
   def reset() {
     _dirtyFields.clear()
+  }
+
+  def built() {
+    setAsRow()
+    reset()
   }
 
   def isDirty= _dirtyFields.size > 0
@@ -229,5 +246,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def setCreator(s:String) {
     writeData(dbio_getCreator_column, Option(s) )
   }
+
+  private def setAsRow() { _isDBRow=true }
 
 }

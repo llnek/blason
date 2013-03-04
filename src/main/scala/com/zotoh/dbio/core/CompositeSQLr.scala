@@ -35,7 +35,6 @@ import com.zotoh.frwk.db.DBVendor
 import com.zotoh.frwk.db.JDBCUtils._
 import org.apache.commons.dbutils.{DbUtils=>DBU}
 import java.sql.Statement
-import org.slf4j._
 
 
 
@@ -71,11 +70,11 @@ class CompositeSQLr(private val _db : DB) {
   }
 
   private def rollback(c :Connection) {
-    block { () => c.rollback() }
+    block { () => c.rollback }
   }
 
   private def commit(c : Connection) {
-    c.commit()
+    c.commit
   }
 
   private def begin(): Connection = {
@@ -85,7 +84,7 @@ class CompositeSQLr(private val _db : DB) {
   }
 
   private def close(c: Connection) {
-    block { () => c.close() }
+    block { () => c.close }
   }
 
 }
@@ -93,15 +92,15 @@ class CompositeSQLr(private val _db : DB) {
 /**
  * @author kenl
  */
-class Transaction(private val _conn : Connection, private val _db: DB ) extends SQLProc {
+class Transaction(private val _conn:Connection, private val _db:DB ) extends SQLProc {
 
   val _log= LoggerFactory.getLogger(classOf[Transaction])
-  val _meta =  _db.getMeta
+  val _meta = _db.getMeta
   val _items= mutable.ArrayBuffer[DBPojo]()
 
   def getDB() = _db
 
-  def insert(obj : DBPojo): Int = {
+  def insert(obj:DBPojo): Int = {
     val rc= doInsert(obj)
     rego(obj)
     rc
@@ -112,11 +111,11 @@ class Transaction(private val _conn : Connection, private val _db: DB ) extends 
   }
 
   def executeWithOutput( sql: String, params:Any* ): (Int, Seq[Any]) = {
-      doExecuteWithOutput(_conn, sql, params:_*)
+    doExecuteWithOutput(_conn, sql, params:_*)
   }
-  
+
   def execute( sql: String, params:Any* ): Int = {
-      doExecute(_conn, sql, params:_*)
+    doExecute(_conn, sql, params:_*)
   }
 
   def delete( obj : DBPojo): Int = {

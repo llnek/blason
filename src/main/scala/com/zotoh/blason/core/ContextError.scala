@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -30,7 +30,10 @@ class ContextError(msg:String,e:Throwable) extends Exception(msg,e) {
   def this(e:Throwable) {
     this(null,e)
   }
+
   def this(msg:String) {
     this(msg,null)
   }
+
 }
+

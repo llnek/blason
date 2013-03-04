@@ -43,7 +43,7 @@ class TMenu( protected var _title:String) {
   private val _log= LoggerFactory.getLogger(classOf[TMenu])
   def tlog() = _log
 
-  _title= STU.trim(_title)
+  _title= strim(_title)
 
   /**
    *
@@ -130,8 +130,8 @@ class TMenu( protected var _title:String) {
   }
 
   private def getInput(c:Console) = {
-    if (c != null) { c.readLine() } else {
-      new BufferedReader(new InputStreamReader(System.in)).readLine()
+    if (c != null) { c.readLine } else {
+      new BufferedReader(new InputStreamReader(System.in)).readLine
     }
   }
 

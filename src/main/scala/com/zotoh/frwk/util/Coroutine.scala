@@ -31,7 +31,7 @@ trait Coroutine extends Runnable {
   def start () {
     new Thread(this).start()
   }
-  
+
 }
 
 

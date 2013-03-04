@@ -22,7 +22,7 @@
 package com.zotoh.frwk
 package util
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 import com.zotoh.frwk.util.StrUtils._
 import org.apache.commons.lang3.{StringUtils=>STU}
 
@@ -35,10 +35,9 @@ object StrArr {
  * @author kenl
  *
  */
-@SerialVersionUID(981284723453L)
-class StrArr(strs:String*) extends Serializable {
+@SerialVersionUID(981284723453L) class StrArr(strs:String*) extends Serializable {
 
-  private val _strs= ArrayBuffer[String]()
+  private val _strs= mutable.ArrayBuffer[String]()
   add(strs.toSeq)
 
   /**

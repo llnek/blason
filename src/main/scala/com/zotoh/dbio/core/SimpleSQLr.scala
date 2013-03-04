@@ -41,16 +41,16 @@ import java.sql.Statement
  * @author kenl
 */
 class SimpleSQLr(private val _db: DB) extends SQLProc {
-  
+
   val _log= LoggerFactory.getLogger(classOf[SimpleSQLr])
   val _meta= _db.getMeta()
-  
+
   def getDB() = _db
-  
-  def execWith[T](f: Transaction => T)  {
+
+  def execWith[T](f: Transaction => T) {
     throw new UnsupportedOperationException("no transactions.")
   }
-  
+
   def update(obj : DBPojo, cols : Set[String]): Int = {
     val rc= doUpdate(obj, cols)
     reset(obj)
@@ -72,7 +72,7 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
   def select[T]( sql: String, params:Any* )(f: ResultSet => T): Seq[T] = {
     val c= _db.open
     try {
-      new SQuery(c, sql, params).select(f)
+      new SQuery(c, sql, params.toSeq).select(f)
     }  finally {
       _db.close(c)
     }
@@ -87,7 +87,7 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
       _db.close(c)
     }
   }
-  
+
   def execute( sql: String, params:Any* ): Int = {
     val c= _db.open
     try {
@@ -105,15 +105,15 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
       if (rc.size == 0) 0 else rc(0)
     }  finally {
       _db.close(c)
-    }    
+    }
   }
-  
+
   def doPurge(sql:String) {
     execute(sql)
   }
-  
+
   private def reset(obj:DBPojo) {
-    obj.asInstanceOf[AbstractModel].reset()
+    obj.asInstanceOf[AbstractModel].commit()
   }
-  
+
 }
