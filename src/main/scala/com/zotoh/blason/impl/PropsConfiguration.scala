@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -34,10 +34,8 @@ import com.zotoh.frwk.util.CoreUtils._
  */
 class PropsConfiguration(private val _props:JMap[_,_]) extends Configuration {
 
-  def asJHM = {
-    _props
-  }
-  
+  def asJHM = { _props }
+
   def getString(name:String,dft:String) = {
     if (_props.containsKey(name)) {
       nsb( _props.get(name))

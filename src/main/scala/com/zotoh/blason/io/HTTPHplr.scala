@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -40,7 +40,7 @@ import javax.servlet.http.{HttpServletRequest=>HSRequest}
  */
 object HTTPHplr extends CoreImplicits {
 
-  def extract( src:BaseHttpIO, req:HSRequest ):HTTPEvent = {
+  def extract( src:BaseHttpIO, req:HSRequest ): HTTPEvent = {
 
     val clen= req.getContentLength()
     val thold= src.threshold()
@@ -60,10 +60,10 @@ object HTTPHplr extends CoreImplicits {
     req.getParameterNames().foreach { (n) =>
       ev.addParam(n, req.getParameterValues(n))
     }
-    
+
     req.getHeaderNames().foreach { (n) =>
-      req.getHeaders(n).foreach { (v) =>        
-        ev.addHeader( n, v ) 
+      req.getHeaders(n).foreach { (v) =>
+        ev.addHeader( n, v )
       }
     }
 

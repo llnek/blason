@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -52,11 +52,11 @@ class HTTPResult extends AbstractResult() {
   }
 
   def getCookies() = _cookies.values.toSeq
-  
+
   def setCookie(c:Cookie) {
     _cookies += c.getName -> c
   }
-  
+
   def setData(data:String) { setData( new XData(data)) }
   def setData(d:XData) { _data=d }
   def data() = {
@@ -77,8 +77,8 @@ class HTTPResult extends AbstractResult() {
   }
 
   def setStatus(s:HTTPStatus) {
-    setStatusText( s.reasonPhrase() )
-    setStatusCode(s.code())
+    setStatusText( s.reasonPhrase )
+    setStatusCode(s.code )
   }
 
   def setStatusCode(c:Int) { _code= c }
@@ -87,7 +87,7 @@ class HTTPResult extends AbstractResult() {
   def setStatusText(s:String) { _text= nsb(s) }
   def statusText() = _text
 
-  def clearAllHeaders() { _headers.clear() }
+  def clearAllHeaders() { _headers.clear }
   def setHeader(h:String, v:String) {
     if (! STU.isEmpty(h)) { _headers += Tuple2(h, nsb(v)) }
   }

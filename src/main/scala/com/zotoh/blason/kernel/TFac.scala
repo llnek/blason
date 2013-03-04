@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -38,7 +38,6 @@ import com.zotoh.frwk.util.StrUtils._
  */
 class TFac(private val _pfx:String) extends ThreadFactory {
   private val _cl = Thread.currentThread().getContextClassLoader
-
   private val _group = System.getSecurityManager() match {
     case sm:SecurityManager => sm.getThreadGroup()
     case _ => Thread.currentThread().getThreadGroup

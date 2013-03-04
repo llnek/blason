@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -27,7 +27,9 @@ import scala.collection.mutable
 import java.util.{Properties=>JPS,ResourceBundle}
 import org.apache.commons.lang3.{StringUtils=>STU}
 import com.zotoh.blason.util.Observer
+import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.IOUtils._
 import javax.mail.Flags
 import javax.mail.Folder
@@ -48,7 +50,7 @@ object IMAP {
   val IMAP="imap"
 }
 
-class IMAP(evtHdlr:Observer, nm:String) extends ThreadedTimer(evtHdlr,nm) {
+class IMAP(evtHdlr:Observer, nm:String) extends ThreadedTimer(evtHdlr,nm) with CoreImplicits {
 
   private var _host=""
   private var _user=""
@@ -61,10 +63,8 @@ class IMAP(evtHdlr:Observer, nm:String) extends ThreadedTimer(evtHdlr,nm) {
   private var _imap:Store = null
   private var _fd:Folder =null
 
-  def this() {
-    this (null,"")
-  }
-  
+  def this() { this (null,"") }
+
   override def configure(cfg:Configuration) {
     super.configure(cfg)
 
@@ -74,12 +74,12 @@ class IMAP(evtHdlr:Observer, nm:String) extends ThreadedTimer(evtHdlr,nm) {
     _delete= cfg.getBool("deletemsg", false)
     _ssl= cfg.getBool("ssl", true)
 
-    _host= cfg.getString("host","").trim()
+    _host= strim( cfg.getString("host","") )
     _port= cfg.getLong("port",993L).toInt
     tstPosIntArg("imaps-port", _port)
 
-    _user = cfg.getString("username", "").trim()
-    _pwd= cfg.getString("passwd","").trim()
+    _user = strim( cfg.getString("username", "") )
+    _pwd= strim( cfg.getString("passwd","") )
 
     if ( ! STU.isEmpty(_pwd)) {
       _pwd= PwdFactory.mk(_pwd).text()
@@ -96,14 +96,12 @@ class IMAP(evtHdlr:Observer, nm:String) extends ThreadedTimer(evtHdlr,nm) {
   }
 
   override def onOneLoop() {
-    if ( conn ) {
-      try {
-        scanIMAP()
-      } catch {
-        case e:Throwable => tlog().warn("",e)
-      } finally {
-        closeFolder()
-      }
+    if ( conn ) try {
+      scanIMAP()
+    } catch {
+      case e:Throwable => tlog().warn("",e)
+    } finally {
+      closeFolder()
     }
   }
 
@@ -151,12 +149,12 @@ class IMAP(evtHdlr:Observer, nm:String) extends ThreadedTimer(evtHdlr,nm) {
       val (key, sn) = if (_ssl) {
         (IMAP.ST_IMAPS, IMAP.IMAPS )
       } else {
-          (IMAP.ST_IMAP, IMAP.IMAP )
+        (IMAP.ST_IMAP, IMAP.IMAP )
       }
       val props = new JPS().add("mail.store.protocol", sn)
       val session = Session.getInstance(props, null)
       val ps= session.getProviders()
-      
+
       closeIMAP()
 
       var sun:Provider = ps.find { (p) => key == p.getClassName } match {

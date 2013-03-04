@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -130,10 +130,8 @@ with Initializable with Contextualizable with Loggable with CoreImplicits {
   }
 
   private def unzip(des:File, zf:ZipFile) {
-
-    using(zf) { (z) =>
-      extractAll(z,des)
-    }
+    using(zf) { (z) => extractAll(z,des) }
   }
 
 }
+

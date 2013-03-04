@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -53,7 +53,7 @@ class AppClassLoader(par:RootClassLoader) extends AbstractClassLoader( par)  {
     val p= new File(baseDir, POD_PATCH)
     val b= new File(baseDir, POD_LIB)
     findUrls(p).addUrl(c,true).findUrls(b)
-    if (new File(baseDir, WEB_INF).exists()) {
+    if (new File(baseDir, WEB_INF).exists ) {
       addUrl(new File(baseDir, WEB_CLASSES),true).findUrls(new File(baseDir, WEB_LIB))
     }
     _loaded=true

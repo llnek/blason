@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -42,24 +42,24 @@ class AsyncServletTrigger( private var _req:HSRequest, private var _rsp:HSRespon
 
   override def resumeWithResult(result:AbstractResult) {
     val res= result.asInstanceOf[HTTPResult]
-    val c = getCont()
+    var cl= 0L
     val hdrs= res.headers()
     try {
       hdrs.foreach { (t) =>
-        if ( "content-length".eqic(t._1)) {
-        } else {
+        if ( "content-length".eqic(t._1)) {} else {
           _rsp.setHeader(t._1, t._2)
         }
       }
       if (res.hasError ) {
         _rsp.sendError(res.statusCode , res.errorMsg )
+        cl= -1L
       } else {
         _rsp.setStatus(res.statusCode )
       }
-      res.data() match {
+      if (cl == 0L ) res.data match {
         case Some(d) =>
           if (d.hasContent ) {
-            val cl=d.size
+            cl=d.size
             copy(d.stream, _rsp.getOutputStream, cl )
             _rsp.setContentLength( cl.toInt)
           } else {
@@ -70,7 +70,7 @@ class AsyncServletTrigger( private var _req:HSRequest, private var _rsp:HSRespon
     } catch {
       case e:Throwable => tlog().error("",e)
     } finally {
-      c.complete()
+      getCont().complete()
     }
 
   }

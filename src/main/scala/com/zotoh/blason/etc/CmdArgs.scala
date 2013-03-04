@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -31,6 +31,7 @@ import java.util.{Properties=>JPS}
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.MetaUtils
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.security._
 import com.zotoh.frwk.i18n.Resources
@@ -82,35 +83,35 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
     if (args.size >= 1 ) {
       onCreatePrompt() match {
         case (true, x) =>
-          if ( STU.isEmpty( x.gets(PF_BLASON_APPDOMAIN)) || 
+          if ( STU.isEmpty( x.gets(PF_BLASON_APPDOMAIN)) ||
               STU.isEmpty( x.gets(PF_BLASON_APPID)) ) {
             throw new CmdHelpError()
-          } 
+          }
           onCreateApp(args, x)
         case (false, x) => // canceled
-      }      
+      }
     } else {
       throw new CmdHelpError()
     }
   }
-  
+
   private def onCreateApp(args:Array[String], ps:JPS) {
     val cb = { (target:String, p:JPS) =>
       runTargetExtra( target, p)
     }
     if (args.size > 1) {
-        args(1) match {
-          case "web/jetty" => cb("create-jetty",ps)
-          case "web" => cb("create-web",ps)
-          case _ => throw new CmdHelpError()
-        }
-      } else {
-        cb("create-app",ps)
-      }    
-  }  
-  
+      args(1) match {
+        case "web/jetty" => cb("create-jetty",ps)
+        case "web" => cb("create-web",ps)
+        case _ => throw new CmdHelpError()
+      }
+    } else {
+      cb("create-app",ps)
+    }
+  }
+
   private def onCreatePrompt() = {
-    val domain= "com."  + userName()
+    val domain= "com."  + nsb( userName() ).toLowerCase
     val q1= new CmdLineMust("domain", "What is the application domain", domain, domain) {
       def onRespSetOut(a:String, ps:JPS) = {
         ps.put(PF_BLASON_APPDOMAIN, a)
@@ -123,13 +124,11 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
         ""
       }
     }
-     val seq= new CmdLineSeq(q1,q2){
-            def onStart() = q1.label
-      }
-     val ps= new JPS()
-     if ( seq.start(ps).isCanceled ) ( false, ps) else (true, ps)
+    val seq= new CmdLineSeq(q1,q2){ def onStart() = q1.label }
+    val ps= new JPS()
+    if ( seq.start(ps).isCanceled ) ( false, ps) else (true, ps)
   }
-  
+
   private def onIDE(args:Array[String]) {
     if (args.size > 2) {
       args(1) match {
@@ -142,9 +141,9 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
   }
 
   private def onBuild(args:Array[String]) {
-    if (args.size >=2 ) {
+    if (args.size >= 2 ) {
       val t = if (args.size > 2) args(2) else "devmode"
-      runTargetExtra("build-app", 
+      runTargetExtra("build-app",
           new JPS().add(PF_BLASON_APPID, args(1)).add(PF_BLASON_APPTASK, t) )
     } else {
       throw new CmdHelpError()
@@ -153,7 +152,7 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
 
   private def onPodify(args:Array[String]) {
     if (args.size > 1) {
-      runTargetExtra("bundle-app", 
+      runTargetExtra("bundle-app",
           new JPS().add(PF_BLASON_APPID, args(1)).add( PF_BLASON_APPTASK,"release") )
     } else {
       throw new CmdHelpError()
@@ -176,7 +175,7 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
   private def onStart(args:Array[String]) {
     val s2=if (args.size > 1) args(1) else ""
     s2 match {
-      case "bg"  if isWindows =>
+      case "bg" if isWindows =>
             runTarget( "run-app-bg-w32")
       case _ =>
             new CLIMain().start( Array( niceFPath(getHomeDir) ) )
@@ -188,7 +187,7 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
       args(1) match {
         case "samples" =>runTarget("create-samples")
         case s =>runTargetExtra("create-demo",  new JPS().add( "demo.id", s) )
-      }      
+      }
     } else {
       throw new CmdHelpError()
     }

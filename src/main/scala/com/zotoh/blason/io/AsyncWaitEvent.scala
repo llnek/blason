@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -33,7 +33,7 @@ class AsyncWaitEvent(ev:AbstractEvent,private val _trigger:AsyncWaitTrigger) ext
   private var _timer:JTimer = null
 
   override def resumeOnResult(res:AbstractResult) {
-    if(_timer!=null) { _timer.cancel() }
+    if(_timer!=null) { _timer.cancel }
     _timer=null
     inner().emitter().release(this)
     setResult(res)
@@ -44,7 +44,7 @@ class AsyncWaitEvent(ev:AbstractEvent,private val _trigger:AsyncWaitTrigger) ext
     _timer = new JTimer(true)
     _timer.schedule(
             new JTTask() {
-              def run() { onExpiry() }
+              def run() { onExpiry }
             },
       millisecs)
   }

@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2010-2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2010-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -89,7 +89,7 @@ class NettyTrigger private(src:EventEmitter) extends AsyncTrigger(src)  {
     res.getCookies().foreach { (c) =>
       val enc= new CookieEncoder(true)
       enc.addCookie(c)
-      rsp.addHeader( Names.SET_COOKIE, enc.encode )      
+      rsp.addHeader( Names.SET_COOKIE, enc.encode )
     }
 
     //TODO: this throw NPE some times !

@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -50,8 +50,7 @@ abstract class AbstractRegistry( protected var _par:ComponentRegistry = null) ex
   protected var _name=""
   protected var _version=""
 
-  import AbstractRegistry._
-  def tlog() = _log
+  def tlog() = AbstractRegistry._log
 
   def getParent() = if ( _par == null) None else Some(_par)
   def setParent(p:ComponentRegistry) { _par=p }
@@ -63,9 +62,7 @@ abstract class AbstractRegistry( protected var _par:ComponentRegistry = null) ex
     }
   }
 
-  def hasComponent( cid:String) = {
-    ! lookup(cid).isEmpty
-  }
+  def hasComponent( cid:String) = { ! lookup(cid).isEmpty }
 
   def add( cid:String, c:Component) {
     if (cid != null && c != null) {
@@ -95,3 +92,4 @@ abstract class AbstractRegistry( protected var _par:ComponentRegistry = null) ex
   def compose(r:ComponentRegistry, arg:Any*) = None
 
 }
+

@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -98,10 +98,10 @@ object NettyHplr extends CoreImplicits {
 
     getHeaders(ev,req)
     getParams(ev, uri)
-    
+
     ev
   }
-  
+
   def parseContentType( cType:String ) = {
     var ct="text/html"
     var enc=""
@@ -227,12 +227,12 @@ object NettyHplr extends CoreImplicits {
   }
 
   def closeCF(doit:Boolean, cf:ChannelFuture) {
-      if (doit && cf != null) { cf.addListener(ChannelFutureListener.CLOSE) }    
+    if (doit && cf != null) { cf.addListener(ChannelFutureListener.CLOSE) }
   }
-  
+
   private val _log= LoggerFactory.getLogger(classOf[NettyHplr])
   def tlog() = _log
-  
+
 }
 
 sealed class NettyHplr {}

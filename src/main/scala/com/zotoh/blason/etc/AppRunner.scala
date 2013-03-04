@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -66,6 +66,7 @@ class AppRunner extends CoreImplicits with Constants {
 
   def start(args:Array[String]) {
     if (!parseArgs(args)) usage else {
+      // no special op for now
     }
   }
 
@@ -105,7 +106,7 @@ class AppRunner extends CoreImplicits with Constants {
     if (args.size < 2) false else {
       val home=STU.stripEnd(new File(args(0)).getCanonicalPath(), System.getProperty("file.separator"))
       val h= new File(home)
-      require(h.exists() && h.isDirectory())
+      require(h.exists && h.isDirectory )
       //println("#### apprunner loader = " + getClass().getClassLoader().getClass().getName())
       //println("#### sys loader = " + ClassLoader.getSystemClassLoader().getClass().getName())
       //mkCZldrs(home)
@@ -128,3 +129,4 @@ class AppRunner extends CoreImplicits with Constants {
   }
 
 }
+

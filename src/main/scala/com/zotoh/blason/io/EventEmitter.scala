@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -47,36 +47,41 @@ import com.zotoh.blason.core.Loggable
 import java.util.concurrent.atomic.AtomicInteger
 import com.zotoh.blason.kernel.Container
 
+
+object EventEmitter {
+  private val _log:Logger= LoggerFactory.getLogger(classOf[EventEmitter])
+}
+
 /**
  * @author kenl
  */
 abstract class EventEmitter(private var _evtHdlr:Observer, private var _name:String = "") extends Observable with BackgroundService with Loggable {
 
-  private val _log:Logger= LoggerFactory.getLogger(classOf[EventEmitter])
-  def tlog() = _log
-  override var _obs:Observer=null
+  def tlog() = EventEmitter._log
 
-  private val _backlog=mutable.HashMap[Any,WaitEvent]()
+  private val _backlog= mutable.HashMap[Any,WaitEvent]()
   protected val _seed= new AtomicInteger(0)
   private var _ctr:Container= null
   private var _enabled=false
   private var _handlerCZ=""
   private var _version=""
   private var _active=false
-  
+
+  override var _obs:Observer=null
+
   protected def setVersion(v:String) { _version=v }
   protected def setName(n:String) { _name=n }
 
   def version() = _version
   def name() = _name
   def container() = _ctr
-  
+
   def release(w:WaitEvent) {
-    if (w != null) { _backlog.remove(w.id()) }
+    if (w != null) { _backlog.remove(w.id ) }
   }
 
   def hold(w:WaitEvent) {
-    if (w != null) { _backlog += Tuple2(w.id(), w) }
+    if (w != null) { _backlog += Tuple2(w.id , w) }
   }
 
   def compose(r:ComponentRegistry, arg:Any*) = {
@@ -85,10 +90,10 @@ abstract class EventEmitter(private var _evtHdlr:Observer, private var _name:Str
     _ctr = arg(0).asInstanceOf[Container]
     _name = if (arg.size > 2) nsb(arg(2) ) else ""
     if (STU.isEmpty(_name)) {
-      _name = getClass().getSimpleName() + "-" + _seed.incrementAndGet()
+      _name = getClass().getSimpleName + "-" + _seed.incrementAndGet
     }
-    tlog().info("Composed {} {} of type {}.", "Emitter", _name, getClass().getName())
-    setObserver(_evtHdlr)    
+    tlog().info("Composed Emitter {} of type {}.", _name, getClass.getName, "")
+    setObserver(_evtHdlr)
     Some(this)
   }
 
@@ -141,8 +146,8 @@ abstract class EventEmitter(private var _evtHdlr:Observer, private var _name:Str
   def isEnabled() = _enabled
   def isActive() = _active
 
-  protected def onStart():Unit
-  protected def onStop():Unit
+  protected def onStart(): Unit
+  protected def onStop(): Unit
 
   private def iniz() {
     val rc= STU.replace(getClass().getName(),".","/") + ".meta"

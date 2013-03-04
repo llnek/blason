@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -38,7 +38,7 @@ import com.zotoh.blason.core.Configuration
 /**
  * @author kenl
  */
-class DefaultConfiguration(private var _node:JMap[_,_],p:Configuration=null) extends AbstractConfiguration(p) {
+class DefaultConfiguration(private var _node:JMap[_,_], p:Configuration=null) extends AbstractConfiguration(p) {
 
   if (_node==null) { _node= new JLMap()  }
 
@@ -50,16 +50,13 @@ class DefaultConfiguration(private var _node:JMap[_,_],p:Configuration=null) ext
   def this() {
     this(null,null)
   }
-  
+
   def contains(n:String) = _node.containsKey(n)
   def size() = _node.size()
 
-  def asJHM() = {
-    _node
-  }
-  
-  def initialize() {
-  }
+  def asJHM() = { _node }
+
+  def initialize() { }
 
   def dispose() {
     setParent(null)
@@ -133,7 +130,7 @@ class DefaultConfiguration(private var _node:JMap[_,_],p:Configuration=null) ext
       _node.get(n) match {
         case m:JMap[_,_] =>
           Some( new DefaultConfiguration(m,this))
-        case _ => 
+        case _ =>
           None
       }
     } else {
@@ -165,8 +162,10 @@ class DefaultConfiguration(private var _node:JMap[_,_],p:Configuration=null) ext
   }
 
   private def iniz(cfgUrl:URL) {
-    val p = new JsonFactory().createParser( cfgUrl )
-    _node= new ObjectMapper().readValue(p, classOf[JMap[String,_]])
+    _node= new ObjectMapper().readValue(
+      new JsonFactory().createParser( cfgUrl ),
+      classOf[JMap[String,_]]
+    )
   }
 
 }
@@ -174,3 +173,4 @@ class DefaultConfiguration(private var _node:JMap[_,_],p:Configuration=null) ext
 
 class EmptyConfiguration extends DefaultConfiguration(null,null) {
 }
+

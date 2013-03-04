@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -52,7 +52,7 @@ with Startable with Disposable {
   private val _tds = max(4, tds)
 
   def start() { activate }
-  
+
   def stop() {}
 
   def dispose() {
@@ -66,14 +66,14 @@ with Startable with Disposable {
 
   def rejectedExecution(r:Runnable, x:ThreadPoolExecutor) {
     //TODO: deal with too much work for the core...
-    tlog.warn("\"{}\" rejected work - threads/queue are max'ed out" , _id);
+    tlog.error("\"{}\" rejected work - threads/queue are max'ed out" , _id);
   }
 
   private def activate() {
     _scd = new ThreadPoolExecutor( _tds, _tds, 5000,
         TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable](),
         new TFac(_id) , this )
-    tlog.info("{} \"{}\" activated with threads = {}" , "Core", _id , asJObj( _tds))
+    tlog.info("Core \"{}\" activated with threads = {}" , _id , asJObj( _tds), "")
   }
 
 }

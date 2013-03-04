@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -41,9 +41,9 @@ class NettyMVC extends NettyIO(null, "") {
   private val _wfiles = mutable.ArrayBuffer[String]()
   private var _useETags=false
   private var _maxAge=3600L
-  
+
   def getWelcomeFiles(): Set[String] = _wfiles.toSet
-  
+
   def getCacheMaxAgeSecs() = _maxAge
 
   def getUseETag() = _useETags
@@ -53,11 +53,11 @@ class NettyMVC extends NettyIO(null, "") {
     cfg.getSequence("welcomeFiles").foreach { _ match {
       case s:String =>_wfiles += s
       case _ =>
-    }}      
+    }}
     _maxAge= cfg.getLong("cacheMaxAgeSecs", 3600L)
     _useETags= cfg.getBool("useEtags", false)
   }
-  
+
   override def cfgPipeline(boot:ServerBootstrap) = {
     boot.setPipelineFactory(new ChannelPipelineFactory() {
       override def getPipeline() = {
@@ -71,12 +71,12 @@ class NettyMVC extends NettyIO(null, "") {
         pl.addLast("handler", getHandler )
         pl
       }
-    })    
+    })
     boot
   }
-  
+
   override def getHandler() = new MVCHandler(this)
-  
+
 }
 
 

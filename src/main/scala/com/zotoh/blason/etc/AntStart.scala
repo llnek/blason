@@ -37,14 +37,14 @@ import java.io.OutputStreamWriter
 object AntStart {
 
   def main(args:Array[String]) {
-    
+
     import freemarker.template._
     val cfg = new Configuration()
     cfg.setDirectoryForTemplateLoading(
         new File("/tmp"))
-    cfg.setObjectWrapper(new DefaultObjectWrapper())  
+    cfg.setObjectWrapper(new DefaultObjectWrapper())
     val temp = cfg.getTemplate("test.ftl")
-    
+
     val out = new OutputStreamWriter(System.out)
     val root= new java.util.HashMap[Object,Object]()
     var m= new java.util.HashMap[Object,Object]()
@@ -53,9 +53,10 @@ object AntStart {
     m.put("encoding", "latin-1")
     m.put("author", "kenken")
     temp.process(root, out)
-    out.flush()  
-    
+    out.flush()
+
   }
-  
-  
-}    
+
+
+}
+

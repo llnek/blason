@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -39,7 +39,7 @@ import java.io.FilenameFilter
 abstract class AbstractClassLoader(par:ClassLoader)  extends URLClassLoader( Array[URL]() ,par) with Constants with Configurable {
   protected var _loaded=false
 
-  protected[loaders] def findUrls(dir:File) = {
+  protected[loaders] def findUrls(dir:File): this.type = {
     dir.listFiles( new FilenameFilter() {
       def accept(f:File,n:String) = n.endsWith(".jar")
     }).foreach { (f) =>
@@ -48,7 +48,7 @@ abstract class AbstractClassLoader(par:ClassLoader)  extends URLClassLoader( Arr
     this
   }
 
-  protected[loaders] def addUrl(f:File, cz:Boolean=false) = {
+  protected[loaders] def addUrl(f:File, cz:Boolean=false): this.type = {
     var url=f.toURI.toURL
 //    if (cz) {
 //      url = new URL( url.toString() + "/")
@@ -61,3 +61,4 @@ abstract class AbstractClassLoader(par:ClassLoader)  extends URLClassLoader( Arr
 
 
 }
+

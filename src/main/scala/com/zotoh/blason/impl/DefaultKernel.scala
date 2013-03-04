@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -112,7 +112,7 @@ with Initializable with Contextualizable with Startable with Loggable with Const
       case Some(x:File) => _playDir=x
       case _ => throw new ContextError(K_PLAYDIR+" undefined")
     }
-    
+
     MimeUtils.setupCache(new File(_baseDir, DN_CFG+"/app/mime.properties").toURI.toURL )
     _ctx=c
   }
@@ -185,6 +185,8 @@ with Initializable with Contextualizable with Startable with Loggable with Const
         case _ => /* never */
       }
       // need this to prevent deadlocks amongst pods
+      // when there are dependencies
+      // TODO: need to handle this better
       safeWait(  Math.max(1,newRandom.nextInt(6) ) * 1000 )
     }
     //val me=this ; new AsyncProc().setDaemon(true).fork{ () => me.monitorApps() }
@@ -212,8 +214,8 @@ with Initializable with Contextualizable with Startable with Loggable with Const
     try {
       val ctr=Container.create( _appReg,c)
       if (ctr.isEnabled) {
-      _apps.put(c.name, ctr)
-      _jmx.register(ctr,"", c.name)
+        _apps.put(c.name, ctr)
+        _jmx.register(ctr,"", c.name)
       } else {
         tlog.info("Container \"{}\" is set offline.", c.name )
       }
@@ -223,3 +225,4 @@ with Initializable with Contextualizable with Startable with Loggable with Const
   }
 
 }
+

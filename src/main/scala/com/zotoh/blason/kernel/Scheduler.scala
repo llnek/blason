@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -46,12 +46,12 @@ object Scheduler {
 /**
  * @author kenl
  */
-class Scheduler protected[kernel]() extends CoreImplicits 
+class Scheduler protected[kernel]() extends CoreImplicits
 with Configurable with Startable with Disposable {
 
   protected val _holdQ= mutable.HashMap[Long,Runnable]()
   protected val _runQ= mutable.HashMap[Long,Runnable]()
-  protected val _parQ= mutable.HashMap[Long,Long]()
+  //protected val _parQ= mutable.HashMap[Long,Long]()
   def tlog() = Scheduler._log
 
   protected var _core:TCore= null
@@ -60,7 +60,7 @@ with Configurable with Startable with Disposable {
   def dispose() {
     if (_core != null) { _core.dispose }
   }
-  
+
   /**
    * @param core
    * @param w
@@ -102,7 +102,7 @@ with Configurable with Startable with Disposable {
 
   def wakeup(w:Runnable) {
     xrefPID(w) match {
-      case pid:Long if pid >= 0L =>  wakeAndRun( pid,w)
+      case pid:Long if (pid >= 0L) =>  wakeAndRun( pid,w)
       case _ =>
     }
   }

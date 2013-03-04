@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -47,7 +47,7 @@ class JobCreator extends Observer with Composable {
   def update(src:Observable, arg:Any*) {
     val ev=arg(0).asInstanceOf[AbstractEvent]
     val cz= if (ev.hasRouter) ev.routerClass else arg(1).asInstanceOf[String]
-    val job= new Job(SeqNumGen.next, _par,ev)    
+    val job= new Job(SeqNumGen.next, _par,ev)
     var p= maybeMkPipe(cz, job)
     if (p==null) {
       p=new OrphanFlow(job)

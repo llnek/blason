@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -40,13 +40,11 @@ class NettyIO(evtHdlr:Observer, nm:String,ssl:Boolean = false)
 extends NettyIOTrait(evtHdlr, nm,ssl) {
 
   private var _contextPath=""
-    
-  def this() {
-    this (null,"")
-  }
+
+  def this() { this (null,"") }
 
   def getContextPath() = _contextPath
-    
+
   def onStart() {
     onStart_1( cfgPipeline(  onStart_0 ) )
   }
@@ -59,7 +57,7 @@ extends NettyIOTrait(evtHdlr, nm,ssl) {
     super.configure(cfg)
     _contextPath = cfg.getString("context","")
   }
-    
+
   protected[io] def cfgPipeline(boot:ServerBootstrap) = {
     boot.setPipelineFactory(new ChannelPipelineFactory() {
       override def getPipeline() = {
@@ -73,9 +71,9 @@ extends NettyIOTrait(evtHdlr, nm,ssl) {
         pl.addLast("handler", getHandler )
         pl
       }
-    })    
+    })
     boot
   }
-  
+
 }
 

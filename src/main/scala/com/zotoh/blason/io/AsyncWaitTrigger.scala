@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -27,7 +27,7 @@ package io
  */
 trait AsyncWaitTrigger {
 
-  def resumeWithResult(res:AbstractResult):Unit
-  def resumeWithError():Unit
+  def resumeWithResult(res:AbstractResult): Unit
+  def resumeWithError(): Unit
 
 }

@@ -41,9 +41,9 @@ object StrUtils extends CoreImplicits {
       Arrays.equals(a.toCharArray, b.toCharArray )
     }
   }
-
-  def strim(s:String) = {
-    nsb(s).trim
+  
+  def strim(obj:Any) = {
+    nsb(obj).trim
   }
 
   /**

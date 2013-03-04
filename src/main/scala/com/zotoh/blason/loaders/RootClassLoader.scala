@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -53,7 +53,7 @@ class RootClassLoader(par:ClassLoader) extends AbstractClassLoader( par) {
   private def iniz() {
     val base=System.getProperty(PF_HOMEDIR,"")
     //println("HOME=====" + base)
-    if (base.length > 0) { load(base)}
+    if (base.length > 0) { load(base) }
   }
 
   private def load(baseDir:String) {
@@ -92,7 +92,8 @@ class ExecClassLoader(par:ClassLoader) extends AbstractClassLoader( new RootClas
   private def iniz() {
     val base=System.getProperty(PF_HOMEDIR,"")
     //println("HOME=====" + base)
-    if (base.length > 0) { load(base)}
+    if (base.length > 0) { load(base) }
   }
 
 }
+

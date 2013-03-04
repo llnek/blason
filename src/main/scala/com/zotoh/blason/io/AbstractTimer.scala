@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -41,14 +41,16 @@ object AbstractTimer {
  */
 abstract class AbstractTimer(evtHdlr:Observer, nm:String) extends EventEmitter(evtHdlr,nm)  with Loopable {
 
+  import AbstractTimer._
+
   private var _when:Option[JDate] = None
-  private var _delayMillis:Long =0L
+  private var _delayMillis:Long = 0L
   var _timer:JTimer=null
 
   override def configure(cfg:Configuration) {
     super.configure(cfg)
-    val delay= max( cfg.getLong(AbstractTimer.PSTR_DELAYSECS, 1L ), 1L)
-    val when= cfg.getDate(AbstractTimer.PSTR_WHEN).getOrElse(null)
+    val delay= max( cfg.getLong( PSTR_DELAYSECS, 1L ), 1L)
+    val when= cfg.getDate( PSTR_WHEN).getOrElse(null)
     if (when != null) {
       setWhen(when)
     } else {
@@ -59,13 +61,13 @@ abstract class AbstractTimer(evtHdlr:Observer, nm:String) extends EventEmitter(e
   protected def delayMillis() = _delayMillis
   protected def when() = _when
 
-  protected def setDelayMillis(d:Long) = {
+  protected def setDelayMillis(d:Long): this.type = {
     tstNonNegLongArg("delay-millis", d)
     _delayMillis=d
     this
   }
 
-  protected def setWhen(d:JDate) = {
+  protected def setWhen(d:JDate): this.type = {
     tstObjArg("when",d)
     _when=Some(d)
     this

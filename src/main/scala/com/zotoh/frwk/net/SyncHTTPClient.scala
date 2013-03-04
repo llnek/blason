@@ -72,7 +72,7 @@ object SyncHTTPClient {
 }
 
 
-class SyncHTTPClient extends HTTPClientBase with CoreImplicits {
+class SyncHTTPClient(private var _contentType:String="") extends HTTPClientBase with CoreImplicits {
   private var _cli:HttpClient = null
 
   def connect(host:String,port:Int) {
@@ -86,6 +86,7 @@ class SyncHTTPClient extends HTTPClientBase with CoreImplicits {
       ent.setChunked(true)
       val p= new HttpPost(_remote)
       p.setEntity(ent)
+      prePost(p)
       onResp(  _cli.execute( p  ) )            
     } finally {
       close()
@@ -94,10 +95,17 @@ class SyncHTTPClient extends HTTPClientBase with CoreImplicits {
 
   def get(): Option[Any] = {
     try {
-      onResp(  _cli.execute( new HttpGet( _remote)   ) )
+      val g= new HttpGet(_remote)
+      preGet(g)
+      onResp(  _cli.execute( g  ) )
     } finally {
       close()
     }
+  }
+
+  protected def prePost(post:HttpPost) {    
+  }
+  protected def preGet(get:HttpGet) {    
   }
   
   private def onResp(rsp:HttpResponse): Option[Any] = {
@@ -125,16 +133,17 @@ class SyncHTTPClient extends HTTPClientBase with CoreImplicits {
   def onOK(ent:HttpEntity): Option[Any] = {
     
     val ct= ent.getContentType match {
-      case x:Header => nsb ( x.getValue ).trim 
-      case _ => "text/html"
+      case x:Header => strim( x.getValue ) 
+      case _ => _contentType
     }
+    
 //    tlog.debug("content-length: {}", asJObj(ent.getContentLength) )
     tlog.debug("content-type: {}", ct )
     tlog.debug("content-encoding: {}", ent.getContentEncoding )
     val isstr= ct.lc match {
       case s if s.startsWith("text/") => true
-      case "application/xml" => true
-      case "application/json" =>true
+      case s if s.startsWith("application/xml") => true
+      case s if s.startsWith("application/json") => true
       case "???" => false
       case _ => false
     }

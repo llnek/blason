@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -31,16 +31,16 @@ trait AsyncCallback {
   /**
    * @param result
    */
-  def onSuccess(result:Option[Any] ):Unit
+  def onSuccess(result:Option[Any] ): Unit
 
   /**
    * @param e
    */
-  def onError(e:Exception):Unit
+  def onError(e:Exception): Unit
 
   /**
    *
    */
-  def onTimeout():Unit
+  def onTimeout(): Unit
 
 }

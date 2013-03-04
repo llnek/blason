@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -49,16 +49,16 @@ object HTTPIOTrait {
 
     val s= if ( key.getFile().endsWith(".jks") ) new JKSStore() else new PKCSStore()
 
-    using(key.openStream()) { (inp) =>
+    using(key.openStream ) { (inp) =>
       s.init(pwd )
       s.addKeyEntity(inp, pwd )
     }
 
     val c= if (createContext) SSLContext.getInstance( sslType ) else null
     if (c!=null) {
-      c.init( s.keyManagerFactory().getKeyManagers(),
-          s.trustManagerFactory().getTrustManagers(),
-          Crypto.secureRandom() )
+      c.init( s.keyManagerFactory.getKeyManagers,
+          s.trustManagerFactory.getTrustManagers,
+          Crypto.secureRandom )
     }
 
     (s, c)
@@ -115,7 +115,7 @@ abstract class HTTPIOTrait protected(evtHdlr:Observer, nm:String, private var _s
     if ( ! STU.isEmpty(key)) {
       tstEStrArg("ssl-key-file-password", pwd)
       _keyURL = if (key.startsWith("file:")) new URL(key) else new File(key).toURI.toURL
-      _keyPwd= PwdFactory.mk(pwd).text()
+      _keyPwd= PwdFactory.mk(pwd).text
       _secure=true
     }
 

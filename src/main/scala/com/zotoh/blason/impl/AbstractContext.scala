@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -36,11 +36,11 @@ object AbstractContext {
 /**
  * @author kenl
  */
-abstract class AbstractContext(private val _par:Context) extends Context {
+abstract class AbstractContext(private val _par:Context = null ) extends Context {
 
   private val _data= new mutable.HashMap[Any,Any] with mutable.SynchronizedMap[Any,Any]
   def tlog() = AbstractContext._log
-  
+
   def get( key:Any) = {
     _data.get(key) match {
       case Some(r:Resolvable) => r.resolve(this)
@@ -51,7 +51,7 @@ abstract class AbstractContext(private val _par:Context) extends Context {
 
   def put( key:Any, value:Any) {
     if (value != null) {
-      _data += (key -> value )
+      _data += key -> value
     }
   }
 
@@ -78,5 +78,6 @@ abstract class AbstractContext(private val _par:Context) extends Context {
       tlog.info("key: {} , value: {}", en._1, en._2)
     }
   }
-  
+
 }
+

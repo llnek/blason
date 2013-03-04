@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -58,10 +58,8 @@ class FILEPicker(evtHdlr:Observer, nm:String) extends RepeatTimer(evtHdlr,nm) {
   private var _destMove:File=null
   private var _srcDir:File=null
 
-  def this() {
-    this (null,"")
-  }
-  
+  def this() { this (null,"") }
+
   def destDir() = _destMove
   def srcDir() = _srcDir
 
@@ -92,7 +90,7 @@ class FILEPicker(evtHdlr:Observer, nm:String) extends RepeatTimer(evtHdlr,nm) {
 
   override def onInit() {
     val observer = new FileAlterationObserver(_srcDir,_mask)
-    val mon= new FileAlterationMonitor(intervalMillis() )        
+    val mon= new FileAlterationMonitor(intervalMillis() )
     val lnr = new FileAlterationListenerAdaptor() {
       override def onFileCreate(file:File) {
         postPoll(file, FP_CREATED )
@@ -115,9 +113,9 @@ class FILEPicker(evtHdlr:Observer, nm:String) extends RepeatTimer(evtHdlr,nm) {
       case _ => scheduleTrigger( delayMillis() )
     }
   }
-  
+
   override def wakeup() {
-    _monitor.start()    
+    _monitor.start()
   }
 
   private def testDir(dir:File) = {
@@ -133,14 +131,14 @@ class FILEPicker(evtHdlr:Observer, nm:String) extends RepeatTimer(evtHdlr,nm) {
 
     val fn= niceFPath(f)
     var cf=f
-    
+
     if ( FP_DELETED != action && _destMove != null) try {
       FUT.moveFileToDirectory(f, _destMove, false)
       cf=new File(_destMove, f.getName())
     } catch {
       case e:Throwable => tlog.warn("",e)
     }
-    
+
     dispatch(new FILEEvent(this, fn, cf, action))
   }
 

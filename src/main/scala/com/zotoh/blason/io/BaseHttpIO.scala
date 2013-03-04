@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -32,13 +32,13 @@ import com.zotoh.frwk.util.CoreUtils._
  *
  */
 trait NIOCB {
-  def destroy():Unit
+  def destroy(): Unit
 }
 
 /**
  * @author kenl
  */
-abstract class BaseHttpIO protected(evtHdlr:Observer, nm:String, ssl:Boolean) 
+abstract class BaseHttpIO protected(evtHdlr:Observer, nm:String, ssl:Boolean)
 extends HTTPIOTrait(evtHdlr, nm,ssl) {
 
   private val _cbs= mutable.HashMap[Any,NIOCB]()
@@ -48,7 +48,7 @@ extends HTTPIOTrait(evtHdlr, nm,ssl) {
 
   private var _async=true
   private var _workers=0
-  
+
   def threshold() = _thsHold
   def isAsync() = _async
 
@@ -77,7 +77,7 @@ extends HTTPIOTrait(evtHdlr, nm,ssl) {
     _thsHold = 1024L * thold
 
     tstPosLongArg("wait-millis", wait)
-    _waitMillis = 1L *wait
+    _waitMillis = 1L * wait
 
     tstPosLongArg("workers", wks)
     _workers = wks.toInt

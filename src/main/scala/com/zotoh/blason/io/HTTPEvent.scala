@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -42,7 +42,7 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private val _hdrs= mutable.HashMap[String,StrArr]()
   private val _attrs= mutable.HashMap[String,Any]()
   private val _atts= mutable.HashMap[String,ULFileItem]()
-  
+
   private var _servletPath=""
   private var _url=""
   private var _uri= ""
@@ -60,7 +60,7 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private var _domain=""
   private var _scheme=""
   private var _encoding="utf-8"
-    
+
   private var _remotePort=0
   private var _localPort=0
   private var _serverPort=0
@@ -68,26 +68,26 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   private var _data:XData=null
   private var _cLen=0L
   private var _cTypeLine=""
-    
+
   private var _cookies:Map[String,Cookie] = null
   private var _keepAlive= false
 
   override def setResult(r:AbstractResult) {
-    super.setResult(r)  
+    super.setResult(r)
   }
-  
+
   def setCookies(c:Map[String,Cookie]) {
     _cookies = c
   }
-  
+
   def getCookies(): Map[String,Cookie] = {
     if (_cookies == null) Map() else _cookies
   }
-  
+
   def getCookie(name:String): Option[Cookie] = {
     if (_cookies==null || STU.isEmpty(name)) None else _cookies.get(name)
   }
-  
+
   def setData(s:String): this.type = {
     _data=new XData(s)
     this
@@ -100,21 +100,21 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
 
   def isKeepAlive() = _keepAlive
   def setKeepAlive(b:Boolean) { _keepAlive=b }
-  
+
   def setData(s:XData): this.type =  { _data=s; this }
   def data() = _data
 
   def hasData() = _data != null
-  
+
   def setContentLength(len:Long) { _cLen = len  }
   def contentLength() = _cLen
 
   def setContentTypeLine(s:String) {
     _cTypeLine= nsb(s)
   }
-  
+
   def contentTypeLine() = _cTypeLine
-  
+
   def setContentType(ct:String) {
     _ctype = nsb(ct)
   }
@@ -122,9 +122,9 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
 
   def setEncoding(enc:String) {
     _encoding = nsb(enc)
-  }  
+  }
   def encoding() = _encoding
-  
+
   def setContextPath(c:String) {
     _contextPath=nsb(c)
   }
@@ -133,7 +133,7 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
   def addFile(fi:ULFileItem) {
     _atts.put(fi.getFieldName, fi)
   }
-  
+
   def addAttr(n:String, v:Any) {
     if ( ! STU.isEmpty(n)) {
       _attrs += Tuple2(n,v)
@@ -147,13 +147,13 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
     }
     _hdrs.get(h).get.add(v)
   }
-  
+
   def headers() = _hdrs.toMap
 
   def header(nm:String): Option[StrArr] = {
     if ( nm==null) None else _hdrs.get(nm.lc )
   }
-  
+
   def setDomain(d:String) { _domain = d }
   def domain() = _domain
 
@@ -192,7 +192,7 @@ class HTTPEvent(src:EventEmitter) extends AbstractEvent(src) with CoreImplicits 
         val s= new StrArr()
         _params += Tuple2(p, s)
         s
-    } 
+    }
     r.add(nsb(v) )
   }
 

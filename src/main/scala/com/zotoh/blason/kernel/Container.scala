@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -94,10 +94,10 @@ object Container extends CoreImplicits with Constants {
 
     new AsyncProc().withClassLoader(pod.getCZldr).setDaemon(true).fork { () =>
       if (c.isEnabled) {
-      c.tlog.info("Created app: {}" , pod.name )
-      c.initialize
-      c.compose(appReg)
-      c.start
+        c.tlog.info("Created app: {}" , pod.name )
+        c.initialize
+        c.compose(appReg)
+        c.start
       }
     }
 
@@ -126,13 +126,13 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
   private var _manifest:Configuration= null
   private var _appConf:Configuration= null
   private var _envConf:Configuration= null
-  
+
   private var _schr:Scheduler = null
   private var _jc:JobCreator=null
   private var _appDir:File=null
 
   private var _ftlCfg:FTLCfg=null
-  
+
   private var _mainCZ:Class[_] = null
   private var _mainObj:Any = null
 
@@ -143,9 +143,9 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
   def getName() = name()
 
   def getRoutes() = {
-    _routes 
+    _routes
   }
-  
+
   override def restartable() = true
   def name() = _meta.name
   def appDir() = _appDir
@@ -185,11 +185,11 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
     } catch {
       case e:Throwable => tlog.warn("Main.Class: No ctor() found.")
     }
-    
+
     if (_mainObj == null) {
       throw new InstantiationException("Failed to create instance: " + _mainCZ.getName )
     }
-    
+
     maybeCfg()
 
     _envConf.getChild("services") match {
@@ -211,54 +211,54 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
     _envConf=parseConf(new File(cfgDir, "env.conf").toURI.toURL)
     _appConf=parseConf(new File(cfgDir, "app.conf").toURI.toURL, _envConf)
     _appDir=new File(appDir)
-    
+
     WebPage.setup(new File(appDir))
     maybeLoadRoutes(cfgDir)
-    
+
     _ftlCfg = new FTLCfg()
     _ftlCfg.setDirectoryForTemplateLoading( new File(_appDir, DN_PAGES+"/"+DN_TEMPLATES))
-    _ftlCfg.setObjectWrapper(new DefaultObjectWrapper())  
-    
+    _ftlCfg.setObjectWrapper(new DefaultObjectWrapper())
+
     tlog.info("Configured app: {}" , name )
   }
-  
+
   def processTemplate(ri:RouteInfo, model:JMap[_,_]): (XData, String)  = {
     processTemplate(ri.template, model)
   }
-  
+
   def processTemplate(tpl:String, model:JMap[_,_]): (XData, String)  = {
     val s= if ( STU.isEmpty( tpl) ) "" else {
       resolveTemplate( tpl, model).toString()
     }
-    ( new XData(s), "text/html" )    
+    ( new XData(s), "text/html" )
   }
-  
+
   def resolveTemplate(tpl:String, model:JMap[_,_]): Writer = {
     tlog.debug("Resolve template: {}", tpl)
-    val t= getTemplate( tpl)
     val out = new StringWriter()
+    val t= getTemplate( tpl)
     t.process( model, out)
     out.flush()
     out
   }
-  
+
   def getTemplate(tpl:String) = {
-    val s =join( List( if (tpl.startsWith("/")) { "" } else  { "/" } , tpl , 
-        if ( tpl.endsWith(".ftl")) { "" } else { ".ftl" } ) , "" ) 
+    val s =join( List( if (tpl.startsWith("/")) { "" } else  { "/" } , tpl ,
+        if ( tpl.endsWith(".ftl")) { "" } else { ".ftl" } ) , "" )
     _ftlCfg.getTemplate( s)
   }
-  
+
   def getAppKey() = {
     _appConf.getString("key","")
   }
-  
+
   def getAppMeta(): Configuration = {
     _appConf.getChild("meta") match {
       case Some(m) => m
       case _ => new DefaultConfiguration(null, null)
     }
   }
-  
+
   def isEnabled() = {
     _envConf.getChild("container") match {
       case Some(c) => c.getBool("enabled", true)
@@ -272,9 +272,9 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
       case _ => throw new ClassCastException("Expecting AnyRef object.")
     }
   }
-  
+
   def getAppCfg(): Configuration = _appConf
-  
+
   def scheduler() = _schr
 
   def initialize() {
@@ -359,13 +359,13 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
 
   private def reifyOneSysService(key:String, c:AbstractConfiguration) {
     val svc = c.getString("service","")
-    val b= c.getBool("enabled", true) 
+    val b= c.getBool("enabled", true)
     if ( ! b) {
-        tlog.info("System service \"{}\" is disabled.", svc)      
+        tlog.info("System service \"{}\" is disabled.", svc)
     } else {
       val rc = if ( ! STU.isEmpty(svc)) {
           tlog.info("Reify required system service \"{}\"", svc)
-          reifyService(svc,c)        
+          reifyService(svc,c)
       } else {
         ("", null)
       }
@@ -373,7 +373,7 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
         _svcReg.add(key, rc._2 )
       } else {
         tlog.warn("Block \"{}\" is not a Service.", rc._1 )
-      }      
+      }
     }
   }
 

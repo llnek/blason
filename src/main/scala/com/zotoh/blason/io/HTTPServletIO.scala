@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -61,29 +61,29 @@ import org.eclipse.jetty.server.handler.ResourceHandler
  */
 class HTTPServletIO(evtHdlr:Observer, nm:String, ssl:Boolean=false)
 extends BaseHttpIO(evtHdlr, nm, ssl) with Weblet with Constants {
+
   import WEBServlet._
+
   private var _jetty:Server=null
   private var _contextPath=""
 
-  def this() {
-    this (null,"")
-  }
-  
+  def this() { this (null,"") }
+
   override def onInit() {
     val svr= new Server()
     val cc = if (isSSL ) {
-      val c= new SslSelectChannelConnector()
-      val t= keyURL  match {
+      val c= new SslSelectChannelConnector
+      val t= keyURL match {
         case Some(u) => HTTPIOTrait.cfgSSL(true,sslType, u, keyPwd )
         case _ => (null,null)
       }
-      val fac=c.getSslContextFactory()
+      val fac=c.getSslContextFactory
       fac.setSslContext( t._2)
       fac.setWantClientAuth(false)
       fac.setNeedClientAuth(false)
       c
     } else {
-      new SelectChannelConnector()
+      new SelectChannelConnector
     }
     cc.setName(this.name )
     if (! STU.isEmpty(host )) { cc.setHost(host ) }
@@ -108,12 +108,12 @@ extends BaseHttpIO(evtHdlr, nm, ssl) with Weblet with Constants {
   }
 
   def onStart() {
-      onStart_War(_jetty)
+    onStart_War(_jetty)
     _jetty.start()
   }
 
   def onStop() {
-    if (_jetty != null) block { () => _jetty.stop() }
+    if (_jetty != null) block { () => _jetty.stop }
     _jetty=null
   }
 
@@ -122,22 +122,22 @@ extends BaseHttpIO(evtHdlr, nm, ssl) with Weblet with Constants {
     val me=this
     val webapp = new WebAppContext()  {
       override def setContextPath(s:String) {
-        super.setContextPath(s)        
+        super.setContextPath(s)
         _scontext.setAttribute(WEBSERVLET_DEVID, me )
       }
     }
-    webapp.setDescriptor(  new File(app, WEB_XML).toURI().toURL().toString )
-    val logDir= new File(app, WEB_LOG).toURI().toURL().toString
-    val resBase= app.toURI().toURL().toString
+    webapp.setDescriptor(  new File(app, WEB_XML).toURI.toURL.toString )
+    val logDir= new File(app, WEB_LOG).toURI.toURL.toString
+    val resBase= app.toURI.toURL.toString
     // static resources are based from this, regardless of context
     webapp.setParentLoaderPriority(true)
     webapp.setResourceBase( resBase )
-    webapp.setContextPath(_contextPath) 
-    val  rr=webapp.getWebInf()
-    svr.setHandler(webapp)    
+    webapp.setContextPath(_contextPath)
+    val rr=webapp.getWebInf()
+    svr.setHandler(webapp)
   }
-  
-  private def maybeREQLog(logDir:String):Handler = {
+
+  private def maybeREQLog(logDir:String): Handler = {
     if ( STU.isEmpty(logDir)) null else {
       val h= new RequestLogHandler()
       val dir=new File(logDir)

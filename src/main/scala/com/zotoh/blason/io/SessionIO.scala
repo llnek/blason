@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -27,7 +27,7 @@ package io
  * @author kenl
  */
 trait SessionIO {
-  
-  def handleResult(evt:AbstractEvent, res:AbstractResult):Unit
-  
+
+  def handleResult(evt:AbstractEvent, res:AbstractResult): Unit
+
 }

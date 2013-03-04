@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -105,7 +105,7 @@ class NettyMsgCB protected[io](private val _src:NettyIO) extends NIOCB {
     _src.tlog.debug("NettyIO: Received HTTP Request :{}", _request.getMethod )
     _src.tlog.debug("NettyIO: Received Request:\n{}", _event.toString )
     ctx.getPipeline()
-    
+
 //    _event.setScheme(_src.isSSL())
     _keepAlive = JbossIsKeepAlive( _request)
 
