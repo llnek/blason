@@ -49,12 +49,12 @@ class SplitStep(s:FlowStep , a:Split )  extends FlowStep(s,a) {
     if (_fallThru) nextStep() else null
   }
 
-  def withBranches(w:IterWrapper) = {
+  def withBranches(w:IterWrapper): this.type = {
     _branches=w
     this
   }
 
-  def fallThrough() = {
+  def fallThrough(): this.type = {
     _fallThru=true
     this
   }

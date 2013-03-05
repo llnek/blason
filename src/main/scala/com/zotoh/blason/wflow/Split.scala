@@ -38,14 +38,14 @@ class Split(private var _join:Join) extends Composite {
     this(null)
   }
 
-  def addSplit(a:Activity ) = {
+  def addSplit(a:Activity ): this.type = {
     add(a)
     this
   }
 
   def reify(cur:FlowStep ) = reifySplit(cur, this)
 
-  def withJoin(a:Join ) = {
+  def withJoin(a:Join ): this.type = {
     _join=a
     this
   }

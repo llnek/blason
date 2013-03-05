@@ -81,7 +81,7 @@ abstract class EventEmitter(private var _evtHdlr:Observer, private var _name:Str
   }
 
   def hold(w:WaitEvent) {
-    if (w != null) { _backlog += Tuple2(w.id , w) }
+    if (w != null) { _backlog += w.id -> w }
   }
 
   def compose(r:ComponentRegistry, arg:Any*) = {

@@ -61,4 +61,9 @@ sealed class JobData protected[kernel](private var _evt:AbstractEvent) {
 
   def clearAll() { _data.clear  }
 
+  override def finalize() {
+    super.finalize()
+    println("=========================> JobData:  finz'ed")
+  }
+  
 }

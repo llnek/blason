@@ -45,7 +45,7 @@ class PTask(private var _work:Work) extends Activity {
 
   def work() = _work
 
-  def withWork(w:Work) = {
+  def withWork(w:Work): this.type = {
     _work=w
     this
   }

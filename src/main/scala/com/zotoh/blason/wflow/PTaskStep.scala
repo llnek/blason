@@ -33,7 +33,7 @@ class PTaskStep(s:FlowStep, a:PTask ) extends FlowStep(s,a) {
 
   private var _work:Work = null
 
-  def withWork(w:Work) = {
+  def withWork(w:Work): this.type = {
     _work=w
     this
   }

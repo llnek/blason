@@ -61,6 +61,13 @@ with Configurable with Startable with Disposable {
     if (_core != null) { _core.dispose }
   }
 
+  // called by a *running* task to remove itself from the running queue
+  def dequeue(w:Runnable) {
+    xrefPID(w) match {
+      case pid:Long => _runQ.remove(pid)
+    }    
+  }
+  
   /**
    * @param core
    * @param w

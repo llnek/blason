@@ -79,5 +79,15 @@ abstract class AbstractEvent protected(src:EventEmitter) extends EventObject(src
     _waitEvent=w
   }
 
+  override def finalize() {
+    super.finalize()
+    if (_waitEvent != null) {
+      println("=========================> AbstractEventWithWaitEvent: " + id + " finz'ed")            
+    } else {
+      println("=========================> AbstractEvent: " + id + " finz'ed")      
+    }
+  }
+  
+  
 }
 

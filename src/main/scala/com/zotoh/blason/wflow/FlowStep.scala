@@ -96,6 +96,7 @@ abstract class FlowStep protected[wflow](protected var _parent:Pipeline) extends
     var err:Activity = null
     var rc:FlowStep =null
 
+    f.core().dequeue(this)
     try {
       rc=eval( f.job )
     } catch {

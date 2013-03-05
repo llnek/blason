@@ -81,7 +81,8 @@ object ProcessUtils {
    */
   def blockForever() {
     while (true) block { () =>
-      Thread.sleep(5000)
+      Thread.sleep(8000)
+      System.gc()
     }
   }
 
