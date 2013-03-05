@@ -45,7 +45,7 @@ import java.util.zip.Deflater
 import java.util.zip.Inflater
 import java.util.{TimeZone=>JTZone}
 import java.util.GregorianCalendar
-import java.util.{Properties=>JPS}
+import java.util.{Map=>JMap,Properties=>JPS}
 import java.util.StringTokenizer
 import scala.collection.JavaConversions.asScalaSet
 import com.zotoh.frwk.util.Nichts.NICHTS
@@ -59,6 +59,8 @@ import java.net.InetAddress
 import java.net.URLEncoder
 import java.net.URLDecoder
 import java.util.Arrays
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.JsonFactory
 
 
 class ZString(str:String) {
@@ -805,6 +807,11 @@ object CoreUtils extends Constants  with CoreImplicits {
     require( v!=null && v.length > 0,  "" + param + " must be non empty")
   }
 
+  def parseJSON(s:String) = {
+    val p = new JsonFactory().createParser( s )
+    new ObjectMapper().readValue(p, classOf[JMap[String,_]])
+  }
+  
   private def cacheEnvVars() {
     _isUNIX = ! sysQuirk("os.name").hasic("windows")
   }

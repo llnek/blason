@@ -50,7 +50,8 @@ trait Constants {
   //val H2_SERVER_URL = "jdbc:h2:tcp://host/path/db"
   val H2_MEM_URL = "jdbc:h2:mem:"
   val H2_FILE_URL = "jdbc:h2:"
-
+  val H2_MVCC = ";MVCC=TRUE"
+    
   val S_POSTGRESQL= "postgresql"
   val S_ORACLE= "oracle"
   val S_MSSQL= "mssql"
