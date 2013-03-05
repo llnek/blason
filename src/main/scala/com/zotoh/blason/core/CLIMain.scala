@@ -232,9 +232,9 @@ class CLIMain extends CoreImplicits with Constants {
   private def blockAndWait() {
     _active=true
     println("Applications are now running...")
-    //freeze(_mutex)
-    //safeWait(1500)
-    blockForever()
+    freeze(_mutex)
+    safeWait(1500)
+//    blockForever()
     println("Bye.")
     sys.exit(0)
   }

@@ -64,4 +64,9 @@ abstract class Activity protected[wflow]() extends Loggable {
    */
   def realize(cur:FlowStep ):Unit
 
+//  override def finalize() {
+//    super.finalize()
+//    println("=========================> Activity: " + getClass.getName + " finz'ed")
+//  }
+  
 }

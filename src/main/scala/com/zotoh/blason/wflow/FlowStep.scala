@@ -127,4 +127,9 @@ abstract class FlowStep protected[wflow](protected var _parent:Pipeline) extends
 
   }
 
+//  override def finalize() {
+//    super.finalize()
+//    println("=========================> FlowEvent: " + getClass.getName + " finz'ed")
+//  }
+  
 }

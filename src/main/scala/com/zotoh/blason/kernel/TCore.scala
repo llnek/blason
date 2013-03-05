@@ -30,6 +30,8 @@ import com.zotoh.frwk.util.StrUtils._
 import org.slf4j._
 import com.zotoh.blason.core.Startable
 import com.zotoh.blason.core.Disposable
+import java.util.concurrent.Executors
+import java.util.concurrent.ExecutorService
 
 
 /**
@@ -47,7 +49,7 @@ with Startable with Disposable {
 
   //private val serialVersionUID = 404521678153694367L
 
-  private var _scd:ThreadPoolExecutor=null
+  private var _scd:ExecutorService= null
   def tlog() = TCore._log
   private val _tds = max(4, tds)
 
@@ -68,9 +70,10 @@ with Startable with Disposable {
     //TODO: deal with too much work for the core...
     tlog.error("\"{}\" rejected work - threads/queue are max'ed out" , _id);
   }
-
+  
   private def activate() {
-    _scd = new ThreadPoolExecutor( _tds, _tds, 5000,
+//    _scd= Executors.newCachedThreadPool( new TFac(_id) )
+    _scd= new ThreadPoolExecutor( _tds, _tds, 5000,
         TimeUnit.MILLISECONDS, new LinkedBlockingQueue[Runnable](),
         new TFac(_id) , this )
     tlog.info("Core \"{}\" activated with threads = {}" , _id , asJObj( _tds), "")

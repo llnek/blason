@@ -30,9 +30,7 @@ import com.zotoh.blason.kernel.Job
  * @author kenl
  *
  */
-class Split(private var _join:Join) extends Composite {
-
-  protected var _theJoin:Join= null
+class Split(protected var _theJoin:Join) extends Composite {
 
   def this() {
     this(null)
@@ -46,15 +44,14 @@ class Split(private var _join:Join) extends Composite {
   def reify(cur:FlowStep ) = reifySplit(cur, this)
 
   def withJoin(a:Join ): this.type = {
-    _join=a
+    _theJoin=a
     this
   }
 
   def realize(cur:FlowStep ) {
 
-    if ( _join != null) {
-      _join.withBranches( size )
-      _theJoin = _join
+    if ( _theJoin != null) {
+      _theJoin.withBranches( size )
     } else {
       _theJoin= new NullJoin()
     }

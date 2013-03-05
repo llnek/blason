@@ -31,14 +31,15 @@ import com.zotoh.blason.core.Loggable
 /**
  * @author kenl
  */
-abstract class WaitEvent protected(private val _event:AbstractEvent) extends Loggable {
+abstract class WaitEvent protected(private var _evt:AbstractEvent) extends Loggable {
 
   private val _log=LoggerFactory.getLogger(classOf[WaitEvent])
   def tlog() = _log
 
   private var _res:AbstractResult= null
-
-  _event.bindWait(this)
+  private val _id= _evt.id
+  
+  _evt.bindWait(this)
 
   def resumeOnResult(res:AbstractResult):Unit
 
@@ -46,9 +47,11 @@ abstract class WaitEvent protected(private val _event:AbstractEvent) extends Log
 
   def timeoutSecs(secs:Int):Unit
 
-  def inner() = _event
-
-  def id() =  _event.id()
+  def unbind() { _evt= null }
+  
+  def inner() = _evt
+  
+  def id() =  _id
 
   def setResult(obj:AbstractResult) {
     _res= obj
@@ -58,5 +61,10 @@ abstract class WaitEvent protected(private val _event:AbstractEvent) extends Log
     if (_res==null) None else Some(_res)
   }
 
+//  override def finalize() {
+//    super.finalize()
+//    println("=========================> WaitEvent: " + getClass.getName + " finz'ed")
+//  }
+  
 }
 

@@ -43,6 +43,7 @@ abstract class AbstractEvent protected(src:EventEmitter) extends EventObject(src
   private var _res:AbstractResult=null
   private var _routerClass=""
   private var _sess:SessionIO=null
+  private var _hasWE=false
 
   def bindSession(s:SessionIO) {
     _sess=s
@@ -77,16 +78,17 @@ abstract class AbstractEvent protected(src:EventEmitter) extends EventObject(src
 
   protected[io] def bindWait(w:WaitEvent) {
     _waitEvent=w
+    _hasWE=true
   }
 
-  override def finalize() {
-    super.finalize()
-    if (_waitEvent != null) {
-      println("=========================> AbstractEventWithWaitEvent: " + id + " finz'ed")            
-    } else {
-      println("=========================> AbstractEvent: " + id + " finz'ed")      
-    }
-  }
+//  override def finalize() {
+//    super.finalize()
+//    if (_hasWE ) {
+//      println("=========================> AbstractEventWithWaitEvent: " + id + " finz'ed")            
+//    } else {
+//      println("=========================> AbstractEvent: " + id + " finz'ed")      
+//    }
+//  }
   
   
 }

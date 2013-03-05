@@ -38,6 +38,7 @@ class AsyncWaitEvent(ev:AbstractEvent,private val _trigger:AsyncWaitTrigger) ext
     inner().emitter().release(this)
     setResult(res)
     _trigger.resumeWithResult(res)
+    unbind()
   }
 
   override def timeoutMillis(millisecs:Long) {
@@ -55,6 +56,7 @@ class AsyncWaitEvent(ev:AbstractEvent,private val _trigger:AsyncWaitTrigger) ext
     inner().emitter().release(this)
     _timer=null
     _trigger.resumeWithError()
+    unbind()
   }
 
 }

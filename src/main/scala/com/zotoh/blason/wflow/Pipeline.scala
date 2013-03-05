@@ -130,9 +130,9 @@ abstract class Pipeline protected[wflow](private val _theJob:Job) {
     getClass().getSimpleName() + "(" + _pid + ")"
   }
 
-  override def finalize() {
-    super.finalize()
-    println("=========================> Pipeline: " + getClass.getName + " finz'ed")
-  }
+//  override def finalize() {
+//    super.finalize()
+//    println("=========================> Pipeline: " + getClass.getName + " finz'ed")
+//  }
   
 }

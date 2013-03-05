@@ -53,9 +53,9 @@ class Job( private val _jobID:Long, private val _parent:Container, private val _
 
   def getID() = _jobID
 
-  override def finalize() {
-    super.finalize()
-    println("=========================> Job: " + _jobID + " finz'ed")
-  }
+//  override def finalize() {
+//    super.finalize()
+//    println("=========================> Job: " + _jobID + " finz'ed")
+//  }
   
 }
