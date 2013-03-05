@@ -22,6 +22,7 @@ set BG=false
 set DBGOPTS=
 set ECODE=0
 
+set JPROF=-agentpath:/Applications/jprofiler7/bin/macos/libjprofilerti.jnilib=port=8849
 set VMXRGS=-XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=256m
 set CLDR=-Djava.system.class.loader=com.zotoh.blason.loaders.ExecClassLoader
 set MAINCZ=com.zotoh.blason.etc.AppRunner

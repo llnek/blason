@@ -31,5 +31,5 @@ package wflow
  */
 abstract class FAsyncResumeToken[T] (protected var _proc:T) {
 
-  def resume(resultArg:Option[Any]):Unit
+  def resume(resultArg:Option[Any]): Unit
 }

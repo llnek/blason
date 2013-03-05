@@ -32,12 +32,12 @@ abstract class JoinStep protected[wflow](s:FlowStep, a:Join) extends FlowStep(s,
   protected var _cntr=0
   private var _branches= 0
 
-  def withBody(body:FlowStep ) = {
+  def withBody(body:FlowStep ): this.type = {
     _body=body
     this
   }
 
-  def withBranches(n:Int) = {
+  def withBranches(n:Int): this.type = {
     _branches=n
     this
   }

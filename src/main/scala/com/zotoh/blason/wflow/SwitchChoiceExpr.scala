@@ -31,5 +31,5 @@ import com.zotoh.blason.kernel.Job
  *
  */
 trait SwitchChoiceExpr {
-  def eval(j:Job ):Any
+  def eval(j:Job ): Any
 }

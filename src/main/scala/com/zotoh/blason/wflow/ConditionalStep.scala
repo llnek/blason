@@ -32,7 +32,7 @@ abstract class ConditionalStep protected[wflow](s:FlowStep, a:Conditional) exten
 
   private var _expr:BoolExpr = null
 
-  def withTest(expr:BoolExpr ) = {
+  def withTest(expr:BoolExpr ): this.type = {
     _expr=expr
     this
   }

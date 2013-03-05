@@ -49,12 +49,12 @@ class If(expr:BoolExpr) extends Conditional(expr) {
 
   def reify(cur:FlowStep ) = reifyIf(cur, this)
 
-  def withElse(elseCode:Activity )  = {
+  def withElse(elseCode:Activity ): this.type  = {
     _else=elseCode
     this
   }
 
-  def withThen(thenCode:Activity ) = {
+  def withThen(thenCode:Activity ): this.type = {
     _then=thenCode
     this
   }

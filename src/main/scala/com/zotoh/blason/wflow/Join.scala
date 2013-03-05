@@ -31,12 +31,12 @@ abstract class Join protected[wflow]() extends Activity {
   protected var _body:Activity= null
   protected var _branches=0
 
-  def withBody(body:Activity ) = {
+  def withBody(body:Activity ): this.type = {
     _body = body
     this
   }
 
-  protected[wflow] def withBranches(n:Int) = {
+  protected[wflow] def withBranches(n:Int): this.type = {
     _branches=n
     this
   }

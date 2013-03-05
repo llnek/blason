@@ -62,6 +62,7 @@ if [ "$JAVA_HOME" = "" ] ; then
   JAVA_HOME=/usr
 fi
 
+JPROF=-agentpath:/Applications/jprofiler7/bin/macos/libjprofilerti.jnilib=port=8849
 DBGOPTS="-agentlib:jdwp=transport=dt_socket,server=y,address=8787,suspend=n"
 PATCHDIR=$BLASON_HOME/patch/*
 DISTRO=$BLASON_HOME/dist/*

@@ -43,5 +43,5 @@ class IterWrapper(private val _outer:FlowStep) {
   def next() = if (_acts.size > 0) _acts.remove(0).reify(_outer) else null
 
   def size() = _acts.size
-  
+
 }

@@ -45,7 +45,7 @@ class Delay(private var _delayMillis:Long) extends Activity {
 
   def delayMillis() = _delayMillis
 
-  def withDelay(millis:Long) = {
+  def withDelay(millis:Long): this.type = {
     _delayMillis=millis
     this
   }

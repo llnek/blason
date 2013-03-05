@@ -52,7 +52,7 @@ class GroupStep protected[wflow](s:FlowStep, a:Group) extends FlowStep(s,a) {
     rc
   }
 
-  def withSteps(wrap:IterWrapper ) = {
+  def withSteps(wrap:IterWrapper ): this.type = {
     _steps=wrap
     this
   }

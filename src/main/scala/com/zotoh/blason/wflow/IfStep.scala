@@ -33,12 +33,12 @@ class IfStep(s:FlowStep , a:If ) extends ConditionalStep(s,a) {
   private var _then:FlowStep = null
   private var _else:FlowStep = null
 
-  def withElse(s:FlowStep ) = {
+  def withElse(s:FlowStep ): this.type = {
     _else=s
     this
   }
 
-  def withThen(s:FlowStep ) = {
+  def withThen(s:FlowStep ): this.type = {
     _then=s
     this
   }

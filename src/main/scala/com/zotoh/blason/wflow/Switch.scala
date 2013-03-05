@@ -40,17 +40,17 @@ class Switch(private var _expr:SwitchChoiceExpr ) extends Activity {
     this(null)
   }
 
-  def withExpr(e:SwitchChoiceExpr ) = { 
+  def withExpr(e:SwitchChoiceExpr ): this.type = {
     _expr=e
     this
   }
 
-  def withChoice(matcher:Any, body:Activity ) = {
+  def withChoice(matcher:Any, body:Activity ): this.type = {
     _choices.put(matcher, body)
     this
   }
 
-  def withDef(a:Activity ) = {
+  def withDef(a:Activity ): this.type = {
     _def=a
     this
   }

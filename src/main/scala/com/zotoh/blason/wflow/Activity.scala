@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -46,8 +46,8 @@ abstract class Activity protected[wflow]() extends Loggable {
    */
   def chain( a:Activity ) =  new Group(this, a)
 
-  def +(a:Activity) = chain(a) 
-  
+  def +(a:Activity) = chain(a)
+
   /**
    * Instantiate a *live* version of this work unit as it becomes
    * part of the Workflow.
@@ -68,5 +68,5 @@ abstract class Activity protected[wflow]() extends Loggable {
 //    super.finalize()
 //    println("=========================> Activity: " + getClass.getName + " finz'ed")
 //  }
-  
+
 }

@@ -30,6 +30,6 @@ import com.zotoh.blason.kernel.Job
  */
 trait ForLoopCountExpr {
 
-  def eval(j:Job ):Int
+  def eval(j:Job ): Int
 
 }

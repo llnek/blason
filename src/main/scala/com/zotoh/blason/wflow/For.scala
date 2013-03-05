@@ -43,7 +43,7 @@ class For extends While {
     withBody(body)
   }
 
-  def withLoopCount(c:ForLoopCountExpr ) = {
+  def withLoopCount(c:ForLoopCountExpr ): this.type = {
     _loopCntr=c
     this
   }
