@@ -571,7 +571,7 @@ object CoreUtils extends Constants  with CoreImplicits {
    * @param tz
    * @return
    */
-  def nowMillis(tz:String) = {
+  def nowMillis(tz:String = "") = {
     if ( STU.isEmpty(tz))  System.currentTimeMillis() else
       (new GregorianCalendar(JTZone.getTimeZone(tz))).getTimeInMillis
   }
