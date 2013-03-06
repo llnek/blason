@@ -98,12 +98,20 @@ class SQuery(
               val sm= rs.getMetaData()
               cnt= sm.getColumnCount()
           }
-          if (cnt==1 && rs.next()) {
-              _out += "1" -> rs.getObject(1)
+          if (cnt > 0 && rs.next()) {
+            handleGKeys(rs, cnt)
           }
       }
       rc
     }
+  }
+  
+  private def handleGKeys(rs:ResultSet, cnt:Int) {
+    val id = cnt match {
+      case 1 =>  rs.getObject(1)
+      case _ => rs.getLong(DBPojo.COL_ROWID)
+    }
+    _out += "1" -> id
   }
 
   def getOutput() = _out.values.toSeq

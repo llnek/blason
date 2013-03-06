@@ -32,11 +32,13 @@ import com.zotoh.dbio.core.FldMetaHolder
  */
 class PostgreSQLImpl extends DBDriver {
 
+  override def getTSKeyword() = "TIMESTAMP WITH TIME ZONE"
+
   override def getBlobKeyword() = "BYTEA"
 
   override def getDoubleKeyword() = "DOUBLE PRECISION"
 
-  override def getFloatKeyword() = "FLOAT(23)"
+  override def getFloatKeyword() = "REAL" //"FLOAT(23)"
 
   override def genDrop(tbl:String ) = {
     new StringBuilder(256).append("DROP TABLE IF EXISTS ").

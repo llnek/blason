@@ -48,23 +48,32 @@ object DBVendor extends Constants with CoreImplicits {
   val DERBY=DBVendor(S_DERBY)
   val NOIDEA=DBVendor("?")
 
-  /**
-   * @param s
-   * @return
-   */
   def fromString(s:String) = {
-    nsb(s) match {
-      case s if ( s.eqic(S_POSTGRESQL)) => POSTGRESQL
-      case s if ( s.eqic(S_MSSQL)) => SQLSERVER
-      case s if ( s.eqic(S_H2)) => H2
-      case s if ( s.eqic(S_HSQLDB)) => HSQLDB
-      case s if ( s.eqic(S_MYSQL)) => MYSQL
-      case s if ( s.eqic(S_ORACLE)) => ORACLE
-      case s if ( s.eqic(S_DB2)) => DB2
-      case s if ( s.eqic(S_DERBY)) => DERBY
+    nsb(s).lc match {
+      case s if ( s == S_POSTGRESQL) => POSTGRESQL
+      case s if ( s == S_MSSQL) => SQLSERVER
+      case s if ( s == S_H2) => H2
+      case s if ( s == S_HSQLDB) => HSQLDB
+      case s if ( s == S_MYSQL) => MYSQL
+      case s if ( s == S_ORACLE) => ORACLE
+      case s if ( s == S_DB2) => DB2
+      case s if ( s == S_DERBY) => DERBY
       case _ => NOIDEA
     }
+  }
 
+  def urlMatch(url:String) = {
+    nsb(url).lc match {
+      case s if ( s.indexOf("jdbc:postgresql") >= 0) => POSTGRESQL
+      case s if ( s.indexOf("jdbc:sqlserver") >= 0 ) => SQLSERVER
+      case s if ( s.indexOf("jdbc:h2") >= 0 ) => H2
+      case s if ( s.indexOf("jdbc:hsqldb") >= 0 ) => HSQLDB
+      case s if ( s.indexOf("jdbc:mysql") >= 0 ) => MYSQL
+      case s if ( s.indexOf("jdbc:oracle") >= 0 ) => ORACLE
+      case s if ( s.indexOf("jdbc:db2") >= 0 ) => DB2
+      case s if ( s.indexOf("jdbc:derby") >= 0 ) => DERBY
+      case _ => NOIDEA
+    }
   }
 
 }

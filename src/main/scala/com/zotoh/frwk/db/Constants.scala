@@ -38,6 +38,7 @@ trait Constants {
   val DERBY_E_DRIVER= "org.apache.derby.jdbc.EmbeddedDriver"
   val DERBY_C_DRIVER= "org.apache.derby.jdbc.ClientDriver"
 
+  val POSTGRESQL_URL= "jdbc:postgresql://{{host}}:{{port}}/{{db}}"
   val SQL_PARAM= " = ? "
   val VARCHAR_WIDTH= 255
 
