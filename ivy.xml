@@ -113,6 +113,9 @@
 -->
     <dependency org="javax" name="geronimo-jms_1.1_spec" rev="1.1.1" conf="libjar->default"/>
     <dependency org="com.h2database" name="h2" rev="1.3.170" conf="libjar->default"/>
+    <dependency org="org.postgresql" name="postgresql" rev="9.2-1002.jdbc4" conf="libjar->default"/>
+    <dependency org="com.mysql" name="mysql-connector-java" rev="5.1.23-bin" conf="libjar->default"/>
+
 
     </dependencies>
 

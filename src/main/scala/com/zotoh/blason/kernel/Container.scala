@@ -178,12 +178,12 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
     try {
       _mainObj = _mainCZ.getDeclaredConstructor(classOf[Container]).newInstance(this)
     } catch {
-      case e:Throwable => tlog.warn("Main.Class: No ctor(Container) found.")
+      case e:Throwable => tlog.warn("Main.Class: No ctor(Container) found.",e)
     }
     if (_mainObj == null) try {
       _mainObj = mkRef(_mainCZ)
     } catch {
-      case e:Throwable => tlog.warn("Main.Class: No ctor() found.")
+      case e:Throwable => tlog.warn("Main.Class: No ctor() found.",e)
     }
 
     if (_mainObj == null) {

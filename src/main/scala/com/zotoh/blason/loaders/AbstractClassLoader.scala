@@ -33,6 +33,9 @@ import java.net.URL
 import com.zotoh.blason.core.Constants
 import java.io.FilenameFilter
 
+object AbstractClassLoader {
+}
+
 /**
  * @author kenl
  */
