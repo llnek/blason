@@ -35,25 +35,55 @@ import org.eclipse.jetty.http.MimeTypes
 import org.jboss.netty.handler.codec.http.HttpHeaders.Values
 import org.slf4j._
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.mime.MimeUtils._
 import java.io.IOException
 import org.jboss.netty.handler.stream.ChunkedFile
 import com.zotoh.blason.io.NettyHplr._
+import java.io.InputStream
+import org.jboss.netty.handler.stream.ChunkedStream
+import org.jboss.netty.handler.stream.ChunkedInput
 
 /**
  * @author kenl
  */
 object HTTPIO {
 
-  def getFile( src:NettyMVC, ctx:ChannelHandlerContext, req:HttpRequest, rsp:HttpResponse,file:File) {
-
-    var raf= new RandomAccessFile(file, "r")
-    val clen = raf.length()
+  private def maybeCache(fp:File) = {
+    val key= niceFPath(fp).toLowerCase
+    key.endsWith(".css") ||
+        key.endsWith(".gif") ||
+        key.endsWith(".jpg") ||
+        key.endsWith(".jpeg") ||
+        key.endsWith(".png") ||
+        key.endsWith(".js") 
+  }
+  
+  def getFile( src:NettyMVC, ctx:ChannelHandlerContext, req:HttpRequest, rsp:HttpResponse,file:File) {    
+    val asset = if (!maybeCache(file)) null else AssetCache.getAsset(file) match {
+      case Some(x) => x
+      case _ => null
+    }
+    var raf:RandomAccessFile = null    
+    var inp:ChunkedInput = null
     val ch= ctx.getChannel
-    val ct=guessContentType(file, "utf-8", "text/plain")
+    var clen=0L
+    var ct=""
+    
+    if (asset == null) {
+      raf= new RandomAccessFile(file, "r")
+      ct= guessContentType(file, "utf-8", "text/plain")
+      clen=raf.length
+      inp = getFileInput(raf, ct, req, rsp)
+    } else {
+      ct=asset.contentType
+      clen=asset.size
+      inp= new ChunkedStream( asStream(asset.bytes) )
+    }
     tlog.debug("Serving file: {} with clen= {}, ctype={}", file.getName, asJObj(clen), ct)
     
-    try {
+    try {      
+      
       if ( rsp.getStatus() != HttpResponseStatus.NOT_MODIFIED) {
         rsp.setHeader( Names.CONTENT_LENGTH, clen.toString )
       }
@@ -61,12 +91,11 @@ object HTTPIO {
       rsp.setHeader(Names.CONTENT_TYPE, ct )
 
       val wf= if ( req.getMethod() != HttpMethod.HEAD) {
-        val inp = getFileInput(raf, ct, req, rsp)
         ch.write(rsp)
         ch.write(inp)
       } else {
         try { ch.write(rsp) } finally {
-          raf.close()
+          block { () => if (raf != null) { raf.close }}
           raf=null
         }
       }
