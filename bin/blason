@@ -22,6 +22,7 @@ splash2() {
   echo ""
 }
 
+#font= crawford
 splash() {
   echo ""
   echo " ____   _       ____  _____  ___   ____  "
