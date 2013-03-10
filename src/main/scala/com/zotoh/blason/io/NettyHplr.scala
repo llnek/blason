@@ -135,8 +135,12 @@ object NettyHplr extends CoreImplicits {
     }
 
     val (host, port) = parseHostPort( nsb( req.getHeader(Names.HOST) ) )
-
-    ( if (STU.isEmpty(addr)) inet.getHostName else addr, host, port )
+    val h= strim( req.getHeader("x-forwarded-for"))
+    if (!STU.isEmpty(h)) {      
+      ( h, "", port)
+    } else {
+      ( if (STU.isEmpty(addr)) inet.getHostName else addr, host, port )      
+    }
   }
 
   def isSSL(ctx:CHContext) = {
