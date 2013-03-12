@@ -43,6 +43,7 @@ import java.net.URI
 import org.apache.http.Header
 import org.apache.http.entity.InputStreamEntity
 import org.apache.http.client.methods.HttpPost
+import org.apache.http.params.HttpConnectionParams
 
 object SyncHTTPClient {
   def main(args:Array[String]) {
@@ -74,9 +75,12 @@ object SyncHTTPClient {
 
 class SyncHTTPClient(private var _contentType:String="") extends HTTPClientBase with CoreImplicits {
   private var _cli:HttpClient = null
-
+  
   def connect(host:String,port:Int) {
     _cli = new DefaultHttpClient()
+    val pms=_cli.getParams()
+    HttpConnectionParams.setConnectionTimeout(pms, _soctout)
+    HttpConnectionParams.setSoTimeout(pms, _soctout)    
   }
 
   def post(contentType:String, data:XData ) = {
@@ -87,6 +91,7 @@ class SyncHTTPClient(private var _contentType:String="") extends HTTPClientBase 
       val p= new HttpPost(_remote)
       p.setEntity(ent)
       prePost(p)
+//      _cli.getParams().setLongParameter("http.socket.timeout", _soctout)
       onResp(  _cli.execute( p  ) )            
     } finally {
       close()
@@ -97,6 +102,7 @@ class SyncHTTPClient(private var _contentType:String="") extends HTTPClientBase 
     try {
       val g= new HttpGet(_remote)
       preGet(g)
+//      _cli.getParams().setLongParameter("http.socket.timeout", _soctout)
       onResp(  _cli.execute( g  ) )
     } finally {
       close()

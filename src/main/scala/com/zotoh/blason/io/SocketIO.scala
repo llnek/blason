@@ -80,7 +80,7 @@ class SocketIO(evtHdlr:Observer, nm:String) extends EventEmitter(evtHdlr,nm)  {
         while ( _ssoc != null) try {
           sockItDown( _ssoc.accept )
         } catch {
-          case _ => closeSoc()
+          case e:Throwable => closeSoc()
         }
       }
     })

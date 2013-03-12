@@ -43,6 +43,7 @@ abstract class HTTPClientBase {
 
   protected var _remote:URI = null
   protected var _ssl=false
+  protected var _soctout=1000
   
   def tlog() = HTTPClientBase._log
   
@@ -62,6 +63,12 @@ abstract class HTTPClientBase {
     close()
   }
 
+  def withSocTOutMillis(n:Int): this.type = {
+    _soctout=n
+    this
+  }
+  
+  
   def close(): Unit
   
   protected def connect(host:String,port:Int):Unit
