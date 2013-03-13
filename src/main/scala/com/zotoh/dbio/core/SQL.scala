@@ -147,7 +147,7 @@ class SQuery(
       case cb : Cloby => ps.setClob(pos, cb)
 
       case b: scala.Array[Byte] => ps.setBytes(pos, b)
-      case b: Boolean => ps.setBoolean(pos, b)
+      case b: Boolean => ps.setInt(pos, if  (b) 1 else 0 ) //ps.setBoolean(pos, b)
       case d: Double => ps.setDouble(pos, d)
       case f: Float => ps.setFloat(pos, f)
 
