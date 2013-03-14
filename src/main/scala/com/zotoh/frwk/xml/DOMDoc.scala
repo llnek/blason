@@ -23,6 +23,7 @@ package com.zotoh.frwk
 package xml
 
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrUtils._
 import org.slf4j._
 import java.net.URL
 import java.io.InputStream
@@ -41,7 +42,16 @@ object DOMDoc {
   val _sax= new ThreadLocal[SAXBuilder]() {
     override def initialValue() = new SAXBuilder( XMLReaders.NONVALIDATING )
   }
-
+  private val _empty="""
+    <?xml version="1.0" ?><EmptyDoc></EmptyDoc>
+    """
+  def blankDoc() = {
+    var rc:Document=null
+    new DOMDoc().parse( strim(_empty)) { (doc) =>
+      rc=doc
+    }
+    rc
+  }
 }
 
 /**
