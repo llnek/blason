@@ -48,6 +48,13 @@ import com.zotoh.blason.loaders.AppClassLoader
 import com.zotoh.blason.loaders.ExecClassLoader
 import com.zotoh.blason.impl.AbstractRegistry
 import com.zotoh.frwk.util.INIConf
+import java.net.ServerSocket
+import com.zotoh.frwk.net.MemHTTPServer
+import com.zotoh.frwk.io.IOUtils
+import com.zotoh.frwk.util.CoreUtils
+import com.zotoh.frwk.net.BasicHTTPMsgIO
+import com.zotoh.frwk.io.XData
+import com.zotoh.frwk.util.ProcessUtils
 
 
 
@@ -78,7 +85,7 @@ class CLIMain extends CoreImplicits with Constants {
   private val _mutex=new Object
   private var _pidFile:File = null
   private var _active=false
-
+  private var _shutServer:MemHTTPServer = null
   private var _locale= Locale.getDefault()
   private var _exec:Execvisor= null
   private var _rc:Resources= null
@@ -96,6 +103,11 @@ class CLIMain extends CoreImplicits with Constants {
       _exec.stop()
       println("Blason stopped.")
       thaw(_mutex)
+      ProcessUtils.asyncExec( new Runnable() {
+        def run() {
+          block { () => if (_shutServer != null) _shutServer.stop }          
+        }
+      } ) 
     }
     _active=false
   }
@@ -226,9 +238,23 @@ class CLIMain extends CoreImplicits with Constants {
         block { () => me.stop() }
       }
     } )
+    enableRemoteShutdown()
 //    println("Added shutdown hook.")
   }
 
+  private def enableRemoteShutdown() {
+    _shutServer = new MemHTTPServer( CoreUtils.tmpDir.getCanonicalPath, "127.0.0.1", 4444)
+    val me=this
+    _shutServer.bind(new BasicHTTPMsgIO() {
+      def onOK(code:Int, r:String, data:XData) {
+        block { () =>
+          me.stop()
+        }
+      }
+    }).start(false)
+    
+  }
+  
   private def blockAndWait() {
     _active=true
     println("Applications are now running...")
