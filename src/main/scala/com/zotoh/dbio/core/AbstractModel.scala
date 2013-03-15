@@ -37,6 +37,11 @@ import java.util.Calendar
 import java.util.GregorianCalendar
 import java.util.TimeZone
 
+import org.slf4j._
+
+object AbstractModel {
+  private val _log= LoggerFactory.getLogger(classOf[AbstractModel])
+}
 
 /**
  * @author kenl
@@ -46,6 +51,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   import ClassMetaHolder._
   import DBPojo._
 
+  def tlog() = AbstractModel._log
+  
   private val _storage= mutable.HashMap[String,Any]()
   private val _dirtyFields= mutable.HashSet[String]()
   private var _isDBRow=false
