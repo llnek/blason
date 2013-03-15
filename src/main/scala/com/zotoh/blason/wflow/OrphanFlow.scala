@@ -59,3 +59,29 @@ sealed class OrphanFlow(j:Job) extends Pipeline(j) {
 
 }
 
+
+
+
+sealed class FatalErrorFlow(j:Job) extends Pipeline(j) {
+
+  override protected def onStart() = {
+
+    new PTask withWork new Work {
+      def eval(j:Job , arg:Any*) {
+        j.event() match {
+          case ev:HTTPEvent => handle(ev)
+          case e:AbstractEvent => throw new FlowError("Unhandled event-type \"" + e.getClass + "\".")
+        }
+      }
+    }
+  }
+
+  private def handle(ev:HTTPEvent ) {
+    val res= new HTTPResult()
+    res.setStatus(HTTPStatus.INTERNAL_SERVER_ERROR)
+    ev.setResult(res)
+  }
+
+
+}
+

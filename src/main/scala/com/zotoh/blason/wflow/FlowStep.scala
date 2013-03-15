@@ -93,21 +93,17 @@ abstract class FlowStep protected[wflow](protected var _parent:Pipeline) extends
     var n= nextStep()
     val f= flow()
 
-    var err:Activity = null
+    var err:FlowStep = null
     var rc:FlowStep =null
 
     f.core().dequeue(this)
     try {
       rc=eval( f.job )
     } catch {
-      case e:Throwable => err= flow().onError(e)
+      case e:Throwable => err= flow().onError(e, this, n)
     }
 
-    if (err != null) {
-      if (n==null) { n= reifyZero(f) }
-      rc= err.reify(n)
-    }
-
+    if (err != null) { rc= err }
     if (rc==null) {
       tlog().debug("FlowStep: rc==null => skip.")
       // indicate skip, happens with joins

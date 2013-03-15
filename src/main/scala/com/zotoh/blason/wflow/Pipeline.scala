@@ -82,9 +82,9 @@ abstract class Pipeline protected[wflow](private val _theJob:Job) {
 
   protected def onEnd() {}
 
-  protected[wflow] def onError(e:Throwable) : Activity = {
+  protected[wflow] def onError(e:Throwable, cur:FlowStep, nxt:FlowStep) : FlowStep = {
     tlog().error("", e)
-    null
+    reifyZero(this)
   }
 
   protected def onStart():Activity

@@ -31,6 +31,7 @@ import com.zotoh.frwk.util.SeqNumGen
 import com.zotoh.blason.util.{Observable,Observer}
 import com.zotoh.blason.core.Composable
 import com.zotoh.blason.core.ComponentRegistry
+import com.zotoh.blason.wflow.FatalErrorFlow
 
 
 /**
@@ -48,11 +49,16 @@ class JobCreator extends Observer with Composable {
     val ev=arg(0).asInstanceOf[AbstractEvent]
     val cz= if (ev.hasRouter) ev.routerClass else arg(1).asInstanceOf[String]
     val job= new Job(SeqNumGen.next, _par,ev)
-    var p= maybeMkPipe(cz, job)
-    if (p==null) {
-      p=new OrphanFlow(job)
+    try {
+        var p= maybeMkPipe(cz, job)
+        if (p==null) {
+          p=new OrphanFlow(job)
+        }
+        p.start()      
+    } catch {
+      case e:Throwable =>
+        new FatalErrorFlow(job).start()
     }
-    p.start
   }
 
   private def maybeMkPipe(cz:String,job:Job) = {
