@@ -227,6 +227,7 @@
        public TARGETS
        -->
 
+  <target name="devmode" depends="build"/>
   <target name="release" depends="build"/>
   <target name="test" depends="test-build"/>
 

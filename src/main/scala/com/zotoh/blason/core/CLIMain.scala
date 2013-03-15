@@ -243,7 +243,8 @@ class CLIMain extends CoreImplicits with Constants {
   }
 
   private def enableRemoteShutdown() {
-    _shutServer = new MemHTTPServer( CoreUtils.tmpDir.getCanonicalPath, "127.0.0.1", 4444)
+    val port= asInt( System.getProperty("blason.kill.port"), 4444)
+    _shutServer = new MemHTTPServer( CoreUtils.tmpDir.getCanonicalPath, "127.0.0.1", port)
     val me=this
     _shutServer.bind(new BasicHTTPMsgIO() {
       def onOK(code:Int, r:String, data:XData) {

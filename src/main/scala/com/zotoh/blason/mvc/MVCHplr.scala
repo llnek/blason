@@ -182,7 +182,7 @@ object MVCHplr extends CoreImplicits {
   def trap404( ctx:CHContext) {
     val rsp = mkHttpReply(HttpResponseStatus.NOT_FOUND)
     try {
-      WebPage.getTemplate("404.html") match {
+      WebPage.getTemplate("notfound.html") match {
         case Some(tp) =>
           rsp.setHeader(Names.CONTENT_TYPE, tp.contentType )
           val bits = tp.body.getBytes("utf-8")

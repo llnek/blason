@@ -21,6 +21,11 @@ set BASEDIR=-Dblason.home=%BLASON_HOME%
 set BG=false
 set DBGOPTS=
 set ECODE=0
+set KPORT=4444
+set KILLPORT=-Dblason.kill.port=%KPORT%
+set LIBP=-Djava.library.path=$BLASON_HOME/bin
+
+
 
 set JPROF=-agentpath:/Applications/jprofiler7/bin/macos/libjprofilerti.jnilib=port=8849
 set VMXRGS=-XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=256m
@@ -52,11 +57,11 @@ REM run in foreground
 REM ********************************************************
 cd %BINDIR%
 :appfg
-REM CMDLINE="%JAVA_CMD%" -cp "%BCP%" %DBGOPTS% "%LOGREF%" "%BASEDIR%" %CLDR% %MAINCZ% "%BLASON_HOME%" %*
+REM CMDLINE="%JAVA_CMD%" -cp "%BCP%" "%LIBP%" %DBGOPTS% "%LOGREF%" "%KILLPORT%" "%BASEDIR%" %CLDR% %MAINCZ% "%BLASON_HOME%" %*
 if %BG% == "true" goto runcmd
 call :splash
 :runcmd
-"%JAVA_CMD%" -cp "%BCP%" %DBGOPTS% "%LOGREF%" "%BASEDIR%" %CLDR% %MAINCZ% "%BLASON_HOME%" %*
+"%JAVA_CMD%" -cp "%BCP%" "%LIBP%" %DBGOPTS% "%LOGREF%" "%KILLPORT%" "%BASEDIR%" %CLDR% %MAINCZ% "%BLASON_HOME%" %*
 set ECODE=%ERRORLEVEL%
 goto end
 

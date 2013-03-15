@@ -79,6 +79,7 @@ VMXRGS=" -XX:+CMSClassUnloadingEnabled -XX:+UseConcMarkSweepGC -XX:MaxPermSize=2
 CLDR=" -Djava.system.class.loader=com.zotoh.blason.loaders.ExecClassLoader"
 MAINCZ=com.zotoh.blason.etc.AppRunner
 
+LIBP="-Djava.library.path=$BLASON_HOME/bin"
 #48G
 #VMARGS="-Xms8192m -Xmx49152m"
 #36G
@@ -93,6 +94,16 @@ LOGCFG=$L4J
 #LOGREF="-Dlogback.configurationFile=$LOGCFG -Dlogback.ContextSelector=com.zotoh.frwk.util.LogbackCtxSelector"
 LOGREF="-Dlogback.configurationFile=$LOGCFG"
 BASEDIR="-Dblason.home=$BLASON_HOME"
+KPORT=4444
+KILLPORT="-Dblason.kill.port=$KPORT"
+
+stop_proc() {
+    pid=$( ps -ef | grep blason.etc.AppRunner | grep -v grep | awk '{print $2}' )
+    if [ -n "$pid" ]; then
+      #kill $pid
+      wget http://127.0.0.1:$KPORT/kill9 2>&1 > /dev/null
+    fi
+}
 
 if [ ! -e ${L4JFILE} ]; then
     LOGREF=
@@ -110,13 +121,21 @@ else
   DBGOPTS=
 fi
 
+if [ $# -eq 1 -a "$1" = "stop" ]; then
+  echo "stopping blason..."
+  stop_proc
+  exit $?
+else
+  DBGOPTS=
+fi
+
 #CMDLINE="$JAVA_CMD -cp $BCP $DBGOPTS $LOGREF $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@ "
 cd $BLASON_BIN
 if [ "$BG" = "true" ]; then
-  nohup $JAVA_CMD -cp $BCP $DBGOPTS $LOGREF $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@ &
+  nohup $JAVA_CMD -cp $BCP $LIBP $DBGOPTS $LOGREF $KILLPORT $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@ &
 else
   splash
-  $JAVA_CMD -cp $BCP $DBGOPTS $LOGREF $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@
+  $JAVA_CMD -cp $BCP $LIBP $DBGOPTS $LOGREF $KILLPORT $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@
 fi
 cd $CWD
 exit 0
