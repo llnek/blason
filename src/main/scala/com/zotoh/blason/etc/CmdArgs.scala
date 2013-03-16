@@ -56,6 +56,7 @@ object CmdArgs extends CoreImplicits {
     "demo" -> "onDemo",
     "generate" -> "onGenerate",
     "encrypt" -> "onEncrypt",
+    "decrypt" -> "onDecrypt",
     "testjce" -> "onTestJCE",
     "version" -> "onVersion",
     "help" -> "onHelp"
@@ -215,6 +216,14 @@ class CmdArgs(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc) with
     }
   }
 
+  private def onDecrypt(args:Array[String]) {
+    if (args.size > 2) {
+      new CmdCrypto(getHomeDir,getCwd,_rcb).decrypt( args(1), args(2)  )
+    } else {
+      throw new CmdHelpError()
+    }
+  }
+  
   private def onTestJCE(args:Array[String]): Unit = new CmdCrypto(getHomeDir,getCwd,_rcb).testjce()
 
   private def onVersion(args:Array[String]) {

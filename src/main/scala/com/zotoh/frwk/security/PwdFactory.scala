@@ -30,6 +30,7 @@ package security
  *
  */
 object PwdFactory {
+  import Password._
   /**
    * Create a Password object from the given text.  If the text is prefixed
    * with "CRYPT:", then it is treated as encrypted content.
@@ -39,12 +40,26 @@ object PwdFactory {
    * @throws Exception
    */
   def mk(text:String) = {
-    if ( text != null && text.startsWith( Password.PWD_PFX)) {
+    if ( text != null && text.startsWith( PWD_PFX)) {
       mkFromCrypto(text)
     } else {
       mkFromText(text)
     }
   }
+  
+  def encrypt(pwd:String, txt:String) = {
+    PWD_PFX + new JasyptCryptor().encrypt(pwd,txt)
+  }
+  
+  def decrypt(pwd:String, blob:String) = {
+    val bs= if ( blob != null && blob.startsWith( PWD_PFX)) {
+      blob.substring(PWD_PFXLEN)
+    }    else {
+      blob
+    }
+    new JasyptCryptor().decrypt(pwd, bs)
+  }
+  
 
   /**
    * Make a clone/copy of an existing Password object.

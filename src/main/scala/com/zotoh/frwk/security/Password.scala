@@ -30,6 +30,7 @@ import org.slf4j._
 object Password {
   private val _log= LoggerFactory.getLogger(classOf[Password])
   val PWD_PFX= "CRYPT:"
+  val PWD_PFXLEN= PWD_PFX.length
 }
 
 /**

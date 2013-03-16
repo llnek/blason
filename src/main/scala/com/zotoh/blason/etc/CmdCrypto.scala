@@ -22,17 +22,21 @@
 package com.zotoh.blason
 package etc
 
-import org.apache.commons.lang3.time.DateUtils.addMonths
-import java.util.{Date=>JDate,Properties=>JPS}
 import java.io.File
-import com.zotoh.frwk.util.{CmdLineQ,CoreImplicits,CmdLineSeq}
-import com.zotoh.frwk.util.CoreUtils._
-import com.zotoh.frwk.io.IOUtils._
-import com.zotoh.frwk.security.JasyptCryptor
-import com.zotoh.frwk.security.PwdFactory
-import com.zotoh.frwk.security.Crypto
+import java.util.{Date => JDate}
+import java.util.{Properties => JPS}
+
+import org.apache.commons.lang3.time.DateUtils.addMonths
+
 import com.zotoh.frwk.i18n.Resources
+import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.security._
+import com.zotoh.frwk.security.Crypto
+import com.zotoh.frwk.security.PwdFactory
+import com.zotoh.frwk.util.CmdLineQ
+import com.zotoh.frwk.util.CmdLineSeq
+import com.zotoh.frwk.util.CoreImplicits
+import com.zotoh.frwk.util.CoreUtils._
 
 /**
  * (Internal use only).
@@ -61,8 +65,11 @@ class CmdCrypto(home:File,cwd:File,rc:Resources) extends CmdLine(home,cwd,rc)  w
   }
 
   def encrypt(pwd:String, txt:String) {
-    val s=new JasyptCryptor().encrypt(pwd,txt)
-    println("\n" + PwdFactory.mk(txt).encoded )
+    println( "\n" + PwdFactory.encrypt(pwd,txt) )
+  }
+  
+  def decrypt(pwd:String, blob:String) {
+    println( "\n" + PwdFactory.decrypt(pwd, blob) )
   }
 
   def keyfile() {

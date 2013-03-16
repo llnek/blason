@@ -89,7 +89,8 @@ class AppRunner extends CoreImplicits with Constants {
       ("generate serverkey", "Create self-signed server key (pkcs12)."),
       ("generate password", "Generate a random password."),
       ("generate csr", "Create a Certificate Signing Request."),
-      ("encrypt <password> <some-text>", "e.g. encrypt SomeSecretData"),
+      ("encrypt <password> <clear-text>", "e.g. encrypt SomeSecretData"),
+      ("decrypt <password> <cipher-text>", "e.g. decrypt Data"),
       ("testjce", "Check JCE  Policy Files."),
 
       ("demo samples", "Generate a set of samples."),
