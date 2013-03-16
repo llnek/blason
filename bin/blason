@@ -97,11 +97,21 @@ BASEDIR="-Dblason.home=$BLASON_HOME"
 KPORT=4444
 KILLPORT="-Dblason.kill.port=$KPORT"
 
+show_proc() {
+    pid=$( ps -ef | grep blason.etc.AppRunner | grep -v grep | awk '{print $2}' )
+    if [ -n "$pid" ]; then
+      echo "Blason is running with process-id: ${pid}."
+    else
+      echo "Blason is not running."
+    fi
+}
 stop_proc() {
     pid=$( ps -ef | grep blason.etc.AppRunner | grep -v grep | awk '{print $2}' )
     if [ -n "$pid" ]; then
       #kill $pid
+      cd /tmp
       wget http://127.0.0.1:$KPORT/kill9 2>&1 > /dev/null
+      cd $CWD
     fi
 }
 
@@ -125,17 +135,20 @@ if [ $# -eq 1 -a "$1" = "stop" ]; then
   echo "stopping blason..."
   stop_proc
   exit $?
-else
-  DBGOPTS=
+fi
+
+if [ $# -eq 1 -a "$1" = "status" ]; then
+  show_proc
+  exit 0
 fi
 
 #CMDLINE="$JAVA_CMD -cp $BCP $DBGOPTS $LOGREF $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@ "
 cd $BLASON_BIN
 if [ "$BG" = "true" ]; then
-  nohup $JAVA_CMD -cp $BCP $LIBP $DBGOPTS $LOGREF $KILLPORT $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@ &
+  nohup $JAVA_CMD $VMARGS -cp $BCP $LIBP $DBGOPTS $LOGREF $KILLPORT $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@ &
 else
   splash
-  $JAVA_CMD -cp $BCP $LIBP $DBGOPTS $LOGREF $KILLPORT $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@
+  $JAVA_CMD $VMARGS -cp $BCP $LIBP $DBGOPTS $LOGREF $KILLPORT $BASEDIR $CLDR $MAINCZ $BLASON_HOME $@
 fi
 cd $CWD
 exit 0
