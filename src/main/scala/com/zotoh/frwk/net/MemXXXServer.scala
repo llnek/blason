@@ -197,7 +197,7 @@ abstract class MemXXXServer extends Constants {
   }
 
   private def start_2() {
-    tlog.debug("{}: running on host {}, port {}", "MemFileServer", _host, asJObj(_port) )
+    tlog.debug("{}: running on host {}, port {}", "MemXXXServer", _host, asJObj(_port) )
     _root= _boot.bind(new InetSocketAddress( _host, _port))
     _chs.add(_root)
   }

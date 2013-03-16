@@ -34,7 +34,7 @@ import com.zotoh.frwk.net.HTTPStatus
  * @author kenl
  */
 class ShutdownHandler(job:Job) extends Pipeline(job) {
-
+// no used
   def onStart() = 
     new PTask( new Work() { def eval(j:Job,args:Any*) {
       val evt= j.event.asInstanceOf[HTTPEvent]

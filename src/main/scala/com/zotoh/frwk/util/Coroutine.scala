@@ -29,7 +29,9 @@ package util
 trait Coroutine extends Runnable {
 
   def start () {
-    new Thread(this).start()
+    val t= new Thread(this)
+    t.setDaemon(true)
+    t.start()
   }
 
 }
