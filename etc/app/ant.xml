@@ -281,7 +281,6 @@
       <mkdir dir="${app.dir}/conf"/>
       <copy todir="${app.dir}/conf" file="${blason.home}/etc/app/app.conf"/>
       <copy todir="${app.dir}/conf" file="${blason.home}/etc/app/env.conf"/>
-      <replace file="${app.dir}/conf/app.conf" token="@@APPKEY@@" value="${uuid}"/>
       <replace file="${app.dir}/conf/app.conf" token="@@USER@@" value="${user.name}"/>
       <mkdir dir="${app.dir}/src/main/scala/${app.domain.path}"/>
       <mkdir dir="${app.dir}/src/main/java"/>
@@ -297,6 +296,7 @@
       <copy todir="${app.dir}" file="${blason.home}/etc/app/ivy.xml"/>
       <copy todir="${app.dir}" file="${blason.home}/etc/app/pom.xml"/>
 
+      <replace file="${app.dir}/META-INF/MANIFEST.MF" token="@@APPKEY@@" value="${uuid}"/>
       <replace file="${app.dir}/META-INF/MANIFEST.MF" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
       <replace file="${app.dir}/pom.xml" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
       <replace file="${app.dir}/pom.xml" token="@@APPID@@" value="${blason.appid}"/>

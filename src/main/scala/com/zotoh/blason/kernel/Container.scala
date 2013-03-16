@@ -249,7 +249,7 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
   }
 
   def getAppKey() = {
-    _appConf.getString("key","")
+    _manifest.getString("Implementation-Vendor-Id", "")
   }
 
   def getAppMeta(): Configuration = {
