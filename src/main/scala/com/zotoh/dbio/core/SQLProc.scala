@@ -70,10 +70,8 @@ trait SQLProc extends CoreImplicits {
     doPurge("delete from " + throwNoTable(cz).table.uc )
   }
   def count(z:Class[_]) = {
-    val f = { (rset:ResultSet) =>
-      if (rset != null && rset.next()) rset.getInt(1) else 0
-    }
-    doCount( "SELECT COUNT(*) FROM " + throwNoTable(z).table().uc , f)
+    val f = { (rset:ResultSet) =>      if (rset != null )  rset.getInt(1)   else 0    }
+    doCount( "SELECT COUNT(*) FROM " + throwNoTable(z).table().uc , f)    
   }
 
   def update( obj:DBPojo): Int = {

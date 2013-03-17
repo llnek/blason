@@ -108,7 +108,9 @@ abstract class Pipeline protected[wflow](private val _theJob:Job) {
 
     try {
       core().run( s)
-    } finally {
+    } catch {
+      case e:Throwable => onError(e, s, s.nextStep )
+    }finally {    
       _active=true
     }
 
