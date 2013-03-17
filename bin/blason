@@ -33,6 +33,11 @@ splash() {
   echo "|     ||     ||  |  |\    |l     !|  |  |"
   echo "l_____jl_____jl__j__j \___j \___/ l__j__j"
   echo ""
+  echo -n "Version: "
+  cat $BLASON_HOME/VERSION
+  echo ""
+  echo ""
+
 }
 
 ### osx sux, has no proper readlink.
