@@ -264,6 +264,7 @@
 
     <target name="create-app">
       <antcall target="create-app-common"/>
+      <copy todir="${app.dir}" file="${blason.home}/etc/app/build.xml"/>
       <antcall target="post-create-app"/>
     </target>
 
@@ -291,7 +292,6 @@
       <mkdir dir="${app.dir}/docs"/>
 
       <copy todir="${app.dir}" file="${blason.home}/etc/app/build.properties"/>
-      <copy todir="${app.dir}" file="${blason.home}/etc/app/build.xml"/>
       <copy todir="${app.dir}" file="${blason.home}/etc/app/ivysettings.xml"/>
       <copy todir="${app.dir}" file="${blason.home}/etc/app/ivy.xml"/>
       <copy todir="${app.dir}" file="${blason.home}/etc/app/pom.xml"/>
@@ -304,7 +304,6 @@
       <replace file="${app.dir}/ivy.xml" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
       <replace file="${app.dir}/build.properties" 
         token="@@BLASONHOME@@" value="${blason.home}"/>
-      <replace file="${app.dir}/build.xml" token="@@APPID@@" value="${blason.appid}"/>
 
     </target>
 
@@ -343,9 +342,6 @@
         </fileset>
       </copy>
       <copy todir="${app.dir}/public" file="${blason.home}/etc/netty/index.html"/>
-      <mkdir dir="${app.dir}/src/main/resources/coffee"/>
-      <mkdir dir="${app.dir}/src/main/resources/js"/>
-      <mkdir dir="${app.dir}/src/main/resources/less"/>
       <copy todir="${app.dir}/src/main/resources/less" file="${blason.home}/etc/netty/main.less"/>
       <replace file="${app.dir}/conf/routes.conf" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
       <copy todir="${app.dir}/src/main/scala/${app.domain.path}" 
@@ -354,7 +350,9 @@
     </target>
 
     <target name="create-web-common">
-      <antcall target="create-app"/>
+      <mkdir dir="${app.dir}/src/main/resources/coffee"/>
+      <mkdir dir="${app.dir}/src/main/resources/js"/>
+      <mkdir dir="${app.dir}/src/main/resources/less"/>
       <mkdir dir="${app.dir}/public/images"/>
       <mkdir dir="${app.dir}/public/scripts"/>
       <mkdir dir="${app.dir}/public/styles"/>
@@ -364,6 +362,7 @@
       <copy todir="${app.dir}/public">
         <fileset dir="${blason.home}/etc/weblibs"/>
       </copy>
+      <copy todir="${app.dir}" file="${blason.home}/etc/web/build.xml"/>
     </target>
 
     <target name="post-create-app">
@@ -372,6 +371,7 @@
       <replace file="${app.dir}/src/main/scala/${app.domain.path}/Handler.scala" 
         token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
       <replace file="${app.dir}/conf/env.conf" token="@@APPDOMAIN@@" value="${blason.app.domain}"/>
+      <replace file="${app.dir}/build.xml" token="@@APPID@@" value="${blason.appid}"/>
     </target>
 
     <target name="build-app" if="blason.appid">

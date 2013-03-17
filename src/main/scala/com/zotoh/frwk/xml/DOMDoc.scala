@@ -42,6 +42,7 @@ object DOMDoc {
   val _sax= new ThreadLocal[SAXBuilder]() {
     override def initialValue() = new SAXBuilder( XMLReaders.NONVALIDATING )
   }
+  val EMPTYDOC_ROOT= "EmptyDoc"
   private val _empty="""
     <?xml version="1.0" ?><EmptyDoc></EmptyDoc>
     """

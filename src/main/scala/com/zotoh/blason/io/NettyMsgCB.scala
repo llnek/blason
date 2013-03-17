@@ -24,20 +24,16 @@ package io
 
 import scala.math._
 import scala.collection.JavaConversions._
-
 import org.apache.commons.lang3.{StringUtils=>STU}
 import org.apache.commons.io.{IOUtils=>IOU}
-
 import com.zotoh.frwk.util.StrUtils._
 import org.jboss.netty.handler.codec.http.HttpHeaders.{isKeepAlive => JbossIsKeepAlive}
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names.COOKIE
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE
-
 import java.io.File
 import java.io.IOException
 import java.io.{OutputStream,ByteArrayOutputStream=>ByteArrayOS}
 import java.util.Set
-
 import org.jboss.netty.buffer.ChannelBuffer
 import org.jboss.netty.channel.ChannelFuture
 import org.jboss.netty.channel.ChannelFutureListener
@@ -48,10 +44,11 @@ import org.jboss.netty.handler.codec.http.CookieEncoder
 import org.jboss.netty.handler.codec.http.HttpChunk
 import org.jboss.netty.handler.codec.http.HttpRequest
 import org.jboss.netty.handler.codec.http.HttpResponse
-
+import org.jboss.netty.handler.codec.http.HttpHeaders._
 import org.apache.commons.io.{IOUtils=>IOU}
 import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.io.XData
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse
 
 /**
  * @author kenl
@@ -95,12 +92,21 @@ class NettyMsgCB protected[io](private val _src:NettyIO) extends NIOCB {
     }
   }
 
+  private def send100Continue(e:MessageEvent) {         
+    import org.jboss.netty.handler.codec.http.HttpResponseStatus._
+    import  org.jboss.netty.handler.codec.http.HttpVersion._
+    e.getChannel().write( new DefaultHttpResponse(HTTP_1_1, CONTINUE))
+  }
+  
   def onREQ(ctx:ChannelHandlerContext, ev:MessageEvent) {
     val ch= ev.getChannel()
     if (this._request != null) {
       throw new IOException("NettyMsgCB.onREQ: expected to be called once only")
     }
     _request = ev.getMessage().asInstanceOf[HttpRequest]
+    if (is100ContinueExpected(_request)) {
+      send100Continue(ev )
+    }        
     _event= NettyHplr.extract(_src, _request)
     _src.tlog.debug("NettyIO: Received HTTP Request :{}", _request.getMethod )
     _src.tlog.debug("NettyIO: Received Request:\n{}", _event.toString )

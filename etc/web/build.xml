@@ -45,11 +45,31 @@
     <echo level="info" message="# building: ${ant.project.name}"/>
     <echo level="info" message="#############################################"/>
     <antcall target="compile_and_jar"/>
+    <antcall target="compile_coffee"/>
+    <antcall target="compile_less"/>
+    <antcall target="compact_other_jsfiles"/>
   </target>
 
+  <target name="compact_other_jsfiles">
+    <concat destfile="${basedir}/public/scripts/webcommon.js" append="true">
+      <filelist dir="${basedir}/public/jquery" files="jquery.min.js"/>
+      <filelist dir="${basedir}/public/jquery" files="jquery-migrate-1.1.1.min.js"/>
+      <filelist dir="${basedir}/public/underscore" files="underscore-min.js"/>
+      <filelist dir="${basedir}/public/bootstrap/js" files="bootstrap.min.js"/>
+      <filelist dir="${basedir}/public/datejs" files="date-en-US.js"/>
+      <filelist dir="${basedir}/public/backbone" files="backbone-min.js"/>
+      <filelist dir="${basedir}/public/handlebars" files="handlebars.js"/>
+      <!--
+      <filelist dir="${basedir}/public/require" files="require.js"/>
+      <filelist dir="${basedir}/public/require" files="use.min.js" />
+      -->
+    </concat>
+  </target>
 
   <!-- target: build-prod ================================= -->
-  <target name="build-prod" depends="build">
+  <target name="build-prod" depends="build,clean-public">
+    <antcall target="yui_css"/>
+    <antcall target="yui_js"/>
     <antcall target="final_phase"/>
   </target>
 
@@ -65,6 +85,13 @@
     <delete includeemptydirs="true">
       <fileset erroronmissingdir="false" dir="${out.jar.dir}" includes="**/*"/>
       <fileset erroronmissingdir="false" dir="${build.dir}" includes="**/*"/>
+    </delete>
+    <antcall target="clean-public"/>
+  </target>
+  <target name="clean-public">
+    <delete includeemptydirs="true">
+    <fileset erroronmissingdir="false" dir="${basedir}/public/scripts" includes="**/*"/>
+    <fileset erroronmissingdir="false" dir="${basedir}/public/styles" includes="**/*"/>
     </delete>
   </target>
 
@@ -86,6 +113,8 @@
   <target name="pre-build">
     <mkdir dir="${basedir}/POD-INF/classes" />
     <mkdir dir="${build.dir}" />
+    <mkdir dir="${build.dir}/css" />
+    <mkdir dir="${build.dir}/js" />
   </target>
 
 
@@ -158,7 +187,86 @@
 
   </target>
 
+  <target name="compile_coffee">
+    <copy todir="${build.dir}/js">
+      <fileset dir="${src.dir}/resources/coffee"><include name="*.coffee"/></fileset>
+    </copy>
+    <copy todir="${build.dir}/js">
+      <fileset dir="${src.dir}/resources/js"><include name="*.js"/></fileset>
+    </copy>
+    <exec executable="coffee">
+      <arg value="--bare"/> <arg value="--output"/> <arg value="${build.dir}/js"/>
+      <arg value="--compile"/> <arg value="${build.dir}/js"/>
+    </exec>
+    <copy todir="${basedir}/public/scripts"><fileset dir="${build.dir}/js"><include name="*.js"/></fileset></copy>
+  </target>
+
+  <target name="yui_css">
+    <apply executable="java" parallel="false">
+      <fileset dir="${build.dir}/css">
+        <exclude name="*.min.css"/>
+        <include name="*.css"/>
+      </fileset>
+      <arg line="-jar" />
+      <arg path="${blason.home}/lib/yuicompressor-2.4.7.jar" />
+      <srcfile/>
+      <arg line="-o"/>
+      <chainedmapper>
+        <mapper type="glob" from="*.css" to="*.min.css"/>
+        <globmapper from="*" to="${build.dir}/css/*"/>
+      </chainedmapper>
+      <targetfile/>
+    </apply>
+  </target>
+
+  <target name="yui_js">
+    <apply executable="java" parallel="false">
+      <fileset dir="${build.dir}/js">
+        <exclude name="*.min.js"/>
+        <include name="*.js"/>
+      </fileset>
+        <arg line="-jar" />
+        <arg path="${blason.home}/lib/yuicompressor-2.4.7.jar" />
+        <srcfile/>
+        <arg line="-o"/>
+        <chainedmapper>
+          <mapper type="glob" from="*.js" to="*.min.js"/>
+          <globmapper from="*" to="${build.dir}/js/*"/>
+        </chainedmapper>
+        <targetfile/>
+      </apply>
+  </target>
+
+  <target name="compile_less">
+    <copy todir="${build.dir}/css">
+      <fileset dir="${src.dir}/resources/less"><include name="*.css"/></fileset>
+    </copy>
+    <apply executable="lessc" parallel="false">
+      <fileset dir="${src.dir}/resources/less">
+        <include name="*.less"/>
+      </fileset>
+        <srcfile/>
+        <chainedmapper>
+          <mapper type="glob" from="*.less" to="*.css"/>
+          <globmapper from="*" to="${build.dir}/css/*"/>
+        </chainedmapper>
+        <targetfile/>
+    </apply>
+    <copy todir="${basedir}/public/styles"><fileset dir="${build.dir}/css"><include name="*.css"/></fileset></copy>
+  </target>
+
   <target name="final_phase">
+    <copy todir="${basedir}/public/scripts">
+      <fileset dir="${build.dir}/js">
+        <include name="*.min.js"/>
+      </fileset>
+    </copy>
+    <copy todir="${basedir}/public/styles">
+      <fileset dir="${build.dir}/css">
+        <include name="*.min.css"/>
+      </fileset>
+    </copy>
+    <antcall target="compact_other_jsfiles"/>
   </target>
 
   <!--

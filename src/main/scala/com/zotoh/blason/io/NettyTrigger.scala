@@ -40,6 +40,7 @@ import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.net.HTTPStatus
 import org.jboss.netty.handler.codec.http.CookieEncoder
+import java.nio.channels.ClosedChannelException
 
 
 /**
@@ -94,26 +95,32 @@ class NettyTrigger private(src:EventEmitter) extends AsyncTrigger(src)  {
 
     //TODO: this throw NPE some times !
     var cf:ChannelFuture = try { _channel.write(rsp) } catch {
-      case e:Throwable => tlog.error("", e); null
+      case e:ClosedChannelException => 
+        tlog.error("ClosedChannelException thrown: NettyTrigger @line 97") 
+        null
+      case e:Throwable =>
+        tlog.error("", e) 
+        null
     }
-
-    if (inp != null) {
+    
+    if (inp != null) try {
       cf= _channel.write(new ChunkedStream(inp))
-      cf.addListener(new ChannelFutureProgressListener() {
-        override def operationComplete(f:ChannelFuture) {
-          close(inp)
-          if (! _evt.isKeepAlive ) {
-            f.addListener(ChannelFutureListener.CLOSE)
-          }
-        }
-        override def operationProgressed( f:ChannelFuture, amount:Long, current:Long, total:Long) {}
-      })
+    } catch {
+      case e:ClosedChannelException => 
+        tlog.error("ClosedChannelException thrown: NettyTrigger @line 107") 
+      case e:Throwable =>
+        tlog.error("", e) 
     }
-    else if ( ! _evt.isKeepAlive ) {
-        cf.addListener(ChannelFutureListener.CLOSE)
-    }
-
+    
+    maybeClose(cf)
   }
 
+  private def maybeClose(cf:ChannelFuture) {
+    if ( ! _evt.isKeepAlive ) {
+        if (cf != null) cf.addListener(ChannelFutureListener.CLOSE)
+    }          
+  }
+  
+  
 }
 

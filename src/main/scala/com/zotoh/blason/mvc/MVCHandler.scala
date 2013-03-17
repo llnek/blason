@@ -66,6 +66,7 @@ import com.zotoh.blason.io.NettyHplr._
 import com.zotoh.blason.io.WebSockTrigger
 import com.zotoh.blason.io.NettyTrigger
 import org.slf4j._
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse
 
 
 /**
@@ -112,9 +113,18 @@ class MVCHandler(private val _src:NettyMVC) extends SimpleChannelHandler with Co
     }
 
   }
-
+  
+  private def send100Continue(e:MessageEvent) {         
+    import org.jboss.netty.handler.codec.http.HttpResponseStatus._
+    import  org.jboss.netty.handler.codec.http.HttpVersion._
+    e.getChannel().write( new DefaultHttpResponse(HTTP_1_1, CONTINUE))
+  }
+  
   private def handleRequest(ctx:CHContext, ev:MessageEvent, req:HttpRequest) {
     precond(ctx, req)
+    if (is100ContinueExpected(req)) {
+      send100Continue(ev )
+    }    
     val evt= extract(_src, ctx, req)
     val rc = routeCracker( evt)
     if (rc._1 && !STU.isEmpty(rc._4)) {
