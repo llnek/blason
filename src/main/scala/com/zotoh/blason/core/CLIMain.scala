@@ -70,6 +70,12 @@ object CLIMain {
     tstArg( p(f), f.getCanonicalPath+" must be readable & writable" )
   }
 
+  def initAsExtService(appDir: File)( f: (String) => Unit) {
+    val pps= CoreUtils.asQuirks(new File(appDir, "META-INF/MANIFEST.MF"))
+    val k=pps.getProperty("Implementation-Vendor-Id")    
+    f(k)
+  }
+
   def main(args:Array[String]) {
     new CLIMain().start(args)
   }
