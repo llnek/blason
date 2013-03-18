@@ -56,6 +56,7 @@
       <filelist dir="${basedir}/public/jquery" files="jquery-migrate-1.1.1.min.js"/>
       <filelist dir="${basedir}/public/underscore" files="underscore-min.js"/>
       <filelist dir="${basedir}/public/bootstrap/js" files="bootstrap.min.js"/>
+      <filelist dir="${basedir}/public/l10njs" files="l10n.min.js"/>
       <filelist dir="${basedir}/public/datejs" files="date-en-US.js"/>
       <filelist dir="${basedir}/public/backbone" files="backbone-min.js"/>
       <filelist dir="${basedir}/public/handlebars" files="handlebars.js"/>
