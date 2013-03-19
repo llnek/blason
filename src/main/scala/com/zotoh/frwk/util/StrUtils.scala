@@ -42,6 +42,10 @@ object StrUtils extends CoreImplicits {
     }
   }
   
+  def hgl(s:String) = {
+    if ( s == null) false else s.length > 0 
+  }
+  
   def strim(obj:Any) = {
     nsb(obj).trim
   }
