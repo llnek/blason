@@ -59,5 +59,8 @@ class PostgreSQLImpl extends DBDriver {
       append( "BIGSERIAL" ).toString
   }
 
+  override protected def genCal(fld:FldMetaHolder ) = {
+    genTimestamp(fld)
+  }
 
 }
