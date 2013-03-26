@@ -91,7 +91,7 @@ LIBP="-Djava.library.path=$BLASON_HOME/bin"
 #VMARGS="-Xms8192m -Xmx36864m"
 #32G
 #VMARGS="-Xms8192m -Xmx32768m"
-VMARGS="-Xms512m -Xmx4096m $VMXRGS"
+VMARGS="-Xms512m -Xmx7096m $VMXRGS"
 LOG4J=etc/log/logback.xml
 L4JFILE=${BLASON_HOME}/$LOG4J
 L4J=file:${L4JFILE}
