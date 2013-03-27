@@ -34,13 +34,14 @@ import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import org.apache.commons.lang3.{StringUtils=>STU}
 
+    import Calendar._
 
 /**
  * @author kenl
  *
  */
 object DateUtils extends Constants with CoreImplicits {
-
+      
   def hasTZPart(ds:String) = {
     val tkns= if (ds.has(':')) {
       ds.split(TS_REGEX)
@@ -170,8 +171,19 @@ object DateUtils extends Constants with CoreImplicits {
    */
   def addDays(d:JDate, days:Int) = add(d, Calendar.DAY_OF_YEAR, days)
 
+  def toTimeStr(cal:Calendar) = {
+    java.lang.String.format("%1$04d%2$02d%3$02d-%4$02d%5$02d%6$02d",
+    asJObj(cal.get(YEAR) ),
+   asJObj(cal.get(MONTH) +1 ) , 
+    asJObj(cal.get(DAY_OF_MONTH) ), 
+    asJObj(cal.get(HOUR_OF_DAY) ),
+    asJObj(cal.get(MINUTE) ),
+    asJObj(cal.get(SECOND) ))    
+    
+  }
+  
   def dbgCal(cal:Calendar) = {
-    import Calendar._
+ 
     "{" + cal.getTimeZone().getDisplayName() + "} " + 
     "{" + cal.getTimeZone().getID() + "} " + 
     "[" + cal.getTimeInMillis() + "] " +

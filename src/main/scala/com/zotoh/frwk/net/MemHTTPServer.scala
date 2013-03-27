@@ -27,18 +27,16 @@ import org.jboss.netty.handler.ssl.SslHandler
 import org.jboss.netty.handler.stream.ChunkedWriteHandler
 import org.jboss.netty.channel.Channels.pipeline
 import javax.net.ssl.SSLEngine
-
 import java.io.IOException
 import java.net.URL
-
 import org.jboss.netty.channel.ChannelHandlerContext
 import org.jboss.netty.channel.ChannelPipeline
 import org.jboss.netty.channel.ChannelPipelineFactory
 import org.jboss.netty.channel.MessageEvent
 import org.jboss.netty.channel.group.ChannelGroup
-
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.util.StrArr
+import org.jboss.netty.handler.codec.http.HttpRequest
 
 
 /**
@@ -83,6 +81,10 @@ class MemHTTPServer(vdir:String,host:String,port:Int) extends MemXXXServer(vdir,
             if (_cb != null) { _cb.onOK(200, "OK", inData) }
             super.doReqFinal(ctx, ev, inData)
           }
+          override def onRecvRequest(ctx:ChannelHandlerContext, ev:MessageEvent, 
+              req:HttpRequest)  = {
+            if (_cb == null) true else { _cb.recvRequest() }
+          }          
         } )
         pl
       }

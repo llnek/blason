@@ -342,7 +342,7 @@ object MVCHplr extends CoreImplicits {
 
   private def maybeGetFormData(evt:HTTPEvent) {
     if ( evt.hasData ) {
-      val formData = nsb ( URLDecoder.decode( evt.data.toString , evt.encoding) )
+      val formData = nsb ( URLDecoder.decode( evt.data.stringify , evt.encoding) )
       formData.split("&").foreach { (s) =>
         val nv= s.split("=")
         var k=""

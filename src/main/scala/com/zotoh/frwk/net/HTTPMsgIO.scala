@@ -63,6 +63,7 @@ trait HTTPMsgIO {
    */
   def keepAlive():Boolean
 
-
+  def recvRequest() : Boolean
+  
 }
 

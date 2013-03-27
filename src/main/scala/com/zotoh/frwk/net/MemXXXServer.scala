@@ -23,6 +23,12 @@
 package com.zotoh.frwk
 package net
 
+import org.apache.commons.io.{FileUtils=>FUS}
+import com.zotoh.frwk.util.FileUtils
+import com.zotoh.frwk.io.XData
+import com.zotoh.frwk.io.IOUtils._
+
+
 import com.zotoh.frwk.net.NettyHplr.newServerSSLContext
 import com.zotoh.frwk.net.NettyHplr.newServerBoot
 import org.apache.commons.lang3.{StringUtils=>STU}
@@ -30,22 +36,20 @@ import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.MetaUtils._
 import com.zotoh.frwk.util.StrUtils._
-
 import java.util.{Properties=>JPS}
 import java.io.File
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URL
-
 import javax.net.ssl.SSLEngine
 import org.slf4j._
-
 import org.jboss.netty.channel.group.ChannelGroupFutureListener
 import org.jboss.netty.channel.group.ChannelGroupFuture
 import org.jboss.netty.bootstrap.ServerBootstrap
 import org.jboss.netty.channel.Channel
 import org.jboss.netty.channel.ChannelPipelineFactory
 import org.jboss.netty.channel.group.ChannelGroup
+import com.zotoh.frwk.io.XData
 
 
 
@@ -53,8 +57,8 @@ object MemXXXServer extends CoreImplicits {
 
   private val _log= LoggerFactory.getLogger(classOf[MemXXXServer])
 
-  protected[net] def xxx_main(block:Boolean, cz:String, args:Array[String]) {
-    try {
+  protected[net] def xxx_main(cz:String, args:Array[String]) = {
+
       val m=parseArgs(args)
       val z=loadClass(cz)
       val host=nsb(m.gets("host"))
@@ -70,12 +74,10 @@ object MemXXXServer extends CoreImplicits {
         newInstance(vdir,host, asJObj(port))
       }
       svr match {
-        case x:MemXXXServer => x.start(block)
-        case _ =>
+        case x:MemXXXServer => Option(x) 
+        case _ => None
       }
-    } catch {
-      case t:Throwable => t.printStackTrace()
-    }
+      
   }
 
   private def parseArgs(args:Array[String]) = {
@@ -224,4 +226,14 @@ abstract class MemXXXServer extends Constants {
    */
   protected def pipelineFac(eg:SSLEngine): ChannelPipelineFactory
 
+  protected[net] def saveFile(file:String, data:XData) {
+    val fp= new File(_vdir, file)
+    FUS.deleteQuietly(fp)
+    data.fileRef match {
+      case Some(f) =>  FUS.moveFile(f, fp)
+      case _ =>  writeFile(fp, data.bytes.getOrElse( Array[Byte]()))
+    }
+    tlog.info("Saved file: {} - {} (bytes) - OK", niceFPath(fp), fp.length )
+  }
+  
 }

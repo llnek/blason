@@ -85,7 +85,7 @@ object HTTPClient {
       c.connect(uri)
       c.get(new BasicHTTPMsgIO(){
         def onOK(code:Int, reason:String, resOut:XData) {
-          println( resOut.toString )          
+          println( resOut.stringify )          
           c.wake()
         }
       } )

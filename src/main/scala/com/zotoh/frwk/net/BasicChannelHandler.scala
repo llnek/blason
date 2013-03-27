@@ -26,6 +26,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.math._
 
+import org.jboss.netty.handler.codec.http.HttpHeaders._
 import org.jboss.netty.handler.codec.http.HttpHeaders.Names.COOKIE
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.{CoreImplicits,StrArr}
@@ -122,6 +123,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
   override def messageReceived(ctx:ChannelHandlerContext, ev:MessageEvent) {
 
     val msg = ev.getMessage()
+    
     msg match {
       case x:HttpMessage =>
         _os= new ByteArrayOS(4096)
@@ -148,11 +150,16 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
 
       case req:HttpRequest =>
         tlog().debug("BasicChannelHandler: got a request: ")
+        if (is100ContinueExpected(req)) {
+          send100Continue(ev )
+        }        
         onReqIniz(ctx,ev, req)
         _keepAlive = HttpHeaders.isKeepAlive(req)
         _props.put("dir", asJObj(1) )
         if ( onRecvRequest(ctx,ev,req) ) {
           onReq(ctx,ev,req)
+        } else {
+          send403(ev )          
         }
 
       case x:HttpChunk => onChunk(ctx,ev,x)
@@ -163,6 +170,19 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
 
   }
 
+  private def send100Continue(e:MessageEvent) {         
+    import org.jboss.netty.handler.codec.http.HttpResponseStatus._
+    import  org.jboss.netty.handler.codec.http.HttpVersion._
+    e.getChannel().write( new DefaultHttpResponse(HTTP_1_1, CONTINUE))
+  }
+
+  private def send403(e:MessageEvent) {         
+    import org.jboss.netty.handler.codec.http.HttpResponseStatus._
+    import  org.jboss.netty.handler.codec.http.HttpVersion._
+    e.getChannel().write( new DefaultHttpResponse(HTTP_1_1, FORBIDDEN))
+    throw new Exception("403 Forbidden")
+  }
+  
   private def onReq(ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest) {
     if (msg.isChunked) {
       tlog.debug("BasicChannelHandler: request is chunked")

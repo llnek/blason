@@ -51,7 +51,7 @@ class Demo(job:Job) extends Pipeline(job) {
     val task1= new Work() {
         override def eval(job:Job, arg:Any*) {
             val ev= job.event.asInstanceOf[WebSockEvent]
-            var msg= ev.data.toString
+            var msg= ev.data.stringify()
             var i= CoreUtils.asInt(msg, 0)
             val rc = 1L * i*i
             msg= rc.toString

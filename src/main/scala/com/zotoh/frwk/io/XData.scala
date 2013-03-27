@@ -248,10 +248,10 @@ class XData() extends Serializable {
     destroy()
   }
 
-  override def toString() = {
-    new String ( javaBytes(), _encoding )
+  def stringify() = {
+    new String ( javaBytes(), _encoding )    
   }
-
+  
   /**
    *
    */

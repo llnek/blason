@@ -42,7 +42,7 @@ class WebSockTrigger( private val _ctx:ChannelHandlerContext, src:EventEmitter) 
       new BinaryWebSocketFrame( new ByteBufferBackedChannelBuffer( 
           ByteBuffer.wrap(res.data.javaBytes )) )
     } else {
-      new TextWebSocketFrame( res.data.toString )
+      new TextWebSocketFrame( res.data.stringify )
     }
     _ctx.getChannel().write(f)
   }

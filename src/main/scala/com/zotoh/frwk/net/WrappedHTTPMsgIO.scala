@@ -37,6 +37,8 @@ class WrappedHTTPMsgIO( private var _inner:HTTPMsgIO) extends HTTPMsgIO {
     if (_inner != null) { _inner.onOK(code, r, resOut) }
   }
 
+  def recvRequest() = true
+  
   override def onError(code:Int, reason:String) {
     if (_inner!=null) { _inner.onError(code, reason) }
   }

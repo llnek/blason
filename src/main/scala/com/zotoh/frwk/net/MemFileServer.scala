@@ -53,7 +53,12 @@ object MemFileServer{
       "-host", "localhost", "-port", "8080", "-vdir", "/tmp/wdrive"
     )
     */
-    MemXXXServer.xxx_main(true, "com.zotoh.frwk.net.MemFileServer", args)
+    MemXXXServer.xxx_main( "com.zotoh.frwk.net.MemFileServer", args) match {
+      case Some(x) =>  x.start(true)
+      case _ =>
+        println("Unable to start server.")        
+    }
+    
   }
 }
 
@@ -62,18 +67,6 @@ object MemFileServer{
  *
  */
 class MemFileServer(vdir:String,host:String,port:Int) extends MemXXXServer(vdir,host,port) {
-
-  /**
-   *
-   */
-  def saveFile(file:String, data:XData) {
-    val fp= new File(_vdir, file)
-    FUS.deleteQuietly(fp)
-    data.fileRef match {
-      case Some(f) =>  FUS.moveFile(f, fp)
-      case _ =>  writeFile(fp, data.bytes.getOrElse( Array[Byte]()))
-    }
-  }
 
   def getFile(file:String) = {
     val fp= new File(_vdir, file)
