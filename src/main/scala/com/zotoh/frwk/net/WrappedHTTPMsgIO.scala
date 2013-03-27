@@ -33,12 +33,10 @@ import com.zotoh.frwk.util.StrArr
  */
 class WrappedHTTPMsgIO( private var _inner:HTTPMsgIO) extends HTTPMsgIO {
 
-  override def onOK(code:Int, r:String, resOut:XData) {
-    if (_inner != null) { _inner.onOK(code, r, resOut) }
+  override def onOK(ctx:HTTPMsgInfo , resOut:XData) {
+    if (_inner != null) { _inner.onOK(ctx, resOut) }
   }
 
-  def recvRequest() = true
-  
   override def onError(code:Int, reason:String) {
     if (_inner!=null) { _inner.onError(code, reason) }
   }
@@ -51,8 +49,8 @@ class WrappedHTTPMsgIO( private var _inner:HTTPMsgIO) extends HTTPMsgIO {
     if (_inner==null) false else _inner.keepAlive
   }
 
-  override def onPreamble(mtd:String, uri:String, hds:Map[String, StrArr]) {
-    if ( _inner != null) { _inner.onPreamble(mtd, uri, hds) }
+  def validateRequest(ctx:HTTPMsgInfo) = {
+    if ( _inner == null) true else _inner.validateRequest(ctx)
   }
 
 }

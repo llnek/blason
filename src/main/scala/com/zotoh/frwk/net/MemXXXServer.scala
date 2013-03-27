@@ -27,8 +27,6 @@ import org.apache.commons.io.{FileUtils=>FUS}
 import com.zotoh.frwk.util.FileUtils
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.io.IOUtils._
-
-
 import com.zotoh.frwk.net.NettyHplr.newServerSSLContext
 import com.zotoh.frwk.net.NettyHplr.newServerBoot
 import org.apache.commons.lang3.{StringUtils=>STU}
@@ -50,6 +48,7 @@ import org.jboss.netty.channel.Channel
 import org.jboss.netty.channel.ChannelPipelineFactory
 import org.jboss.netty.channel.group.ChannelGroup
 import com.zotoh.frwk.io.XData
+import com.zotoh.frwk.util.CoreUtils
 
 
 
@@ -66,6 +65,7 @@ object MemXXXServer extends CoreImplicits {
       val pwd=nsb(m.gets("pwd"))
       val vdir=nsb(m.gets("vdir"))
       val port= nsb(m.gets("port")).toInt
+      
       val svr = if (! STU.isEmpty(key)) {
         z.getConstructor(classOf[String],classOf[URL], classOf[String], classOf[String], classOf[Int]).
         newInstance(vdir,new URI(key).toURL(), pwd, host, asJObj(port))
@@ -121,7 +121,9 @@ abstract class MemXXXServer extends Constants {
    */
   protected def this(vdir:String, host:String, port:Int) {
     this()
-    _vdir=new File(vdir)
+    _vdir = if (hgl(vdir)) new File(vdir) else {
+      CoreUtils.tmpDir()
+    }          
     _vdir.mkdirs()
     _host=host
     _port=port
@@ -226,14 +228,18 @@ abstract class MemXXXServer extends Constants {
    */
   protected def pipelineFac(eg:SSLEngine): ChannelPipelineFactory
 
-  protected[net] def saveFile(file:String, data:XData) {
-    val fp= new File(_vdir, file)
+  protected[net] def saveFile(dir:File, file:String, data:XData) {
+    val fp= new File(dir, file)
     FUS.deleteQuietly(fp)
     data.fileRef match {
       case Some(f) =>  FUS.moveFile(f, fp)
       case _ =>  writeFile(fp, data.bytes.getOrElse( Array[Byte]()))
     }
     tlog.info("Saved file: {} - {} (bytes) - OK", niceFPath(fp), fp.length )
+  }
+
+  protected[net] def saveFile(file:String, data:XData) {
+    saveFile(_vdir, file,data)
   }
   
 }

@@ -54,6 +54,7 @@ import org.jboss.netty.handler.ssl.SslHandler
 import org.jboss.netty.handler.stream.ChunkedStream
 import org.jboss.netty.handler.stream.ChunkedWriteHandler
 import org.jboss.netty.handler.codec.http.HttpClientCodec
+import com.zotoh.frwk.util.StrArr
 
 
 /**
@@ -84,7 +85,7 @@ object HTTPClient {
       println( uri.toASCIIString())
       c.connect(uri)
       c.get(new BasicHTTPMsgIO(){
-        def onOK(code:Int, reason:String, resOut:XData) {
+        def onOK(ctx:HTTPMsgInfo, resOut:XData) {
           println( resOut.stringify )          
           c.wake()
         }
@@ -174,8 +175,7 @@ class HTTPClient extends HTTPClientBase {
     val clen= if (data.hasContent) data.size else 0L
     var cfg:HTTPMsgIO = if (io == null) {
       new BasicHTTPMsgIO() {
-        def onOK(code:Int, reason:String, res:XData) {}
-        //def onError(code:Int, reason:String) {}
+        def onOK(ctx:HTTPMsgInfo, res:XData) {}
       }
     } else {
       io

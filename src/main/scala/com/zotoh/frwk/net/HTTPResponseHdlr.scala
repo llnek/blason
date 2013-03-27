@@ -24,6 +24,7 @@ package net
 
 import org.jboss.netty.channel.group.ChannelGroup
 import com.zotoh.frwk.io.XData
+import com.zotoh.frwk.util.StrArr
 
 /**
  * @author kenl
@@ -41,9 +42,9 @@ class HTTPResponseHdlr(g:ChannelGroup) extends BasicChannelHandler(g) {
     _cb= cb; this
   }
 
-  override def doResFinal(code:Int, reason:String, out:XData) {
+  override def doResFinal(ctx:HTTPMsgInfo , out:XData) {
     if (_cb != null)  {
-      _cb.onOK(code, reason, out)
+      _cb.onOK( ctx, out)
     }
   }
 

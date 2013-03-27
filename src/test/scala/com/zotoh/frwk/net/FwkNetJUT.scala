@@ -118,7 +118,7 @@ class FwkNetJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
     val baos= new ByteArrayOS()
     val join=new Object()
     m.bind(new BasicHTTPMsgIO() {
-      def onOK(code:Int, r:String, data:XData) {
+      def onOK(ctx:HTTPMsgInfo, data:XData) {
         block { () =>
           Thread.sleep(1500)
           baos.write(data.javaBytes() )
@@ -194,10 +194,12 @@ class FwkNetJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
     val baos= new ByteArrayOS()
     val m= new MemHTTPServer(tDir, "localhost", LPORT)
     m.bind(new BasicHTTPMsgIO(){
-      override def onPreamble(mtd:String, uri:String, hds:Map[String,StrArr]) {
-        block { () => baos.write(uri.getBytes()) }
+      override def validateRequest(ctx:HTTPMsgInfo) = {
+        true
       }
-      def onOK(code:Int, r:String, data:XData) {
+      def onOK(ctx:HTTPMsgInfo, data:XData) {
+        block { () => baos.write(ctx.method.getBytes()) }
+        block { () => baos.write(ctx.uri.getBytes()) }
         block { () => baos.write(data.javaBytes()) }
       }
     }).start(false)
@@ -206,8 +208,8 @@ class FwkNetJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
 
     simpleGET(new URI("http://localhost:"+LPORT+"/dosomething?a=b&c=e"), 
         new BasicHTTPMsgIO() {
-        def onOK(code:Int, r:String, res:XData) {
-          Thread.sleep(1500)
+        def onOK(ctx:HTTPMsgInfo, data:XData) {
+          Thread.sleep(2500)
           join.synchronized { join.notify() }
         }
         override def configMsg(m:HttpMessage) {
@@ -219,12 +221,12 @@ class FwkNetJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
 
     var s= asStr(baos)
     //System.out.println("-->" + s)
-    assert( s.has("a=b") )
+    assert( s.has("dosomething") )
 
     baos.reset()
     simpleGET(false, "localhost", LPORT, "/dosomething", "x=y&j=k",
       new BasicHTTPMsgIO() {
-        def onOK(code:Int, r:String, res:XData) {
+        def onOK(ctx:HTTPMsgInfo, data:XData) {
             Thread.sleep(1500)
             join.synchronized { join.notify() }
         }
@@ -240,7 +242,7 @@ class FwkNetJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
     simplePOST(new URI("http://localhost:"+LPORT+"/hereyougo"), in,
         new BasicHTTPMsgIO(){
       override def configMsg(m:HttpMessage) { m.setHeader("content-type", "text/plain") }
-      def onOK(code:Int, r:String, res:XData) {
+        def onOK(ctx:HTTPMsgInfo, data:XData) {
         Thread.sleep(1500)
         join.synchronized { join.notify() }
       }
@@ -254,7 +256,7 @@ class FwkNetJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
     simplePOST(false, "localhost", LPORT, "/hereyougo", in,
         new BasicHTTPMsgIO(){
       override def configMsg(m:HttpMessage) { m.setHeader("content-type", "text/plain");}
-      def onOK(code:Int, r:String, res:XData) {
+        def onOK(ctx:HTTPMsgInfo, data:XData) {
         Thread.sleep(1500)
         join.synchronized { join.notify() }
       }
@@ -269,7 +271,7 @@ class FwkNetJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAll
       override def configMsg(m:HttpMessage) { m.setHeader("content-type", "text/plain")
         m.setHeader("content-transfer-encoding", "binary")
       }
-      def onOK(code:Int, r:String, res:XData) {
+        def onOK(ctx:HTTPMsgInfo, data:XData) {
         Thread.sleep(1500)
         join.synchronized { join.notify() }
       }

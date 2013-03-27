@@ -25,16 +25,14 @@ package net
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.net.HTTPUtils._
 import com.zotoh.frwk.io.IOUtils._
-
 import org.slf4j._
-
 import java.io.File
 import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
-
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrArr
 
 
 
@@ -71,10 +69,10 @@ class SimpleHTTPSender  {
 
     if ( !parseArgs(args)) usage() else {
       _client= send(new BasicHTTPMsgIO() {
-        def onOK(code:Int, r:String, res:XData) {
+        def onOK(ctx:HTTPMsgInfo, res:XData) {
           try {
-            println("Response Status Code: " +  code)
-            println("Response Data: " + nsn(res))
+            println("Response Status Code: 200 OK")
+            println("Response Data: " + (if (res==null) "" else res.stringify ) )
           } catch {
             case e:Throwable =>
           }

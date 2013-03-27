@@ -55,6 +55,8 @@ import com.zotoh.frwk.util.CoreUtils
 import com.zotoh.frwk.net.BasicHTTPMsgIO
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.util.ProcessUtils
+import com.zotoh.frwk.util.StrArr
+import com.zotoh.frwk.net.HTTPMsgInfo
 
 
 
@@ -253,7 +255,7 @@ class CLIMain extends CoreImplicits with Constants {
     _shutServer = new MemHTTPServer( CoreUtils.tmpDir.getCanonicalPath, "127.0.0.1", port)
     val me=this
     _shutServer.bind(new BasicHTTPMsgIO() {
-      def onOK(code:Int, r:String, data:XData) {
+      def onOK(ctx:HTTPMsgInfo, data:XData) {
         block { () =>
           me.stop()
         }

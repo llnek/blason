@@ -45,10 +45,8 @@ abstract class BasicHTTPMsgIO protected[net]() extends HTTPMsgIO {
 
   def tlog() = BasicHTTPMsgIO._log
   
-  def onPreamble(mtd:String, uri:String, hds:Map[String,StrArr]) {}
+  def validateRequest(ctx:HTTPMsgInfo) = true
 
-  def recvRequest() = true
-  
   def onError(code:Int, reason:String)  {
     tlog.error("Error: status= {}, reason= {}" , asJObj(code), reason, "")
   }

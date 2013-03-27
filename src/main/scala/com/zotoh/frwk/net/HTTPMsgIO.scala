@@ -33,19 +33,9 @@ import com.zotoh.frwk.util.StrArr
  */
 trait HTTPMsgIO {
 
-  /**
-   * @param mtd
-   * @param uri
-   * @param headers
-   */
-  def onPreamble(mtd:String, uri:String, headers:Map[String,StrArr] ):Unit
+  def validateRequest(ctx:HTTPMsgInfo):Boolean
 
-  /**
-   * @param code
-   * @param reason
-   * @param resOut
-   */
-  def onOK(code:Int, reason:String, resOut:XData):Unit
+  def onOK(ctx:HTTPMsgInfo , resOut:XData):Unit
 
   /**
    * @param code
@@ -63,7 +53,10 @@ trait HTTPMsgIO {
    */
   def keepAlive():Boolean
 
-  def recvRequest() : Boolean
   
 }
+
+case class HTTPMsgInfo(val method:String, val uri:String, val headers:Map[String,StrArr]) {  
+}
+
 

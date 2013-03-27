@@ -117,7 +117,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
 //    super.exceptionCaught(ctx, e)
   }
 
-  protected def onRecvRequest( ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest) = true
+  protected def onRecvRequest(ctx:HTTPMsgInfo) = true
   // false to stop further processing
 
   override def messageReceived(ctx:ChannelHandlerContext, ev:MessageEvent) {
@@ -139,6 +139,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
         val c= s.getCode()
         tlog().debug("BasicChannelHandler: got a response: code {} {}", asJObj(c), asJObj(r), "")
         _props.add("reason", r).add("dir", -1).add("code", c)
+        _props.add("headers",iterHeaders(res) )
         if (c >= 200 && c < 300) {
           onRes(s,ctx,ev,res)
         } else if (c >= 300 && c < 400) {
@@ -149,14 +150,16 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
         }
 
       case req:HttpRequest =>
+        val cx= new HTTPMsgInfo(req.getMethod.getName, req.getUri(), iterHeaders(req))
         tlog().debug("BasicChannelHandler: got a request: ")
         if (is100ContinueExpected(req)) {
           send100Continue(ev )
         }        
-        onReqIniz(ctx,ev, req)
         _keepAlive = HttpHeaders.isKeepAlive(req)
+        onReqIniz(ctx,ev, req)
         _props.put("dir", asJObj(1) )
-        if ( onRecvRequest(ctx,ev,req) ) {
+        _props.put("ctx", cx)
+        if ( onRecvRequest( cx) ) {
           onReq(ctx,ev,req)
         } else {
           send403(ev )          
@@ -183,7 +186,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
     throw new Exception("403 Forbidden")
   }
   
-  private def onReq(ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest) {
+  protected def onReq(ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest) {
     if (msg.isChunked) {
       tlog.debug("BasicChannelHandler: request is chunked")
     } else {
@@ -203,21 +206,22 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
   }
 
   protected def onReqIniz(ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest ) {
-    val m= msg.getMethod().getName
-    val uri= msg.getUri
-    tlog.debug("BasicChannelHandler: onReqIniz: Method {}, Uri {}",m, uri, "")
-    onReqPreamble(m, uri, iterHeaders(msg))
+    onReqPreamble(new HTTPMsgInfo(msg.getMethod().getName, msg.getUri, iterHeaders(msg)) )
   }
 
   protected def onResIniz(ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpResponse ) {
-    onResPreamble( iterHeaders(msg))
+    onResPreamble( new HTTPMsgInfo("","",iterHeaders(msg)) )
   }
 
-  protected def onReqPreamble(mtd:String, uri:String, h:Map[String,StrArr] ) {}
-  protected def onResPreamble(h:Map[String,StrArr]) {}
+  protected def onReqPreamble(ctx:HTTPMsgInfo) {
+    tlog.debug("BasicChannelHandler: onReqIniz: Method {}, Uri {}",
+        ctx.method, ctx.uri, "")
+  }
+  
+  protected def onResPreamble(ctx:HTTPMsgInfo) {}
 
-  protected def doReqFinal(code:Int, r:String, out:XData) {}
-  protected def doResFinal(code:Int, r:String, out:XData) {}
+  protected def doReqFinal(ctx:HTTPMsgInfo , out:XData) {}
+  protected def doResFinal(ctx:HTTPMsgInfo , out:XData) {}
   protected def onResError(code:Int, r:String) {}
 
   private def onResError(ctx:ChannelHandlerContext, ev:MessageEvent) {
@@ -290,17 +294,30 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
     }
   }
 
-  protected def doReqFinal(ctx:ChannelHandlerContext, ev:MessageEvent, inData:XData) {
+  protected def replyRequest(ctx:ChannelHandlerContext, ev:MessageEvent, data:XData) {
     doReplyXXX(ctx,ev,HttpResponseStatus.OK)
   }
 
+  protected def replyResponse(ctx:ChannelHandlerContext, ev:MessageEvent, data:XData) {
+    val c= maybeGetChannel(ctx,ev)
+    if ( ! isKeepAlive && c != null ) {
+      c.close()
+    }    
+  }
+  
   private def onMsgFinal(ctx:ChannelHandlerContext, ev:MessageEvent) {
+    val cx= _props.get("ctx") match {
+      case x:HTTPMsgInfo => x
+      case _ => new HTTPMsgInfo("","",Map())
+    }
     val dir = _props.geti("dir")
     val out= on_msg_final(ev)
+    
     if ( dir > 0) {
-      doReqFinal(ctx,ev,out)
+      replyRequest(ctx,ev,out)
+      doReqFinal(cx,out)
     } else if (dir < 0) {
-      doResFinal( _props.geti("code"), _props.gets("reason"),out)
+      doResFinal(cx,out)
     }
   }
 
@@ -367,7 +384,7 @@ class BasicChannelHandler( private var _grp:ChannelGroup) extends SimpleChannelH
       hdrs.foreach { (t) =>
         dbg.append(t._1).append(": ").append(t._2).append("\r\n")
       }
-      tlog.debug("HttpResponseHdlr: headers\n{}", dbg.toString )
+      tlog.debug("BasicChannelHandler: headers\n{}", dbg.toString )
     }
 
     hdrs.toMap

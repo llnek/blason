@@ -22,15 +22,24 @@
 package com.zotoh.frwk
 package net
 
-import java.net.URL
-import com.zotoh.frwk.io.XData
-import java.util.concurrent.atomic.AtomicLong
-import com.zotoh.frwk.util.DateUtils._
-import java.util.GregorianCalendar
 import java.io.File
+import java.net.URL
+import java.util.GregorianCalendar
+import java.util.concurrent.atomic.AtomicLong
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+import scala.collection.mutable
+import com.zotoh.frwk.io.XData
+import com.zotoh.frwk.util.StrUtils._
+import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.DateUtils._
+import com.zotoh.frwk.util.INIConf
 import com.zotoh.frwk.util.StrArr
+import com.zotoh.frwk.util.ProcessUtils
 
-
+/**
+ * @author kenl
+ */
 object SimpleHTTPServer {
   
   private val _seed= new AtomicLong()
@@ -53,11 +62,14 @@ object SimpleHTTPServer {
  */
 class SimpleHTTPServer(vdir:String, host:String, port:Int) extends MemHTTPServer(vdir,host,port)  {
 
+  type T2 = Tuple2[String,Pattern]
   import SimpleHTTPServer._
   
-  private var _sfx=".dat"
-  private var _pfx=""
-    
+  private val _regexs= mutable.ArrayBuffer[ T2 ]()
+  private var _ini:INIConf= null
+  
+  
+  
   /**
    * @param vdir
    * @param key
@@ -71,37 +83,83 @@ class SimpleHTTPServer(vdir:String, host:String, port:Int) extends MemHTTPServer
   }
 
   private def runServer(args:Array[String]) {
+    val me=this
+    
     for (i <- 0 until args.length) {
-      if ( "-prefix" == args(i) ) {
-        _pfx= args(i+1)
-      }
-      if ( "-suffix" == args(i) ) {        
-        _sfx= args(i+1)
+      if ( "-conf" == args(i) ) {
+        _ini=new INIConf(new File(args(i+1)))
       }
     }
+    
+    if (_ini != null) {
+      parseConf(_ini)
+      start()
+    } else {
+      println("No conf file.")
+    }
+  }
+  
+  private def start() {
     val me=this
-    this.bind(new BasicHTTPMsgIO() {
-      var theUri=""
-        
-      override def onPreamble(mtd:String, uri:String, hds:Map[String,StrArr]) {
-        super.onPreamble(mtd, uri, hds)
-        theUri=uri
-      }
+    
+    bind(new BasicHTTPMsgIO() {
       
-      def onOK(code:Int, reason:String, resOut:XData) {
-        var f= toTimeStr( new GregorianCalendar) + "-" + _seed.incrementAndGet()
-        f = _pfx + f + _sfx
-        me.saveFile( f, resOut)
+      def onOK(ctx:HTTPMsgInfo, resOut:XData) {
+        me.maybeSaveFile( ctx, resOut)
       }      
       
-      override def recvRequest() = me.validate(theUri)
+      override def validateRequest(ctx:HTTPMsgInfo) = {
+        me.validate(ctx) match {
+          case Some(x) => true
+          case _ => false
+        }
+      }
       
     })
+    
+    java.lang.Runtime.getRuntime().addShutdownHook( new Thread() {
+      override def run() {
+        block { () => me.stop()  }
+      }      
+    })
+    
     this.start(true)
   }
   
-  private def validate(uri:String) = {
-    true
+  private def maybeSaveFile(ctx:HTTPMsgInfo, resOut:XData) {
+    validate(ctx) match {
+      case Some(t) =>
+        var f= toTimeStr( new GregorianCalendar) + "-" + _seed.incrementAndGet()
+        val m= _ini.section(t._1).get.asInstanceOf[Map[String,String]]
+        val d=m.get("vdir").getOrElse("")
+        val p=m.get("pfx").getOrElse("")
+        val x=m.get("sfx").getOrElse(".dat")
+        val dir=if (hgl(d)) new File(d) else _vdir
+        saveFile( dir, p+f+x, resOut)
+      case _ =>
+    }
+  }
+  
+  private def parseConf(ini:INIConf) {
+    _ini.sections.foreach { (s) =>
+      _ini.section(s).get.get("vdir") match {
+        case Some(x) => new File(x).mkdirs()
+        case _ =>
+      }
+      _regexs += Tuple2( s, Pattern.compile(s) )
+    }    
+  }
+  
+  private def validate(ctx:HTTPMsgInfo) = {
+    _regexs.find{ (t) =>
+      if ( t._2.matcher(ctx.uri).matches()) {
+        val m= _ini.section(t._1).get.asInstanceOf[Map[String,String]]
+        val v=m.get("verb").getOrElse("").toLowerCase
+        if ("*" == v || v == ctx.method.toLowerCase) true else false        
+      } else {
+        false
+      }
+    }      
   }
   
 }

@@ -27,15 +27,14 @@ import org.jboss.netty.channel.ChannelHandlerContext
 import org.jboss.netty.channel.Channel
 import org.jboss.netty.channel.ChannelFuture
 import org.jboss.netty.channel.MessageEvent
-
 import org.jboss.netty.handler.codec.http.DefaultHttpResponse
 import org.jboss.netty.handler.codec.http.HttpMethod
 import org.jboss.netty.handler.codec.http.HttpRequest
 import org.jboss.netty.handler.codec.http.HttpResponseStatus
 import org.jboss.netty.handler.codec.http.HttpVersion
 import org.jboss.netty.handler.stream.ChunkedStream
-
 import com.zotoh.frwk.io.XData
+import com.zotoh.frwk.util.StrArr
 
 
 /**
@@ -45,27 +44,27 @@ import com.zotoh.frwk.io.XData
 class FileServerHdlr(private var _svr:MemFileServer) extends BasicChannelHandler(_svr.channels) {
 
   private var _file=""
-
-  override def onRecvRequest( ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest) = {
-
-    val m=msg.getMethod()
+  
+  override def onReq(ctx:ChannelHandlerContext, ev:MessageEvent, msg:HttpRequest) {
+    val mtd= msg.getMethod().getName()
     val uri= msg.getUri()
     val pos= uri.lastIndexOf('/')
     val p = if (pos < 0) uri else uri.substring(pos+1)
 
-    tlog.debug("FileServerHdlr: Input Method = {}, Uri = {}, File = {}", m.getName(), uri, p)
+    tlog.debug("FileServerHdlr: Input Method = {}, Uri = {}, File = {}", mtd, uri, p)
     _file=p
-    if (HttpMethod.GET eq m) {
+    
+    if ("get" == mtd.lc) {
       doGet(ctx,ev)
-      false
     } else {
-      true
+      super.onReq(ctx,ev,msg)
     }
-  }
+    
+  }  
 
-  override def doReqFinal(ctx:ChannelHandlerContext, ev:MessageEvent, inData:XData) {
+  override def replyRequest(ctx:ChannelHandlerContext, ev:MessageEvent, inData:XData) {
+    super.replyRequest(ctx, ev, inData)
     if (inData  != null) {
-      super.doReqFinal(ctx, ev, inData)
       doPut(inData)
     }
   }

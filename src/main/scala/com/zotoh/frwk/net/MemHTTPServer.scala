@@ -74,17 +74,15 @@ class MemHTTPServer(vdir:String,host:String,port:Int) extends MemXXXServer(vdir,
 //        pipe.addLast("deflater", new HttpContentCompressor())
         pl.addLast("chunker", new ChunkedWriteHandler())
         pl.addLast("handler", new BasicChannelHandler(g){
-          override def onReqPreamble(mtd:String, uri:String, h:Map[String,StrArr]) {
-            if (_cb != null) { _cb.onPreamble(mtd,uri,h) }
+          
+          override def doReqFinal(ctx:HTTPMsgInfo,inData:XData)  {
+            if (_cb != null) { _cb.onOK(ctx, inData) }
           }
-          override def doReqFinal(ctx:ChannelHandlerContext, ev:MessageEvent,inData:XData)  {
-            if (_cb != null) { _cb.onOK(200, "OK", inData) }
-            super.doReqFinal(ctx, ev, inData)
+          
+          override def onRecvRequest(ctx:HTTPMsgInfo ) = {
+            if (_cb == null) true else  _cb.validateRequest(ctx)             
           }
-          override def onRecvRequest(ctx:ChannelHandlerContext, ev:MessageEvent, 
-              req:HttpRequest)  = {
-            if (_cb == null) true else { _cb.recvRequest() }
-          }          
+          
         } )
         pl
       }

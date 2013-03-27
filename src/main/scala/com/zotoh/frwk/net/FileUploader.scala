@@ -24,22 +24,20 @@ package net
 
 import org.jboss.netty.handler.codec.http.HttpMessage
 import org.slf4j._
-
 import org.apache.commons.lang3.{StringUtils=>STU}
 import scala.collection.mutable
-
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.util.WWID
 import com.zotoh.frwk.io.XData
-
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
+import com.zotoh.frwk.util.StrArr
 
 
 
@@ -69,8 +67,8 @@ class FileUploader {
   def start(args:Array[String]) {
     if ( parseArgs(args)) {
       upload(new BasicHTTPMsgIO() {
-        def onOK(code:Int, r:String, res:XData) {
-          println("Done: status=" + code)
+        def onOK(ctx:HTTPMsgInfo, res:XData) {
+          println("Done.")
         }
       })
     }
