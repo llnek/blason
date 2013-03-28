@@ -241,7 +241,10 @@ trait SQLProc extends CoreImplicits {
   }
 
   def getO2O[T <: DBPojo ](lhs:DBPojo, rhs:Class[T], fkey:String): Option[T] = {
-    val rc = findSome( rhs, new NameValues(COL_ROWID, lhs.get(fkey).getOrElse(-1L)) )
+    val rc= lhs.get(fkey) match {
+      case Some(x:Long) =>  findSome( rhs, new NameValues(COL_ROWID, x) )
+      case _ => List()
+    }
     if (rc.size == 0) None else Option( rc(0) )
   }
 
@@ -254,6 +257,7 @@ trait SQLProc extends CoreImplicits {
     val t= throwNoTable(rhs)
     val sql="DELETE FROM " + t.table.uc + " WHERE " + COL_ROWID + "=?"
     lhs.get(fkey) match {
+      case Some(x:Nichts) => 0
       case Some(v) => execute(sql, v)
       case _ => 0
     }

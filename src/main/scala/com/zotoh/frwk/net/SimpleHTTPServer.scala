@@ -152,7 +152,7 @@ class SimpleHTTPServer(vdir:String, host:String, port:Int) extends MemHTTPServer
   
   private def validate(ctx:HTTPMsgInfo) = {
     _regexs.find{ (t) =>
-      if ( t._2.matcher(ctx.uri).matches()) {
+      if ( t._2.matcher(ctx.uriOnly).matches()) {
         val m= _ini.section(t._1).get.asInstanceOf[Map[String,String]]
         val v=m.get("verb").getOrElse("").toLowerCase
         if ("*" == v || v == ctx.method.toLowerCase) true else false        

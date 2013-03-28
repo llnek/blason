@@ -25,6 +25,7 @@ package io
 
 import java.io.File
 
+import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils.nsb
 import FILEAction._
 
@@ -64,5 +65,9 @@ class FILEEvent(src:EventEmitter, private var _file:File) extends AbstractEvent(
    */
   def file() = _file
 
+  override def toString() = {
+    "" + niceFPath(_file) + " was " + _action.toString + "."
+  }
+  
 }
 

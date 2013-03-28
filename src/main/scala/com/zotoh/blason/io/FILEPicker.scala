@@ -53,7 +53,7 @@ object FILEAction extends Enumeration {
 class FILEPicker(evtHdlr:Observer, nm:String) extends RepeatTimer(evtHdlr,nm) {
   import FILEAction._
   private var _monitor:FileAlterationMonitor= null
-  private val _dirs= mutable.HashSet[File]()
+  //private val _dirs= mutable.HashSet[File]()
   private var _mask:FileFilter= null
   private var _destMove:File=null
   private var _srcDir:File=null
@@ -71,7 +71,8 @@ class FILEPicker(evtHdlr:Observer, nm:String) extends RepeatTimer(evtHdlr,nm) {
 
     tstEStrArg("file-root-folder", root)
     _srcDir = new File(root)
-    _dirs += _srcDir
+    _srcDir.mkdirs()
+    //_dirs += _srcDir
     _mask = mask match {
       case s:String if s.startsWith("*.") => new SuffixFileFilter(s.substring(1))
       case s:String if s.endsWith("*") => new PrefixFileFilter(s.substring(0,s.length()-1))

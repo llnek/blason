@@ -24,6 +24,7 @@ package net
 
 import org.jboss.netty.handler.codec.http.HttpMessage
 
+import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.XData
 import com.zotoh.frwk.util.StrArr
 
@@ -57,6 +58,15 @@ trait HTTPMsgIO {
 }
 
 case class HTTPMsgInfo(val method:String, val uri:String, val headers:Map[String,StrArr]) {  
+  
+  private var _uriOnly= uri  
+  val s= strim(uri)
+  s.indexOf('?') match {
+    case pos if pos > 0 => _uriOnly = s.substring(0,pos)
+    case _ =>
+  }
+  
+  def uriOnly = _uriOnly
 }
 
 
