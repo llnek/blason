@@ -22,7 +22,7 @@
     </encoder>
     <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
       <maxIndex>2</maxIndex>
-      <FileNamePattern>../logs/blason.log.%i</FileNamePattern>
+      <FileNamePattern>../logs/mhttpd.log.%i</FileNamePattern>
     </rollingPolicy>
     <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
       <MaxFileSize>2MB</MaxFileSize>

@@ -35,7 +35,7 @@ import java.nio.file._
 class DirWatcher(private val _targetDir:File) {
 
   private val _watcher= FileSystems.getDefault().newWatchService()
-  private val _targetPath = _targetDir.toPath()
+  private val _targetPath:Path = null//_targetDir.toPath()
   
   _targetPath.register(
                 _watcher,
