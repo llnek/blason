@@ -73,28 +73,20 @@ class FwkUtilJUT  extends FunSuite with BeforeAndAfterEach with BeforeAndAfterAl
   }
 
   test("testDateUtils") {
-    val gc= new GregorianCalendar(2050, 5, 20)
-    val base= gc.getTime()
+    val base= new GregorianCalendar(2050, 5, 20)
     var dt= DateUtils.addYears(base, -5)
-    var g= new GregorianCalendar()
-    g.setTime(dt)
 
-    expectResult(g.get(Calendar.YEAR))( 2045)
+    expectResult( dt.get(Calendar.YEAR))( 2045)
     dt= DateUtils.addYears(base, 5)
-    g= new GregorianCalendar(); g.setTime(dt)
-    expectResult(g.get(Calendar.YEAR))( 2055)
+    expectResult(dt.get(Calendar.YEAR))( 2055)
     dt= DateUtils.addMonths(base, -2)
-    g= new GregorianCalendar(); g.setTime(dt)
-    expectResult(g.get(Calendar.MONTH))( 3)
+    expectResult(dt.get(Calendar.MONTH))( 3)
     dt= DateUtils.addMonths(base, 2)
-    g= new GregorianCalendar(); g.setTime(dt)
-    expectResult(g.get(Calendar.MONTH))( 7)
+    expectResult(dt.get(Calendar.MONTH))( 7)
     dt= DateUtils.addDays(base, -10)
-    g= new GregorianCalendar(); g.setTime(dt)
-    expectResult(g.get(Calendar.DAY_OF_MONTH))( 10)
+    expectResult(dt.get(Calendar.DAY_OF_MONTH))( 10)
     dt= DateUtils.addDays(base, 10)
-    g= new GregorianCalendar(); g.setTime(dt)
-    expectResult(g.get(Calendar.DAY_OF_MONTH))( 30)
+    expectResult(dt.get(Calendar.DAY_OF_MONTH))( 30)
   }
 
   test("testMiscStr") {

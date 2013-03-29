@@ -155,21 +155,21 @@ object DateUtils extends Constants with CoreImplicits {
    * @param yrs
    * @return
    */
-  def addYears(d:JDate, yrs:Int) = add(d, Calendar.YEAR, yrs)
+  def addYears(d:Calendar, yrs:Int) = add(d, Calendar.YEAR, yrs)
 
   /**
    * @param d
    * @param mts
    * @return
    */
-  def addMonths(d:JDate, mts:Int) = add(d, Calendar.MONTH, mts)
+  def addMonths(d:Calendar, mts:Int) = add(d, Calendar.MONTH, mts)
 
   /**
    * @param d
    * @param days
    * @return
    */
-  def addDays(d:JDate, days:Int) = add(d, Calendar.DAY_OF_YEAR, days)
+  def addDays(d:Calendar, days:Int) = add(d, Calendar.DAY_OF_YEAR, days)
 
   def toTimeStr(cal:Calendar) = {
     java.lang.String.format("%1$04d%2$02d%3$02d-%4$02d%5$02d%6$02d",
@@ -196,14 +196,12 @@ object DateUtils extends Constants with CoreImplicits {
     cal.get(SECOND)
   }
   
-  private def add(d:JDate, calendarField:Int, amount:Int) = {
-    if (d!= null) {
-      val c = Calendar.getInstance
-      c.setTime(d)
-      c.add(calendarField, amount)
-      c.getTime
-    } else {
-      d
+  private def add(c:Calendar, calendarField:Int, amount:Int) = {
+    if (c == null) null else {
+      val rc= new GregorianCalendar( c.getTimeZone)
+      rc.setTime(c.getTime)
+      rc.add(calendarField, amount)
+      rc
     }
   }
 
