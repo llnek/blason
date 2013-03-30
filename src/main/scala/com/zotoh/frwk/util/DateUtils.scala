@@ -196,7 +196,7 @@ object DateUtils extends Constants with CoreImplicits {
     cal.get(SECOND)
   }
   
-  private def add(c:Calendar, calendarField:Int, amount:Int) = {
+  private def add(c:Calendar, calendarField:Int, amount:Int): Calendar = {
     if (c == null) null else {
       val rc= new GregorianCalendar( c.getTimeZone)
       rc.setTime(c.getTime)
