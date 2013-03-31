@@ -67,7 +67,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   protected def readString(col:String, dft:String="") = {
     readData(col) match {
       case Some(s:String) => s
-      case Some(x) => nsb(x)
+      case Some(x) if x != Nichts.NICHTS => nsb(x)
       case _ => dft
     }
   }
