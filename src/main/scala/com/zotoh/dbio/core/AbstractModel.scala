@@ -67,13 +67,15 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   protected def readString(col:String, dft:String="") = {
     readData(col) match {
       case Some(s:String) => s
-      case Some(x) if x != Nichts.NICHTS => nsb(x)
+      case Some(x:Nichts) => dft
+      case Some(x) => nsb(x)
       case _ => dft
     }
   }
   protected def readInt(col:String, dft:Int = 0) = {
     readData(col) match {
       case Some(n:Int) => n
+      case Some(x:Nichts) => dft
       case Some(x) => asInt(nsb(x), dft)
       case _ => dft
     }
@@ -81,6 +83,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   protected def readLong(col:String, dft:Long = 0L) = {
     readData(col) match {
       case Some(n:Long) => n
+      case Some(x:Nichts) => dft
       case Some(x) => asLong(nsb(x), dft)
       case _ => dft
     }
@@ -89,6 +92,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     readData(col) match {
       case Some(d:Double) => d
       case Some(d:Float) => d.toDouble
+      case Some(x:Nichts) => dft
       case Some(x) => asDouble(nsb(x), dft)
       case _ => dft
     }
@@ -97,6 +101,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     readData(col) match {
       case Some(f:Double) => f.toDouble
       case Some(f:Float) => f
+      case Some(x:Nichts) => dft
       case Some(x) => asFloat(nsb(x), dft)
       case _ => dft
     }
