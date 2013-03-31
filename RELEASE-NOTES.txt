@@ -1,4 +1,4 @@
-Blason-0.0.1-SNAPSHOT : [ 2012/12 ]
+Blason-0.0.1-SNAPSHOT : [ 2013/03 ]
 =====================================
 
 - Initial release
