@@ -54,6 +54,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def tlog() = AbstractModel._log
   
   private val _storage= mutable.HashMap[String,Any]()
+  private val _refs= mutable.HashMap[String,Any]()
   private val _dirtyFields= mutable.HashSet[String]()
   private var _isDBRow=false
   private def iniz() {
@@ -64,6 +65,14 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def isTransient() = ! _isDBRow
   def isDB() = _isDBRow
 
+  protected def getRef(col:String) = _refs.get(col).getOrElse(null)
+  protected def setRef(col:String,r:Any) {
+    r match {
+      case null => _refs.remove(col)
+      case _ => _refs.put(col, r)
+    }
+  }
+  
   protected def readString(col:String, dft:String="") = {
     readData(col) match {
       case Some(s:String) => s
@@ -179,6 +188,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
   protected def setO2O(rhs:DBPojo, fkey:String) {
     set(fkey, if (rhs==null) None else Option(rhs.getRowID ) )
+    setRef(fkey , rhs)    
   }
 
   def commit() {
@@ -188,7 +198,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
   def reset() {
-    _dirtyFields.clear()
+    _dirtyFields.clear
+    _refs.clear
   }
 
   def built() {
