@@ -61,6 +61,7 @@ import java.net.URLDecoder
 import java.util.Arrays
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.core.JsonFactory
+import java.util.Calendar
 
 
 class ZString(str:String) {
@@ -151,6 +152,7 @@ object CoreUtils extends Constants  with CoreImplicits {
 
   def nowJTS() = new java.sql.Timestamp(nowJDate().getTime )
   def nowJDate() = new java.util.Date()
+  def nowCal(): Calendar = new GregorianCalendar()
 
   /**
    *
