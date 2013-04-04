@@ -52,20 +52,26 @@ class SimpleSQLr(private val _db: DB) extends SQLProc {
   }
 
   def update(obj : DBPojo, cols : Set[String]): Int = {
+    obj.preEvent(this, DBAction.UPDATE)        
     val rc= doUpdate(obj, cols)
     reset(obj)
+    obj.postEvent(this, DBAction.UPDATE)    
     rc
   }
 
   def delete(obj : DBPojo): Int = {
+    obj.preEvent(this, DBAction.DELETE)        
     val rc =doDelete(obj)
     reset(obj)
+    obj.postEvent(this, DBAction.DELETE)        
     rc
   }
 
   def insert(obj : DBPojo): Int = {
+    obj.preEvent(this, DBAction.INSERT)        
     val rc = doInsert(obj)
     reset(obj)
+    obj.postEvent(this, DBAction.INSERT)        
     rc
   }
 

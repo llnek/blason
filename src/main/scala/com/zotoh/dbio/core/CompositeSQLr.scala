@@ -101,8 +101,10 @@ class Transaction(private val _conn:Connection, private val _db:DB ) extends SQL
   def getDB() = _db
 
   def insert(obj:DBPojo): Int = {
+    obj.preEvent(this, DBAction.INSERT)
     val rc= doInsert(obj)
     rego(obj)
+    obj.postEvent(this, DBAction.INSERT)
     rc
   }
 
@@ -119,14 +121,18 @@ class Transaction(private val _conn:Connection, private val _db:DB ) extends SQL
   }
 
   def delete( obj : DBPojo): Int = {
+    obj.preEvent(this, DBAction.DELETE)    
     val rc = doDelete(obj)
     rego(obj)
+    obj.postEvent(this, DBAction.DELETE)    
     rc
   }
 
   def update(obj : DBPojo, cols : Set[String]): Int = {
+    obj.preEvent(this, DBAction.UPDATE)    
     val rc= doUpdate(obj, cols)
     rego(obj)
+    obj.postEvent(this, DBAction.UPDATE)    
     rc
   }
 

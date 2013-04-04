@@ -24,6 +24,13 @@ package core
 
 import java.sql.{Timestamp=>JTS}
 
+object DBAction extends Enumeration {
+  type DBAction= Value
+  val INSERT = Value(0, "INSERT")
+  val DELETE = Value(1, "DELETE")
+  val UPDATE = Value( 2, "UPDATE")
+  val QUERY = Value(3, "QUERY")
+}
 
 object DBPojo {
 
@@ -38,6 +45,8 @@ object DBPojo {
 
 trait DBPojo {
 
+  import DBAction._
+  
   def setRowID(n:Long ): Unit
   def setVerID(n:Long): Unit
 
@@ -50,6 +59,9 @@ trait DBPojo {
   def setLastModified(dt:JTS): Unit
   def getLastModified(): JTS
 
+  def postEvent(db:SQLProc, act:DBAction ):Unit
+  def preEvent(db:SQLProc, act:DBAction):Unit
+  
 }
 
 
