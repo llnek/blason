@@ -73,7 +73,7 @@ object SyncHTTPClient {
 }
 
 
-class SyncHTTPClient(private var _contentType:String="") extends HTTPClientBase with CoreImplicits {
+class SyncHTTPClient(private var _contentType:String="", private val _useChunk:Boolean = false) extends HTTPClientBase with CoreImplicits {
   private var _cli:HttpClient = null
   
   def connect(host:String,port:Int) {
@@ -83,11 +83,11 @@ class SyncHTTPClient(private var _contentType:String="") extends HTTPClientBase 
     HttpConnectionParams.setSoTimeout(pms, _soctout)    
   }
 
-  def post(contentType:String, data:XData ) = {
+  def post(contentType:String, data:XData ): Option[Any] = {
     try {      
       val ent = new InputStreamEntity( data.stream, data.size)
       ent.setContentType(contentType)
-      ent.setChunked(true)
+      ent.setChunked(_useChunk)
       val p= new HttpPost(_remote)
       p.setEntity(ent)
       prePost(p)
