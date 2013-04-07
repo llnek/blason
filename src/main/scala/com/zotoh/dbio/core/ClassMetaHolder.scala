@@ -49,6 +49,7 @@ object ClassMetaHolder {
  */
 class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
 
+  private val _refs= mutable.HashMap[String,Method]()
   private var _cz:Class[_] = null
   private var _table=""
   private val _info= new FMap()
@@ -60,6 +61,7 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
   import DBPojo._
   import Utils._
 
+  def getParent() = _meta
   def getCZ() = _cz
 
   def scan(z:Class[_] ): this.type = {
@@ -90,6 +92,8 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
     }
   }
 
+  def getRefs() = _refs.toMap
+  
   def getIndexes( wantUnique:Boolean = false) = {
     val rc= mutable.HashMap[String,SIndex]()
     val t = Utils.throwNoTable( getCZ )
@@ -308,6 +312,7 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
   private def scanAssocs(z:Class[_], obj:Any, ms:Array[Method], allMtds:Map[String, Method] ) {
     ms.filter( (m) => m.getName.startsWith("get") && hasAssoc(m) ).foreach { (m) =>
       val mn= m.getName()
+      _refs.put(mn, m)
       allMtds.get( fmtAssocKey(mn) ) match {
         case Some(x) =>
           ensureFKeyType(x)

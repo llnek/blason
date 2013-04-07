@@ -22,22 +22,28 @@
 package com.zotoh.dbio
 package core
 
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import com.zotoh.dbio.meta.Column
 import java.util.{Date=>JDate}
 import java.sql.{Timestamp=>JTS,Time=>JTime}
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.JSONUtils
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.Nichts
 import com.zotoh.dbio.core.DBPojo.COL_ROWID
 import com.zotoh.dbio.core.DBPojo.COL_VERID
+import com.zotoh.dbio.core.{Utils=>DBU}
 import java.util.{Date =>JDate}
-import java.util.Calendar
+import java.util.{Arrays,Calendar }
 import java.util.GregorianCalendar
 import java.util.TimeZone
-
 import org.slf4j._
+import org.json.JSONObject
+import com.narvar.model.DataModel
+import java.lang.reflect.Method
+import org.json.JSONArray
 
 object AbstractModel {
   private val _log= LoggerFactory.getLogger(classOf[AbstractModel])
@@ -69,6 +75,10 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def postEvent(db:SQLProc, act:DBAction ) {}
   def preEvent(db:SQLProc, act:DBAction) {}
 
+  def getSeq(mtd:String): Seq[Any] = _refs.get(mtd) match {
+    case Some(x:Seq[_]) => x
+    case _ => List()
+  }
   def getRef(col:String) = _refs.get(col) match {
     case Some(x:DBPojo) => x
     case _ => null
@@ -285,4 +295,90 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
   private def setAsRow() { _isDBRow=true }
 
+  def stringify(cache:MetaCache, db:SQLProc, skipDBIO:Boolean = true) = {
+    JSONUtils.asString( getJSON(cache,db,skipDBIO) )
+  }
+  
+  def getJSON(cache:MetaCache, db:SQLProc, skipDBIO:Boolean) = {
+    val czmeta= cache.getClassMeta(this.getClass)
+    tstArg( czmeta.isDefined, "Meta-class-holder for class: " + getClass  + " not found." )       
+    val metas= czmeta.get.getFldMetas
+    val refs = czmeta.get.getRefs
+    val rc= if (skipDBIO) metas.keySet.filter(  ! isInternal( _ ) ) else metas.keySet
+    val ks= rc.toArray[Object]
+    val root= new JSONObject()
+    
+    Arrays.sort(ks); ks.foreach { (k) =>
+      val kk= nsb(k)
+      metas.get(kk) match {
+        case Some(fld) => if ( includeJSON(kk) )  {
+            val v= _storage.get( kk ).getOrElse(null) match {
+              case x:String => nsb(x)
+              case x:Long => x
+              case x:Int => x
+              case x:Double => x
+              case x:Float => x
+              case x:java.sql.Timestamp => x.getTime
+              case x:JTime => x.getTime()
+              case x:JDate => x.getTime()
+              case x:Calendar => x.getTimeInMillis
+              case _ => null
+            }
+            root.put(kk, v)
+        }
+        case _ =>
+      }
+    }
+    
+    if (refs.size > 0) {
+      getRefJSON(cache, db, root, refs, skipDBIO)
+    }
+    
+    root
+  }
+
+  private def getRefJSON(cache:MetaCache, db:SQLProc, root:JSONObject, refs:Map[String,Method], skipDBIO:Boolean) {
+    val keys= refs.keySet.filter( includeJSON(_) ).toArray[Object]; Arrays.sort(keys);
+    val t= asJObj(true)
+    keys.foreach { (k) =>
+      val kk= nsb(k)
+      val m= refs.get(kk).get
+      val s= if (DBU.hasM2M(m) || DBU.hasO2M(m)) {
+        m.invoke(this, db, t) match {
+          case Some(x:AbstractModel ) =>
+            val a = x.getJSON(cache, db, skipDBIO)
+            if (a!=null) { val arr= new JSONArray; arr.put(a); root.put(kk, arr) }
+          case x:Seq[_] => 
+            val arr = getJSONArray(x, cache, db, skipDBIO)
+            root.put(kk,arr)
+          case _ =>
+        }
+      } else if (DBU.hasO2O(m)) {             
+        m.invoke(this, db, DBU.getO2O(m).rhs(),t) match {
+          case Some(x:AbstractModel ) =>
+            val a = x.getJSON(cache, db, skipDBIO)
+            if (a!=null) { root.put(kk, a) }
+          case _ =>
+        }
+      }      
+    }
+  }
+  
+  private def getJSONArray(seq:Seq[_], cache:MetaCache, db:SQLProc, skipDBIO:Boolean) = {
+    val arr= new JSONArray()
+    seq.foreach { _ match {
+      case x:AbstractModel => 
+        val a = x.getJSON(cache, db, skipDBIO)
+        if (a!=null) { arr.put(a) }
+      case _ => 
+    }}    
+    arr
+  }
+  
+  protected def includeJSON(col:String) = true
+  
+  private def isInternal(col:String) = col.toLowerCase.startsWith("dbio_")
+  private def isFK(col:String) = col.toLowerCase.startsWith("fk_")
+  
+  
 }
