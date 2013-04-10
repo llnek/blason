@@ -46,7 +46,7 @@ class Employee extends Person {
   }
 
   def dbio_getLogin_column= "login"
-  @Column(size=128, index="loginid")
+  @Column(data=classOf[String],size=128, index="loginid")
   def getLogin() = {
     readData( dbio_getLogin_column) match {
       case Some(s) => nsb(s)
@@ -58,7 +58,7 @@ class Employee extends Person {
   }
 
   def dbio_getDesc_column = "descr"
-  @Column()
+  @Column(data=classOf[String])
   def getDesc() = {
     readData( dbio_getDesc_column ) match {
       case Some(s) => nsb(s)
@@ -70,7 +70,7 @@ class Employee extends Person {
   }
 
   def dbio_getPwd_column = "passcode"
-  @Column()
+  @Column(data=classOf[String])
   def getPwd() = {
     readData( dbio_getPwd_column ) match {
       case Some(s) => nsb(s)
@@ -82,7 +82,7 @@ class Employee extends Person {
   }
 
   def dbio_getPic_column = "picture"
-  @Column()
+  @Column(data=classOf[Array[Byte]])
   def getPic() = {
     readData( dbio_getPic_column ) match {
       case Some(v) => javaToBytes(v)
@@ -94,7 +94,7 @@ class Employee extends Person {
   }
 
   def dbio_getSalary_column = "salary"
-  @Column()
+  @Column(data=classOf[Float])
   def getSalary() = {
     readData( dbio_getSalary_column ) match {
       case Some(v) => javaToSQLFloat(v)

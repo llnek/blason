@@ -40,7 +40,7 @@ class Company extends AbstractModel {
   }
 
   def dbio_getCompanyName_column = "COMPANY_ID"
-  @Column(size=255, index="companyid")
+  @Column(data=classOf[String],size=255, index="companyid")
   def getCompanyName() = {
     readData( dbio_getCompanyName_column ) match {
       case Some(v) => nsb(v)
@@ -52,7 +52,7 @@ class Company extends AbstractModel {
   }
 
   def dbio_getRevenue_column = "revenue"
-  @Column()
+  @Column(data=classOf[Double])
   def getRevenue() = {
     readData( dbio_getRevenue_column ) match {
       case Some(v) => javaToSQLDouble(v)
@@ -64,7 +64,7 @@ class Company extends AbstractModel {
   }
 
   def dbio_getLogo_column = "logo"
-  @Column()
+  @Column(data=classOf[Array[Byte]])
   def getLogo() = {
     readData( dbio_getLogo_column ) match {
       case Some(v) => javaToBytes(v)

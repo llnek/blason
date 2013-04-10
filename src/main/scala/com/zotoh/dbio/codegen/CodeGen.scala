@@ -64,7 +64,7 @@ object CodeGen {
         "utf-8")
   
   def main(args:Array[String]) {
-    val cz= MetaUtils.loadClass("com.narvar.model.IFeedback")
+    val cz= MetaUtils.loadClass("com.narvar.model.IAncillaryInfo")
     new CodeGen(_ftlDir).genOneFile(cz)    
   }
   
@@ -162,7 +162,7 @@ sealed class CodeGen(ftlDir:File) {
     val gn= mn.substring(5, mn.length() - 7)
     val sn=  gn.substring(3)
     val c= Utils.getColumn(mtd)
-    val (pt,rdr)= getParamType( c.dataType )
+    val (pt,rdr)= getParamType( c.data )
     val scope= getScope(model)
     var b=""
     scope.put("col",true)

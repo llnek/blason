@@ -34,7 +34,7 @@ import com.zotoh.frwk.util.StrUtils._
 class Department extends AbstractModel {
 
   def dbio_getDeptID_column = "dname"
-  @Column(size=128, index="deptid")
+  @Column(data=classOf[String],size=128, index="deptid")
   def getDeptID() = {
     readData( dbio_getDeptID_column ) match {
       case Some(v) => nsb(v)

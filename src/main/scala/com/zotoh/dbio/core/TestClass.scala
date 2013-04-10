@@ -12,7 +12,7 @@ object TestClass {
 @Table(table="crap")
 class TestClass extends AbstractModel {
   
-  @Column(desc="")
+  @Column(data=classOf[String],desc="")
   def getName() = ""
     
   def setName(s:String) {    

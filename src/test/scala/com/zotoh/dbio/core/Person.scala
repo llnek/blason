@@ -34,7 +34,7 @@ import java.util.TimeZone
 class Person extends AbstractModel {
   
   def dbio_getFirst_column="first_name"
-  @Column(optional=false)
+  @Column(data=classOf[String],optional=false)
   def getFirst() = {
     readData( dbio_getFirst_column) match {
       case Some(v) => nsb(v)
@@ -46,7 +46,7 @@ class Person extends AbstractModel {
   }
   
   def dbio_getLast_column="last_name"
-  @Column(optional=false)
+  @Column(data=classOf[String],optional=false)
   def getLast() = {
     readData( dbio_getLast_column) match {
       case Some(v) => nsb(v)
@@ -58,7 +58,7 @@ class Person extends AbstractModel {
   }
 
   def dbio_getIQ_column = "iQ"
-  @Column()
+  @Column(data=classOf[Int])
   def getIQ() = {
     readData( dbio_getIQ_column ) match {
       case Some(v) => javaToSQLInt(v)
@@ -70,7 +70,7 @@ class Person extends AbstractModel {
   }
 
   def dbio_getBDay_column = "bday"
-  @Column(optional=false)
+  @Column(data=classOf[Calendar],optional=false)
   def getBDay() = {
     readData( dbio_getBDay_column ) match {
       case Some(v) =>
@@ -85,7 +85,7 @@ class Person extends AbstractModel {
   }
 
   def dbio_getSex_column= "sex"
-  @Column(optional=false,size=8)
+  @Column(data=classOf[String],optional=false,size=8)
   def getSex() = {
     readData( dbio_getSex_column) match {
       case Some(v) => nsb(v)

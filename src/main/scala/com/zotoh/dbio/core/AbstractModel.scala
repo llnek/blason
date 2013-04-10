@@ -238,7 +238,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def isDirty= _dirtyFields.size > 0
 
   def dbio_getRowID_column = COL_ROWID
-  @Column(autogen=true,optional=false,system=true,updatable=false)
+  @Column(data=classOf[Long],autogen=true,optional=false,system=true,updatable=false)
   def getRowID()  = {
     readData( dbio_getRowID_column ) match {
       case Some(x:Long) => x
@@ -251,7 +251,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
 
   def dbio_getVerID_column = COL_VERID
-  @Column( optional=false,system=true,dft=true,updatable=false,dftValue="0")
+  @Column( data=classOf[Long],optional=false,system=true,dft=true,updatable=false,dftValue="0")
   def getVerID() = {
     readData(dbio_getVerID_column ) match {
       case Some(x:Long) => x
@@ -263,7 +263,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
   def dbio_getLastModified_column = "dbio_lastchanged"
-  @Column( optional=false, system=true, dft=true)
+  @Column(data=classOf[JTS], optional=false, system=true, dft=true)
   def getLastModified() = {
     readData( dbio_getLastModified_column) match {
       case Some(x:JTS) => x
@@ -275,7 +275,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
   def dbio_getCreated_column = "dbio_created_on"
-  @Column( optional=false, system=true, dft=true,updatable=false)
+  @Column( data=classOf[JTS], optional=false, system=true, dft=true,updatable=false)
   def getCreated() = {
     readData( dbio_getCreated_column) match {
       case Some(x:JTS) => x
@@ -287,7 +287,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
   def dbio_getCreator_column = "dbio_created_by"
-  @Column()
+  @Column(data=classOf[String])
   def getCreator() = {
     readData( dbio_getCreator_column ) match {
       case Some(s:String) => s

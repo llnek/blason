@@ -39,6 +39,8 @@ public @interface Column {
 
   public String index() default "";
 
+  public Class<?> data();
+  
   /**
    * Flag to reflect column's nullability.
    *
@@ -57,7 +59,7 @@ public @interface Column {
    * @return
    */
   public boolean autogen() default false;
-
+  
   /**
    * For UI
    * @return

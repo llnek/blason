@@ -32,7 +32,7 @@ import com.zotoh.frwk.util.StrUtils._
 class Address extends AbstractModel {
 
   def dbio_getAddr1_column = "ADDR1"
-  @Column()
+  @Column(data=classOf[String])
   def getAddr1() = {
     readData(dbio_getAddr1_column ) match {
     case Some(v) => nsb(v)
@@ -44,7 +44,7 @@ class Address extends AbstractModel {
   }
 
   def dbio_getAddr2_column= "ADDR2"
-  @Column()
+  @Column(data=classOf[String])
   def getAddr2()= {
     readData(dbio_getAddr2_column ) match {
     case Some(v) => nsb(v)
@@ -56,7 +56,7 @@ class Address extends AbstractModel {
   }
 
   def dbio_getCity_column= "CITY"
-  @Column(size=128)
+  @Column(data=classOf[String],size=128)
   def getCity() = {
     readData(dbio_getCity_column) match {
     case Some(v) => nsb(v)
@@ -68,7 +68,7 @@ class Address extends AbstractModel {
   }
 
   def dbio_getState_column= "STATE"
-  @Column(size=128)
+  @Column(data=classOf[String],size=128)
   def getState() = {
     readData( dbio_getState_column) match {
     case Some(v) => nsb(v)
@@ -81,7 +81,7 @@ class Address extends AbstractModel {
 
 
   def dbio_getZip_column= "ZIP"
-  @Column(size=64)
+  @Column(data=classOf[String],size=64)
   def getZip() = {
     readData( dbio_getZip_column) match {
     case Some(v) => nsb(v)
@@ -94,7 +94,7 @@ class Address extends AbstractModel {
 
 
   def dbio_getCountry_column = "COUNTRY"
-  @Column(size=128)
+  @Column(data=classOf[String],size=128)
   def getCountry() = {
     readData( dbio_getCountry_column ) match {
     case Some(v) => nsb(v)
