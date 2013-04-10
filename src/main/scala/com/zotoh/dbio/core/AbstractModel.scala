@@ -74,8 +74,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def postEvent(db:SQLProc, act:DBAction ) {}
   def preEvent(db:SQLProc, act:DBAction) {}
 
-  def getSeq(mtd:String): Seq[Any] = _refs.get(mtd) match {
-    case Some(x:Seq[_]) => x
+  def getSeq(mtd:String): Seq[_] = _refs.get(mtd) match {
+    case Some(x:Seq[_])  => x
     case _ => List()
   }
   def getRef(col:String) = _refs.get(col) match {
@@ -138,7 +138,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
       case _ => dft
     }
   }
-  protected def readCalendar(col:String, dft:Calendar) = {
+  protected def readCalendar(col:String, dft:Calendar= null) = {
     val cal = new GregorianCalendar( TimeZone.getTimeZone( readString(toTZCol(col),"GMT")))
     readData(col) match {
       case Some(x:java.sql.Timestamp) =>
@@ -209,6 +209,12 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def linkO2M( rhs:DBPojo, fkey:String) =  {
     if (rhs == null) 0 else {
       rhs.set(fkey, Some(this.getRowID) )
+      1
+    }
+  }
+  def unlinkO2M(rhs:DBPojo, fkey:String): Int = {
+    if (rhs == null) 0 else {
+      rhs.set(fkey, None)
       1
     }
   }
