@@ -37,5 +37,5 @@ public @interface One2Many {
   // the other object type
   public Class<?> rhs();
   public String desc() default "";
-
+  public boolean singly() default false;
 }

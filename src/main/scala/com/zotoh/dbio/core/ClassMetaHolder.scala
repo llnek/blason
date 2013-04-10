@@ -156,17 +156,6 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
     _cz = z
   }
 
-  private def ensureMarker(mn:String) = {
-    if ( mn.startsWith("dbio_") && mn.endsWith("_column") && mn.length > 12 ) {} else {
-      throw new Exception("Invalid marker:  found : " + mn)
-    }
-    mn
-  }
-
-  private def chompMarker(mn:String) = {
-    mn.substring(5, mn.length - 7)
-  }
-
   private def ensureMarkerType(m:Method) = {
     if ( !isString( m.getReturnType ) ) {
       throw new Exception("Expected marker type (string) for: " + m.getName )
@@ -177,25 +166,6 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
     if ( !isString( m.getReturnType ) ) {
       throw new Exception("Expected marker type (string) for: " + m.getName )
     }
-  }
-
-  private def ensureAssoc(mn:String) = {
-    if ( mn.startsWith("dbio_") && mn.endsWith("_fkey") && mn.length > 10 ) {} else {
-      throw new Exception("Invalid assoc-fkey marker:  found : " + mn)
-    }
-    mn
-  }
-
-  private def chompAssoc(mn:String) = {
-    mn.substring(5, mn.length - 5)
-  }
-
-  private def fmtAssocKey(mn:String) = {
-    "dbio_" + mn + "_fkey"
-  }
-
-  private def fmtMarkerKey(mn:String) = {
-    "dbio_" + mn + "_column"
   }
 
   private def getCol(obj:Any, m:Method) = {
@@ -216,21 +186,21 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
   private def scanAllMarkers( obj:Any, ms:Array[Method], allMtds:Map[String,Method]) {
 
     ms.filter( hasColumn(_) ).foreach { (m) =>
-      val kn= fmtMarkerKey(m.getName )
-      val km= allMtds.get(kn) match {
+      ensureMarkerType( m )
+      ensureMarker( m )
+      val gn= splitMarkerKey(m.getName )
+      val gm= allMtds.get(gn) match {
         case Some(x) => x
-        case _ => throw new Exception("Column getter not found: " + kn)
+        case _ => throw new Exception("Column getter not found: " + gn)
       }
-      ensureMarkerType( km )
-      val cn = getCol(obj, km).toUpperCase
-      val rt = m.getReturnType
-      val gn= m.getName
+      val cn = getCol(obj, m).toUpperCase
+      val rt = gm.getReturnType
       val c = getColumn(m)
       _info.get(cn) match {
-        case Some(x) =>throw new Exception("Found duplicate col-def: " + cn)
+        case Some(x) => throw new Exception("Found duplicate col-def: " + cn)
         case _ => _info.put(cn, mkFldMeta(c, cn,gn))
       }
-      _info.get(cn).get.setGetter(m)
+      _info.get(cn).get.setGetter(gm)
 
       // something special for calendar type
       if ( classOf[Calendar].isAssignableFrom(rt)) {
@@ -257,14 +227,14 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
           val cn = en._1
           val sn = "set" + gn.substring(3)
           ms.get(sn) match {
-            case Some(x) => en._2.setSetter(x)
+            case Some(y) => en._2.setSetter(y)
             case _ => tlog.warn("No setter defined for getter: " + gn + " for class: " + z)
           }
       }
     }
   }
 
-  private def mkM2M(z:Class[_], m:Method, fkey:String) {
+  private def mkM2M(z:Class[_], m:Method, gm:Method, fkey:String) {
     val mm= getM2M(m)
     val jc= mm.joined()
     val rhs = mm.rhs()
@@ -281,7 +251,7 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
     }
   }
 
-  private def mkX2X(z:Class[_], m:Method, fkey:String) {
+  private def mkX2X(z:Class[_], m:Method, gm:Method, fkey:String) {
     val rhs = if (hasO2M(m)) { getO2M(m).rhs() } else if (hasO2O(m)) {
       getO2O(m).rhs()
     } else { throw new Exception("never!" ) }
@@ -310,20 +280,21 @@ class ClassMetaHolder(private val _meta:MetaCache) extends CoreImplicits {
 
   // scan for "assoc(s)" ...
   private def scanAssocs(z:Class[_], obj:Any, ms:Array[Method], allMtds:Map[String, Method] ) {
-    ms.filter( (m) => m.getName.startsWith("get") && hasAssoc(m) ).foreach { (m) =>
-      val mn= m.getName()
-      _refs.put(mn, m)
-      allMtds.get( fmtAssocKey(mn) ) match {
+    ms.filter( (m) => hasAssoc(m) ).foreach { (m) =>
+      ensureFKeyType(m)
+      ensureAssoc(m)
+      val gn= splitAssocKey(m.getName())
+      val fk= nsb( m.invoke( obj ))
+      allMtds.get( gn ) match {
         case Some(x) =>
-          ensureFKeyType(x)
-          val fk=nsb( x.invoke( obj ))
+          _refs.put(gn, x)
           if (hasM2M(m)) {
-            mkM2M(z,m,fk)
+            mkM2M(z,m, x,fk)
           } else {
-            mkX2X(z, m, fk)
+            mkX2X(z,m, x,fk)
           }
         case _ =>
-          throw new Exception("Missing assoc-fkey getter for: " + mn)
+          throw new Exception("Missing assoc-fkey getter for: " + gn)
       }
     }
 

@@ -22,6 +22,7 @@
 package com.zotoh.dbio
 package codegen
 
+import org.apache.commons.lang3.{StringUtils=>STU}
 import java.lang.reflect.Method
 import com.zotoh.dbio.meta.Column
 import com.zotoh.dbio.meta.Many2Many
@@ -64,8 +65,28 @@ object CodeGen {
         "utf-8")
   
   def main(args:Array[String]) {
-    val cz= MetaUtils.loadClass("com.narvar.model.IAncillaryInfo")
-    new CodeGen(_ftlDir).genOneFile(cz)    
+    val rc=List("IAncillaryInfo","ICarrier","ICarrierConnection","IFeedback","IRetailer","IStdAddress","ITrackingDetail","ITrackingInfo","IWatchList").map { (s) =>
+      "com.narvar.model." + s
+    }
+    genFiles(rc, new File("/tmp/abc"))
+  }
+  
+  private def genFiles(cz:Seq[String], desDir:File) {
+    desDir.mkdirs()
+    cz.foreach { (c) =>
+      val z=MetaUtils.loadClass(c)
+      writeOneFile( z, new CodeGen(_ftlDir).genOneFile(z), desDir)          
+    }
+  }
+  
+  private def writeOneFile(cz:Class[_], body:String, desDir:File) {
+    val pn=cz.getPackage().getName()
+    val p=STU.replaceChars(pn, '.','/')
+    val n= cz.getSimpleName() + "DAO.scala"
+    val d=new File(desDir,p)
+    d.mkdirs()
+    val f=new File( d, n)
+    writeFile(f, body, "utf-8")
   }
   
 }
@@ -80,24 +101,25 @@ sealed class CodeGen(ftlDir:File) {
   _ftlCfg.setObjectWrapper(new DefaultObjectWrapper())
   _ftlCfg.setDirectoryForTemplateLoading( ftlDir)
 
-  def genOneFile(cz:Class[_]) {
+  def genOneFile(cz:Class[_]) = {
     tstArg(cz.isInterface(), "" + cz.getName() + " - must be a trait or interface.")
-    tstArg( cz.getSimpleName().startsWith("I") , "" + cz.getName() + " - name must start with I.")
+//    tstArg( cz.getSimpleName().startsWith("I") , "" + cz.getName() + " - name must start with I.")
     val b=new StringBuilder()
+    val mtds= cz.getMethods()
     val model= prepareDef(cz)
-    cz.getMethods().filter ( Utils.hasColumn(_) ).foldLeft(b) { (b, m) =>
+    mtds.filter ( Utils.hasColumn(_) ).foldLeft(b) { (b, m) =>
       resetScope(model)
       b.append( genOneMtd(model, m.getName, m))
       b
     }
-    cz.getMethods().filter ( Utils.hasAssoc(_) ).foldLeft(b) { (b, m) =>
+    mtds.filter ( Utils.hasAssoc(_) ).foldLeft(b) { (b, m) =>
       resetScope(model)
       b.append( genOneMtd(model, m.getName, m))
       b
     }
     pimpScope(model, b.toString)
     val out= finz(model)
-    println(out)
+    out
   }
 
   def genOneMtd(model:JMap[_,_], mn:String, mtd:Method) = {
@@ -134,6 +156,7 @@ sealed class CodeGen(ftlDir:File) {
       case x:One2Many =>
         scope.put("rhstype", x.rhs().getName() )
         scope.put("o2m",true)
+        scope.put("singly", x.singly() )
         sum += 1
       case _ =>
     }
@@ -206,7 +229,7 @@ sealed class CodeGen(ftlDir:File) {
     val cn= cz.getSimpleName()
     model.put("gendate", DateUtils.fmtDate(new JDate))
     model.put("pkg", pn)
-    model.put("classname", cn.substring(1))
+    model.put("classname", cn + "DAO")
     model.put("trait", cn)
     model.put("scope", scope)
     model

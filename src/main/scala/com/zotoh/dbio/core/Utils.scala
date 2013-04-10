@@ -31,10 +31,44 @@ import com.zotoh.dbio.meta._
  */
 object Utils {
 
+  def ensureAssoc(m:Method) = {
+    val mn=m.getName
+    if ( mn.startsWith("dbio_") && mn.endsWith("_fkey") && mn.length > 10 ) {} else {
+      throw new Exception("Invalid assoc-fkey marker:  found : " + mn)
+    }
+    mn
+  }
+  
+  def ensureMarker(m:Method) = {
+    val mn=m.getName
+    if ( mn.startsWith("dbio_") && mn.endsWith("_column") && mn.length > 12 ) {} else {
+      throw new Exception("Invalid marker:  found : " + mn)
+    }
+    mn
+  }
+
+
+  def fmtMarkerKey(mn:String) =    "dbio_" + mn + "_column"
+  def fmtAssocKey(mn:String) =  "dbio_" + mn + "_fkey"
+
+  def splitMarkerKey(mn:String) = mn.substring(5, mn.length - 7)
+  def splitAssocKey(mn:String) = mn.substring(5,mn.length - 5)
+
+
+  
   def getColumn(m:Method) = if (m==null) null else m.getAnnotation(classOf[Column])
   def hasColumn(m:Method) = getColumn(m) != null
 
-  def getTable(z:Class[_]) = if(z==null) null else z.getAnnotation(classOf[Table])
+  def getTable(z:Class[_]) = {
+    if(z==null) null else {
+      var t=z.getAnnotation(classOf[Table])
+      if (t==null) t = z.getInterfaces().find(  _.getAnnotation(classOf[Table]) != null  ) match {
+        case Some(x) => x.getAnnotation(classOf[Table])
+        case _ => null
+      }
+      t
+    }
+  }
   def hasTable(z:Class[_]) = getTable(z) != null
 
   def getM2M(m:Method) = if (m==null) null else m.getAnnotation(classOf[Many2Many])

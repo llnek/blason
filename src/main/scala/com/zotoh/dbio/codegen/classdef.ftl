@@ -13,7 +13,6 @@ import java.util.{Calendar,Date}
 import java.sql.{Time,Timestamp}
 import java.math.{BigDecimal,BigInteger}
 
-
 class ${classname} extends AbstractModel with ${trait} {
 
 ${classbody}

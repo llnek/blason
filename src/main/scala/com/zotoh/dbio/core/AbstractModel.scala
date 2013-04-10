@@ -74,14 +74,15 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def postEvent(db:SQLProc, act:DBAction ) {}
   def preEvent(db:SQLProc, act:DBAction) {}
 
-  def getSeq(mtd:String): Seq[_] = _refs.get(mtd) match {
-    case Some(x:Seq[_])  => x
-    case _ => List()
+  def getRef(col:String): Option[DBPojo] = _refs.get(col) match {
+    case Some(x:DBPojo) => Some(x)
+    case _ => None
   }
-  def getRef(col:String) = _refs.get(col) match {
-    case Some(x:DBPojo) => x
-    case _ => null
+  def getSeq(mtd:String): Option[Seq[_]] = _refs.get(mtd) match {
+    case Some(x:Seq[_])  => Some(x)
+    case _ => None
   }
+  
   protected def setRef(col:String,r:Any) {
     r match {
       case null => _refs.remove(col)
@@ -208,7 +209,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
   def linkO2M( rhs:DBPojo, fkey:String) =  {
     if (rhs == null) 0 else {
-      rhs.set(fkey, Some(this.getRowID) )
+      rhs.set(fkey, Some(this.getRowID) )      
       1
     }
   }
@@ -237,8 +238,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
   def isDirty= _dirtyFields.size > 0
 
-  def dbio_getRowID_column = COL_ROWID
   @Column(data=classOf[Long],autogen=true,optional=false,system=true,updatable=false)
+  def dbio_getRowID_column = COL_ROWID
   def getRowID()  = {
     readData( dbio_getRowID_column ) match {
       case Some(x:Long) => x
@@ -250,8 +251,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   }
 
 
-  def dbio_getVerID_column = COL_VERID
   @Column( data=classOf[Long],optional=false,system=true,dft=true,updatable=false,dftValue="0")
+  def dbio_getVerID_column = COL_VERID
   def getVerID() = {
     readData(dbio_getVerID_column ) match {
       case Some(x:Long) => x
@@ -262,8 +263,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     writeData( dbio_getVerID_column, Option(v))
   }
 
-  def dbio_getLastModified_column = "dbio_lastchanged"
   @Column(data=classOf[JTS], optional=false, system=true, dft=true)
+  def dbio_getLastModified_column = "dbio_lastchanged"
   def getLastModified() = {
     readData( dbio_getLastModified_column) match {
       case Some(x:JTS) => x
@@ -274,8 +275,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     writeData( dbio_getLastModified_column, Option(t) )
   }
 
-  def dbio_getCreated_column = "dbio_created_on"
   @Column( data=classOf[JTS], optional=false, system=true, dft=true,updatable=false)
+  def dbio_getCreated_column = "dbio_created_on"
   def getCreated() = {
     readData( dbio_getCreated_column) match {
       case Some(x:JTS) => x
@@ -286,8 +287,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     writeData( dbio_getCreated_column, Option(t) )
   }
 
-  def dbio_getCreator_column = "dbio_created_by"
   @Column(data=classOf[String])
+  def dbio_getCreator_column = "dbio_created_by"
   def getCreator() = {
     readData( dbio_getCreator_column ) match {
       case Some(s:String) => s
@@ -336,20 +337,22 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     }
     
     if (refs.size > 0) {
-      getRefJSON(cache, db, root, refs, skipDBIO)
+      getRefJSON(cache, czmeta.get, db, root, refs, skipDBIO)
     }
     
     root
   }
 
-  private def getRefJSON(cache:MetaCache, db:SQLProc, root:JSONObject, refs:Map[String,Method], skipDBIO:Boolean) {
+  private def getRefJSON(cache:MetaCache, czmeta:ClassMetaHolder, db:SQLProc, root:JSONObject, refs:Map[String,Method], skipDBIO:Boolean) {
     val keys= refs.keySet.filter( includeJSON(_) ).toArray[Object]; Arrays.sort(keys);
-    val t= asJObj(true)
     keys.foreach { (k) =>
       val kk= nsb(k)
-      val m= refs.get(kk).get
-      val s= if (DBU.hasM2M(m) || DBU.hasO2M(m)) {
-        m.invoke(this, db, t) match {
+      //val m= refs.get(kk).get
+      val km= Utils.fmtAssocKey(kk)
+      val gm= czmeta.getCZ.getMethod(km)
+      val s= if (DBU.hasM2M(gm) || DBU.hasO2M(gm)) {
+        val m= czmeta.getCZ.getMethod(kk, classOf[SQLProc])
+        m.invoke(this,db) match {
           case Some(x:AbstractModel ) =>
             val a = x.getJSON(cache, db, skipDBIO)
             if (a!=null) { val arr= new JSONArray; arr.put(a); root.put(kk, arr) }
@@ -358,8 +361,9 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
             root.put(kk,arr)
           case _ =>
         }
-      } else if (DBU.hasO2O(m)) {             
-        m.invoke(this, db, DBU.getO2O(m).rhs(),t) match {
+      } else if (DBU.hasO2O(gm)) {             
+        val m= czmeta.getCZ.getMethod(kk, classOf[Class[_]])
+        m.invoke(this, DBU.getO2O(gm).rhs() ) match {
           case Some(x:AbstractModel ) =>
             val a = x.getJSON(cache, db, skipDBIO)
             if (a!=null) { root.put(kk, a) }
