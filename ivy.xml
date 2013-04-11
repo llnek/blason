@@ -118,6 +118,13 @@
     <dependency org="net.sf.ehcache" name="ehcache" rev="2.7.0" conf="libjar->default"/>
 
 
+    <!--
+         needs this just to use ehcache! Sigh!
+         -->
+    <dependency org="javax" name="javax-transaction" rev="6.0.0"  conf="libjar->default"/>
+    <dependency org="javax" name="javax-jms" rev="6.0.0"  conf="libjar->default"/>
+    <dependency org="javax" name="javax-management" rev="6.0.0"  conf="libjar->default"/>
+
     </dependencies>
 
 </ivy-module>
