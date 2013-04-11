@@ -25,12 +25,42 @@ package core
 
 import java.lang.reflect.Method
 import com.zotoh.dbio.meta._
+import java.net.URL
+import net.sf.ehcache.CacheManager
+import net.sf.ehcache.Cache
+import com.zotoh.frwk.util.Nichts
+import net.sf.ehcache.Element
+import net.sf.ehcache.transaction.manager.TransactionManagerLookup
+import net.sf.ehcache.transaction.xa.EhcacheXAResource
+import java.util.Properties
+import net.sf.ehcache.transaction.xa.XAExecutionListener
 
 /**
  * @author kenl
  */
 object Utils {
 
+  private var _dbcache:Cache = null
+  
+  def setupCache(cfg:URL) {
+    _dbcache = CacheManager.newInstance(cfg).getCache("dbio-memcached")
+  }
+  
+  def putToCache(key:String, v:Option[Any]) {
+    v match {
+      case Some(x) => _dbcache.putQuiet(new Element(key, x) )
+      case _ => _dbcache.removeQuiet(key)
+    }      
+  }
+  
+  def getFromCache(key:String): Option[Any] = {
+    _dbcache.get(key) match {
+      case x if x != null => Option(x.getObjectValue )
+      case null => None
+    }
+  }  
+  
+  
   def ensureAssoc(m:Method) = {
     val mn=m.getName
     if ( mn.startsWith("dbio_") && mn.endsWith("_fkey") && mn.length > 10 ) {} else {
@@ -95,5 +125,4 @@ object Utils {
   }
 
 }
-
 

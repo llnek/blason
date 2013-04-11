@@ -41,13 +41,7 @@ import java.io.File
 import com.zotoh.frwk.io.IOUtils._
 import java.io.StringWriter
 import com.zotoh.frwk.util.DateUtils
-import com.narvar.model.Feedback
-import com.narvar.model.AncillaryInfo
-import com.narvar.model.StdAddress
-import com.narvar.model.TrackingDetail
-import com.narvar.model.Carrier
 import java.util.Calendar
-import com.narvar.model.CarrierConnection
 import com.zotoh.frwk.util.MetaUtils
 
 
@@ -147,6 +141,8 @@ sealed class CodeGen(ftlDir:File) {
     scope.put("adder", "link" + sn)
     scope.put("delone", "unlink"+ sn)
     scope.put("delall", "purge"+sn)
+    scope.put("encacher", "encache"+sn)
+    scope.put("decacher", "decache"+sn)
     scope.put("colname", mn)
     scope.put("col",false)
     scope.put("o2o",false)

@@ -56,6 +56,7 @@ import com.zotoh.frwk.util.ProcessUtils._
 import com.zotoh.frwk.mime.MimeUtils
 import com.zotoh.blason.core.Execvisor
 import com.zotoh.frwk.util.AsyncProc
+import com.zotoh.dbio.core.Utils
 
 
 object DefaultKernel {
@@ -114,6 +115,7 @@ with Initializable with Contextualizable with Startable with Loggable with Const
     }
 
     MimeUtils.setupCache(new File(_baseDir, DN_CFG+"/app/mime.properties").toURI.toURL )
+    Utils.setupCache(new File(_baseDir, DN_CFG+"/app/ehcache.xml").toURI.toURL )
     _ctx=c
   }
 

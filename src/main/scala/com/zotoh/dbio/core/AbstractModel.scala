@@ -43,9 +43,11 @@ import org.slf4j._
 import org.json.JSONObject
 import java.lang.reflect.Method
 import org.json.JSONArray
+import java.util.concurrent.atomic.AtomicLong
 
 object AbstractModel {
   private val _log= LoggerFactory.getLogger(classOf[AbstractModel])
+  private val _guid= new AtomicLong(0L)
 }
 
 /**
@@ -59,9 +61,11 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   
   def tlog() = AbstractModel._log
   
-  private val _storage= mutable.HashMap[String,Any]()
-  private val _refs= mutable.HashMap[String,Any]()
+  // use this as part of key to cache
+  private val _memID= AbstractModel._guid.incrementAndGet()
+  
   private val _dirtyFields= mutable.HashSet[String]()
+  private val _storage= mutable.HashMap[String,Any]()
   private var _isDBRow=false
   private def iniz() {
     setVerID(0L)
@@ -70,23 +74,34 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
   def isTransient() = ! _isDBRow
   def isDB() = _isDBRow
+  def getMemID() = _memID
+  
+  protected def mkKey(obj:DBPojo, key:String) = getMemID + "." + obj.getClass.getName() + "." + key
+  protected def mkKey(key:String) = getMemID + "." + key
+  
   
   def postEvent(db:SQLProc, act:DBAction ) {}
   def preEvent(db:SQLProc, act:DBAction) {}
 
-  def getRef(col:String): Option[DBPojo] = _refs.get(col) match {
-    case Some(x:DBPojo) => Some(x)
-    case _ => None
-  }
-  def getSeq(mtd:String): Option[Seq[_]] = _refs.get(mtd) match {
-    case Some(x:Seq[_])  => Some(x)
-    case _ => None
-  }
+  def getRef(col:String): Option[DBPojo] = {
+    Utils.getFromCache(mkKey(col)) match {
+      case Some(x:DBPojo) => Some(x)
+      case _ => None
+    }    
+  } 
   
+  def getSeq(mtd:String): Option[Seq[_]] = {
+    Utils.getFromCache(mkKey(mtd)) match {
+      case Some(x:Seq[_])  => Some(x)
+      case _ => None
+    }
+  } 
+      
   protected def setRef(col:String,r:Any) {
+    val key= mkKey(col)
     r match {
-      case null => _refs.remove(col)
-      case _ => _refs.put(col, r)
+      case null => Utils.putToCache( key, None)
+      case _ => Utils.putToCache(key, Some(r))
     }
   }
   
@@ -207,12 +222,14 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     set(fkey, if (rhs==null) None else Option(rhs.getRowID ) )
     setRef(fkey , rhs)    
   }
-  def linkO2M( rhs:DBPojo, fkey:String) =  {
+  
+  def linkO2M(rhs:DBPojo, fkey:String) =  {    
     if (rhs == null) 0 else {
       rhs.set(fkey, Some(this.getRowID) )      
       1
     }
   }
+  
   def unlinkO2M(rhs:DBPojo, fkey:String): Int = {
     if (rhs == null) 0 else {
       rhs.set(fkey, None)
@@ -220,6 +237,33 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     }
   }
 
+  private def maybeAddSeq( mtd:String, rhs:DBPojo) {
+    val key= mkKey(mtd)
+    val s = Utils.getFromCache(key) match {
+      case Some(x:mutable.ArrayBuffer[_]) => x.asInstanceOf[ mutable.ArrayBuffer[DBPojo]]
+      case _ =>
+        val x = mutable.ArrayBuffer[DBPojo]()
+        Utils.putToCache(key, Option(x))
+        x
+    }
+    s += rhs
+  }
+  
+  private def maybeDelSeq( mtd:String, rhs:DBPojo ) {
+    val key= mkKey(mtd)
+    Utils.getFromCache(key) match {
+      case Some(x:mutable.ArrayBuffer[_]) => 
+        val s = x.asInstanceOf[ mutable.ArrayBuffer[DBPojo]]
+        if (s.contains(rhs)) {
+          s.remove(rhs)
+        }
+        if (s.size == 0) {
+          Utils.putToCache(key, None)
+        }
+      case _ =>
+    }
+  }
+  
   def commit() {
     setVerID( getVerID() + 1)
     setAsRow()
@@ -228,7 +272,6 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
   def reset() {
     _dirtyFields.clear
-    _refs.clear
   }
 
   def built() {
@@ -301,9 +344,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
 
   private def setAsRow() { _isDBRow=true }
 
-  def stringify(cache:MetaCache, db:SQLProc, skipDBIO:Boolean = true) = {
-    JSONUtils.asString( getJSON(cache,db,skipDBIO) )
-  }
+  def stringify(cache:MetaCache, db:SQLProc, skipDBIO:Boolean = true) = JSONUtils.asString( getJSON(cache,db,skipDBIO) )
   
   def getJSON(cache:MetaCache, db:SQLProc, skipDBIO:Boolean) = {
     val czmeta= cache.getClassMeta(this.getClass)
@@ -362,8 +403,8 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
           case _ =>
         }
       } else if (DBU.hasO2O(gm)) {             
-        val m= czmeta.getCZ.getMethod(kk, classOf[Class[_]])
-        m.invoke(this, DBU.getO2O(gm).rhs() ) match {
+        val m= czmeta.getCZ.getMethod(kk)
+        m.invoke(this) match {
           case Some(x:AbstractModel ) =>
             val a = x.getJSON(cache, db, skipDBIO)
             if (a!=null) { root.put(kk, a) }

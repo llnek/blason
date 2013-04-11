@@ -84,25 +84,26 @@ trait SQLProc extends CoreImplicits {
     obj
   }
 
-  def findSome[T <: DBPojo ](cz:Class[T], filter:NameValues): Seq[T] = {
+  def findSome[T <: DBPojo ](cz:Class[T], filter:NameValues, orderby:String = ""): Seq[T] = {
     val s= "SELECT * FROM " + throwNoTable(cz).table().uc
     val wc= filter.toFilterClause
     val cb: ResultSet => T = { row : ResultSet => row2Obj(cz, row) }
+    val extra= if (hgl(orderby)) { " ORDER BY " + orderby } else ""
     if ( !STU.isEmpty(wc._1) ) {
-      select[T]( s + " WHERE " + wc._1, wc._2:_* )(cb)
+      select[T]( s + " WHERE " + wc._1 + extra, wc._2:_* )(cb)
     } else {
-      select[T]( s)(cb)
+      select[T]( s + extra )(cb)
     }
   }
 
-  def findSome[T <: DBPojo ](cz:Class[T]): Seq[T] = findSome(cz, new NameValues)
+  def findSome[T <: DBPojo ](cz:Class[T], orderby:String = ""): Seq[T] = findSome(cz, new NameValues, orderby)
   def findOne[T <: DBPojo ](cz:Class[T], filter:NameValues): Option[T] = {
-    val rc = findSome(cz, filter)
+    val rc = findSome(cz, filter, "")
     if (rc.size == 0) None else Option( rc(0) )
   }
 
-  def findAll[T <: DBPojo ](cz:Class[T]): Seq[T] = {
-    findSome(cz, new NameValues )
+  def findAll[T <: DBPojo ](cz:Class[T], orderby:String = ""): Seq[T] = {
+    findSome(cz, new NameValues, orderby )
   }
 
   def findViaSQL[T <: DBPojo ](cz:Class[T], sql:String, params:Any* ): Seq[T] = {
@@ -242,7 +243,7 @@ trait SQLProc extends CoreImplicits {
 
   def getO2O[T <: DBPojo ](lhs:DBPojo, rhs:Class[T], fkey:String): Option[T] = {
     val rc= lhs.get(fkey) match {
-      case Some(x:Long) =>  findSome( rhs, new NameValues(COL_ROWID, x) )
+      case Some(x:Long) =>  findSome( rhs, new NameValues(COL_ROWID, x), "" )
       case _ => List()
     }
     if (rc.size == 0) None else Option( rc(0) )
@@ -263,8 +264,8 @@ trait SQLProc extends CoreImplicits {
     }
   }
 
-  def getO2M[T <: DBPojo ](lhs:DBPojo, rhs:Class[T], fkey:String): Seq[T] = {
-    findSome( rhs, new NameValues(fkey, lhs.getRowID ))
+  def getO2M[T <: DBPojo ](lhs:DBPojo, rhs:Class[T], fkey:String, orderby:String = ""): Seq[T] = {
+    findSome( rhs, new NameValues(fkey, lhs.getRowID ), orderby)
   }
 
   def unlinkO2M(lhs:DBPojo, rhs:DBPojo, fkey:String): Int = {
@@ -289,7 +290,7 @@ trait SQLProc extends CoreImplicits {
     0
   }
 
-  def getM2M[T <: DBPojo](lhs:DBPojo, rhs:Class[T]): Seq[T] = {
+  def getM2M[T <: DBPojo](lhs:DBPojo, rhs:Class[T], orderby:String = ""): Seq[T] = {
     val jc= _meta.findJoined(lhs.getClass,rhs)
     val jn= throwNoTable(jc).table.uc
     val rn= Utils.getTable(rhs).table.uc
