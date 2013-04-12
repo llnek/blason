@@ -60,6 +60,7 @@ object Utils {
     }
   }  
   
+  def getCacheSize(): Int =  _dbcache.getSize()  
   
   def ensureAssoc(m:Method) = {
     val mn=m.getName
