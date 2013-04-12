@@ -115,7 +115,7 @@ with Initializable with Contextualizable with Startable with Loggable with Const
     }
 
     MimeUtils.setupCache(new File(_baseDir, DN_CFG+"/app/mime.properties").toURI.toURL )
-    Utils.setupCache(new File(_baseDir, DN_CFG+"/app/ehcache.xml").toURI.toURL )
+    Utils.setupCache(new File(_baseDir, DN_CFG+"/app/cache.conf") )
     _ctx=c
   }
 

@@ -66,6 +66,7 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   
   private val _dirtyFields= mutable.HashSet[String]()
   private val _storage= mutable.HashMap[String,Any]()
+  private val _cache= mutable.HashMap[String,Any]()
   private var _isDBRow=false
   private def iniz() {
     setVerID(0L)
@@ -76,32 +77,39 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
   def isDB() = _isDBRow
   def getMemID() = _memID
   
-  protected def mkKey(obj:DBPojo, key:String) = getMemID + "." + obj.getClass.getName() + "." + key
+  //protected def mkKey(obj:DBPojo, key:String) = getMemID + "." + obj.getClass.getName() + "." + key
   protected def mkKey(key:String) = getMemID + "." + key
   
+  private def putToCache(k:String,v:Option[Any]) {
+    v match {
+      case Some(x) => _cache.put(k,x)
+      case _ => _cache.remove(k)
+    }
+  }
+  private def getFromCache(k:String) = _cache.get(k)
   
   def postEvent(db:SQLProc, act:DBAction ) {}
   def preEvent(db:SQLProc, act:DBAction) {}
 
-  def getRef(col:String): Option[DBPojo] = {
-    Utils.getFromCache(mkKey(col)) match {
+  def getRef(mtd:String): Option[DBPojo] = {
+    getFromCache(mkKey(mtd)) match {
       case Some(x:DBPojo) => Some(x)
       case _ => None
     }    
   } 
   
   def getSeq(mtd:String): Option[Seq[_]] = {
-    Utils.getFromCache(mkKey(mtd)) match {
+    getFromCache(mkKey(mtd)) match {
       case Some(x:Seq[_])  => Some(x)
       case _ => None
     }
   } 
       
-  protected def setRef(col:String,r:Any) {
-    val key= mkKey(col)
+  protected def setRef(mtd:String,r:Any) {
+    val key= mkKey(mtd)
     r match {
-      case null => Utils.putToCache( key, None)
-      case _ => Utils.putToCache(key, Some(r))
+      case null => putToCache( key, None)
+      case _ => putToCache(key, Some(r))
     }
   }
   
@@ -218,9 +226,9 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     _storage.get(col.uc)
   }
 
-  def setO2O(rhs:DBPojo, fkey:String) {
+  def setO2O(mtd:String, rhs:DBPojo, fkey:String) {
     set(fkey, if (rhs==null) None else Option(rhs.getRowID ) )
-    setRef(fkey , rhs)    
+    setRef(mtd,rhs)
   }
   
   def linkO2M(rhs:DBPojo, fkey:String) =  {    
@@ -237,28 +245,28 @@ abstract class AbstractModel extends DBPojo with CoreImplicits {
     }
   }
 
-  private def maybeAddSeq( mtd:String, rhs:DBPojo) {
+  private def XmaybeAddSeq( mtd:String, rhs:DBPojo) {
     val key= mkKey(mtd)
-    val s = Utils.getFromCache(key) match {
+    val s = getFromCache(key) match {
       case Some(x:mutable.ArrayBuffer[_]) => x.asInstanceOf[ mutable.ArrayBuffer[DBPojo]]
       case _ =>
         val x = mutable.ArrayBuffer[DBPojo]()
-        Utils.putToCache(key, Option(x))
+        putToCache(key, Option(x))
         x
     }
     s += rhs
   }
   
-  private def maybeDelSeq( mtd:String, rhs:DBPojo ) {
+  private def XmaybeDelSeq( mtd:String, rhs:DBPojo ) {
     val key= mkKey(mtd)
-    Utils.getFromCache(key) match {
+    getFromCache(key) match {
       case Some(x:mutable.ArrayBuffer[_]) => 
         val s = x.asInstanceOf[ mutable.ArrayBuffer[DBPojo]]
         if (s.contains(rhs)) {
           s.remove(rhs)
         }
         if (s.size == 0) {
-          Utils.putToCache(key, None)
+          putToCache(key, None)
         }
       case _ =>
     }

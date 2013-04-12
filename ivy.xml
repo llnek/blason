@@ -31,7 +31,7 @@
     <!-- miscellaneous -->
     <dependency org="net.sourceforge.jregex" name="jregex" rev="1.2_01"  conf="libjar->default"/>
     <dependency org="com.beust" name="jcommander" rev="1.30" conf="libjar->default"/>
-    <dependency org="com.google.guava" name="guava" rev="13.0.1" conf="libjar->default"/>
+    <dependency org="com.google.guava" name="guava" rev="14.0.1" conf="libjar->default"/>
     <dependency org="com.google.code.findbugs" name="jsr305" rev="2.0.1" conf="libjar->default"/>
 
     <!-- xml, dom -->

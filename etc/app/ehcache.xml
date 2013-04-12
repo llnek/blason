@@ -58,8 +58,11 @@ Here is an example of CacheManager level resource tuning, which will use up to 4
          dynamicConfig="true" maxBytesLocalHeap="400M" maxBytesLocalOffHeap="2G">
 
 -->
+
 <ehcache xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:noNamespaceSchemaLocation="ehcache.xsd">
+         xsi:noNamespaceSchemaLocation="ehcache.xsd"
+         updateCheck="true" monitoring="autodetect"
+         dynamicConfig="true">
 
   <diskStore path="java.io.tmpdir"/>
 

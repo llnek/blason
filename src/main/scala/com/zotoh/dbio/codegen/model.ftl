@@ -11,18 +11,18 @@
   def ${scope.colname} = "${scope.columnid}"
   def ${scope.getter}(db:SQLProc): Option[${scope.rhstype}] = {
     val rc= db.getO2O(this, classOf[${scope.rhstype}], ${scope.colname} )
-    setRef( ${scope.colname}, rc.getOrElse(null) )
+    setRef( "${scope.getter}", rc.getOrElse(null) )
     rc
   }
 
   def ${scope.getter}(): Option[${scope.rhstype}] = {
-    getRef(${scope.colname}) match {
+    getRef("${scope.getter}") match {
       case Some(x) => Option(x.asInstanceOf[${scope.rhstype}])
       case _ => None
     }
   }
 
-  def ${scope.setter}(p:${scope.rhstype} ) = setO2O( p, ${scope.colname} )
+  def ${scope.setter}(p:${scope.rhstype} ) = setO2O( "${scope.getter}", p, ${scope.colname} )
 
 </#if>
 <#if scope.o2m = true >
@@ -34,25 +34,25 @@
       case s if s.size > 0 => Option(s(0))
       case _ => None
     }
-    setRef( ${scope.colname} , x.getOrElse(null) )
+    setRef( "${scope.getter}" , x.getOrElse(null) )
     x
   }
   def ${scope.getter}(): Option[${scope.rhstype}] = {
-    getRef(${scope.colname} ) match {
+    getRef("${scope.getter}" ) match {
       case Some( x)  => Option(x.asInstanceOf[${scope.rhstype}])
       case _ => None
     }
   }
   def ${scope.setter}(p:${scope.rhstype} ) {
     linkO2M( p, ${scope.colname})
-    setRef( ${scope.colname}, p)
+    setRef( "${scope.getter}", p)
   }
   def ${scope.delone}(d:${scope.rhstype} ) = {
-    setRef(${scope.colname}, null)
+    setRef( "${scope.getter}", null)
     unlinkO2M(  d, ${scope.colname})
   }
   def ${scope.delall}(db:SQLProc) = {
-    setRef(${scope.colname}, null)
+    setRef( "${scope.getter}", null)
     db.purgeO2M(  this, classOf[${scope.rhstype}], ${scope.colname} )
   }
 

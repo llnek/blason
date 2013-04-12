@@ -24,43 +24,97 @@ package com.zotoh.dbio
 package core
 
 import java.lang.reflect.Method
+import java.util.concurrent.Callable
+import java.util.concurrent.TimeUnit
+import org.slf4j._
+import com.google.common.cache.Cache
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
 import com.zotoh.dbio.meta._
+import com.zotoh.frwk.util.CoreUtils._
+import com.google.common.util.concurrent.ExecutionError
+import java.util.concurrent.ExecutionException
 import java.net.URL
-import net.sf.ehcache.CacheManager
-import net.sf.ehcache.Cache
-import com.zotoh.frwk.util.Nichts
-import net.sf.ehcache.Element
-import net.sf.ehcache.transaction.manager.TransactionManagerLookup
-import net.sf.ehcache.transaction.xa.EhcacheXAResource
-import java.util.Properties
-import net.sf.ehcache.transaction.xa.XAExecutionListener
+import com.zotoh.frwk.util.INIConf
+import java.io.File
+
+
+sealed class CacheElementBox(private val _em:Any) extends Object {
+  def get() = _em
+}
 
 /**
  * @author kenl
  */
 object Utils {
 
-  private var _dbcache:Cache = null
+  private val _log= LoggerFactory.getLogger(classOf[Utils])
+  def tlog() = _log
   
-  def setupCache(cfg:URL) {
-    _dbcache = CacheManager.newInstance(cfg).getCache("dbio-memcached")
+  private var _dbcache:Cache[String,CacheElementBox] = null
+    
+  // this doesn't work in the way that I want, doesn't expire stuff ????
+  def setupCache(cfg:File) {
+    val f= new INIConf( cfg)
+    val timeToLiveSecs= f.getInt("dbio-memcached", "time_to_live_secs").getOrElse(120)
+    val maxItems= f.getInt("dbio-memcached", "max_items").getOrElse(10000)
+    val a = CacheBuilder.newBuilder().maximumSize(maxItems).expireAfterAccess(timeToLiveSecs, TimeUnit.SECONDS ).build(
+        new CacheLoader[String,CacheElementBox] {
+            def load(k:String) = {   throw new ExecutionException() {} }
+        }
+        )
+    _dbcache=a    
+    tlog.info("Created cache#dbio-memcached.  maxItems= {}, timeToLiveSecs= {}", maxItems, timeToLiveSecs)
   }
   
-  def putToCache(key:String, v:Option[Any]) {
+  private def safeCacheClear(key:String) {
+    try {
+      _dbcache.invalidate(key)
+    } catch {
+      case e:Throwable =>
+    }
+  }
+  
+  private def safeCachePut(key:String, v:Any) {
+    try {
+      _dbcache.put(key, new CacheElementBox(v))
+      safeCacheGet(key) // force an access ?
+    } catch {
+      case e:Throwable => tlog.error("",e)
+    }
+  }
+  
+  private def safeCacheGet(key:String) = {
+    val rc = try {
+      _dbcache.get(key, new Callable[CacheElementBox]() {
+        def call() = { throw new ExecutionException() {} }      
+      })      
+    } catch {
+      case e:Throwable => tlog.error("",e); null
+    }
+    if (rc==null) null else rc.get()
+  }
+  
+  def XputToCache(key:String, v:Option[Any]) {
+    if (v.isDefined) {
+      tlog.debug("PutCache: key= {}, v = {}", key, v.get.getClass.getName(), "" )            
+    } else {
+      tlog.debug("PutCache: key= {}, v = None", key)      
+    }
     v match {
-      case Some(x) => _dbcache.putQuiet(new Element(key, x) )
-      case _ => _dbcache.removeQuiet(key)
+      case Some(x) => safeCachePut(key, x)
+      case _ => safeCacheClear(key)
     }      
   }
   
-  def getFromCache(key:String): Option[Any] = {
-    _dbcache.get(key) match {
-      case x if x != null => Option(x.getObjectValue )
+  def XgetFromCache(key:String): Option[Any] = {
+    safeCacheGet(key) match {
+      case x:Any => Option(x)
       case null => None
     }
   }  
   
-  def getCacheSize(): Int =  _dbcache.getSize()  
+  def XgetCacheSize(): Long =  _dbcache.size()  
   
   def ensureAssoc(m:Method) = {
     val mn=m.getName
@@ -134,4 +188,6 @@ object Utils {
   }
 
 }
+
+sealed class Utils {}
 
