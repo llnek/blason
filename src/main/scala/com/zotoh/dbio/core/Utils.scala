@@ -85,6 +85,11 @@ object Utils {
   def splitAssocKey(mn:String) = mn.substring(5,mn.length - 5)
 
 
+  def getField(m:Method) = if (m==null) null else m.getAnnotation(classOf[Field])
+  def hasField(m:Method) = getField(m) != null
+
+  def getAssocDef(m:Method) = if (m==null) null else m.getAnnotation(classOf[Assoc])
+  def hasAssocDef(m:Method) = getAssocDef(m) != null
   
   def getColumn(m:Method) = if (m==null) null else m.getAnnotation(classOf[Column])
   def hasColumn(m:Method) = getColumn(m) != null
@@ -101,6 +106,9 @@ object Utils {
   }
   def hasTable(z:Class[_]) = getTable(z) != null
 
+  def getManifest(z:Class[_]) = if (z==null) null else  z.getAnnotation(classOf[CodeGenManifest])
+  def hasManifest(z:Class[_]) = getManifest(z) != null
+  
   def getM2M(m:Method) = if (m==null) null else m.getAnnotation(classOf[Many2Many])
   def getO2M(m:Method) = if (m==null) null else m.getAnnotation(classOf[One2Many])
   def getO2O(m:Method) = if (m==null) null else m.getAnnotation(classOf[One2One])

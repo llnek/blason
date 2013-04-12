@@ -1,10 +1,14 @@
 <#if scope.col = true >
-  def ${scope.setter}(p:${scope.param_type}) = writeData(${scope.colname}, Option(p))
 
+  @Column(${scope.coldetails})
+  def ${scope.colname} = "${scope.columnid}"
+  def ${scope.setter}(p:${scope.param_type}) = writeData(${scope.colname}, Option(p))
   def ${scope.getter}() = ${scope.reader}(${scope.colname})
 
-</#if>
+</#if> 
 <#if scope.o2o = true >
+  ${scope.refdetails}
+  def ${scope.colname} = "${scope.columnid}"
   def ${scope.getter}(db:SQLProc): Option[${scope.rhstype}] = {
     val rc= db.getO2O(this, classOf[${scope.rhstype}], ${scope.colname} )
     setRef( ${scope.colname}, rc.getOrElse(null) )
@@ -23,6 +27,8 @@
 </#if>
 <#if scope.o2m = true >
   <#if scope.singly = true>
+  ${scope.refdetails}
+  def ${scope.colname} = "${scope.columnid}"
   def ${scope.getter}(db:SQLProc): Option[${scope.rhstype}] = {
     val x = db.getO2M(this, classOf[${scope.rhstype}], ${scope.colname}) match {
       case s if s.size > 0 => Option(s(0))
@@ -51,6 +57,8 @@
   }
 
   <#else>
+  ${scope.refdetails}
+  def ${scope.colname} = "${scope.columnid}"
   def ${scope.getter}(db:SQLProc): Seq[${scope.rhstype}] = {
     val rc= db.getO2M(this, classOf[${scope.rhstype}], ${scope.colname} )
     ${scope.encacher}(rc )
@@ -71,6 +79,8 @@
 </#if>
 
 <#if scope.m2m = true >
+  ${scope.refdetails}
+  def ${scope.colname} = "${scope.columnid}"
   def ${scope.getter}( db:SQLProc) = {
     val rc = db.getM2M(this, classOf[${scope.rhstype}] )
     ${scope.encacher}(rc)
