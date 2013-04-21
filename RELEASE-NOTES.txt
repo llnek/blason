@@ -1,5 +1,5 @@
-Blason-0.0.1-SNAPSHOT : [ 2013/03 ]
+Blason-0.0.2-SNAPSHOT : [ 2013/04 ]
 =====================================
 
-- Initial release
+-  bug fixes release
 
