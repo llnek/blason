@@ -58,7 +58,7 @@ import org.bouncycastle.cms.CMSSignedDataGenerator
 import org.bouncycastle.cms.CMSSignedGenerator
 import org.bouncycastle.cms.jcajce.JcaSignerInfoGeneratorBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.bouncycastle.openssl.PEMReader
+import org.bouncycastle.openssl.{PEMParser, PEMReader}
 import org.bouncycastle.operator.ContentSigner
 import org.bouncycastle.operator.DigestCalculatorProvider
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
@@ -82,11 +82,11 @@ import org.apache.commons.codec.binary.Base64
 import org.apache.commons.codec.binary.Hex
 
 
-sealed class SigningStyle() {}
+class SigningStyle() {}
 case object EXPLICIT extends SigningStyle
 case object IMPLICIT extends SigningStyle
 
-sealed class CertFormat() {}
+class CertFormat() {}
 case object DER extends CertFormat
 case object PEM extends CertFormat
 
@@ -225,7 +225,7 @@ object Crypto {
     }
     val rdr=new InputStreamReader( new ByteArrayIS(keyPEM))
     val ss= new PKCSStore().createKeyStore
-    val kp = new PEMReader(rdr).readObject().asInstanceOf[KeyPair]
+    val kp = new PEMParser(rdr).readObject().asInstanceOf[KeyPair]
     ss.setKeyEntry(friendlyName, kp.getPrivate, pwd.toCharArray, Array(ct))
     val baos= new ByteArrayOS()
     ss.store(baos, pwd.toCharArray)
