@@ -22,7 +22,7 @@
 package com.zotoh.frwk
 package net
 
-import java.net.{ServerSocket,Socket,InetAddress,URI}
+import java.net._
 import java.lang.{Character=>JCH}
 import java.io.InputStream
 
@@ -31,9 +31,19 @@ import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.CoreImplicits
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.io.IOUtils._
+import scala.Some
 
 
 object NetUtils extends CoreImplicits {
+
+  def mkTinyUrl(url:URL) = {
+    val target= "http://tinyurl.com/api-create.php?url="+url.toExternalForm()
+    val cli= new SyncHTTPClient("text/plain").withSocTOutMillis( 5000 )
+    cli.connect(new URI(target)).get match {
+      case Some(x:String) => strim(x)
+      case _ => ""
+    }
+  }
 
   /**
    * Get the current machine/interface's IP Address.
