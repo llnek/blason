@@ -36,15 +36,15 @@ import com.zotoh.frwk.util.CoreUtils._
  */
 class PropsConfiguration(private val _props:JPS) extends Configuration {
 
-  def asMap = { _props.toMap }
   def asJavaMap = {
     val rc= new java.util.HashMap[String,Any]()
     _props.keys().foreach { (key)  =>
-      val k=nsb(key)
-      rc.put(k, _props.get(key))
+      rc.put(nsb(key), _props.get(key))
     }
     rc
   }
+
+  def asMap = { _props.toMap }
 
   def getString(name:String,dft:String) = {
     if (_props.containsKey(name)) {

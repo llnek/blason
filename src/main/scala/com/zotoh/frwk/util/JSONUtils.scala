@@ -195,27 +195,18 @@ object JSONUtils {
   def newJSON(): JSNO = new JSNO
 
   def newJSON(m:JSNO): JSNO = {
-    val rc= newJSON()
-    if (m != null) m.keySet().foreach { (key) =>
-      val k= nsb(key)
-      m.get(k) match {
-        case x:JSNO => rc.put(k,x)
-        case x:JSNA => rc.put(k,x)
-        case z => rc.put(k,z)
-      }
+    if (m == null) null else {
+      read( asString(m) )
     }
-    rc
   }
 
-  def newJSON(m:java.util.Map[_,_]): JSNO = new JSNO(m)
-
   def newJSA(c:java.util.Collection[_]): JSNA = new JSNA(c)
-
+  def newJSON(m:java.util.Map[_,_]): JSNO = new JSNO(m)
   def newJSA(): JSNA = new JSNA
 
   def merge(base:JSNO, other:JSNO): JSNO = {
     val rc= newJSON(base)
-    if (other != null) other.keySet().foreach { (key) =>
+    if (other != null) other.keys().foreach { (key) =>
       val k=nsb(key)
       rc.put(k, other.get(k) )
     }
@@ -224,7 +215,7 @@ object JSONUtils {
 
   def asJavaList(ja:JSNA): java.util.List[_] = {
     val rc= new java.util.ArrayList[Any]()
-    for (i <- 0 to ja.length) {
+    for (i <- 0 until ja.length) {
       rc.add( ja.get(i) )
     }
     rc
@@ -232,7 +223,7 @@ object JSONUtils {
 
   def asList(ja:JSNA): List[_] = {
     val rc= mutable.ArrayBuffer[Any]()
-    for (i <- 0 to ja.length) {
+    for (i <- 0 until ja.length) {
       rc += ja.get(i)
     }
     rc.toList
