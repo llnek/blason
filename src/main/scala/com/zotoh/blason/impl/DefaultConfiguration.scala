@@ -26,21 +26,19 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable
 import java.net.URL
 import java.util.{Date=>JDate,Map=>JMap,List=>JList,LinkedHashMap=>JLMap}
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.core.{JsonFactory,JsonParser}
-import com.fasterxml.jackson.databind.JsonNode
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.StrUtils._
 import com.zotoh.frwk.util.DateUtils._
 import com.zotoh.blason.core.Configuration
+import com.zotoh.frwk.util.JSONUtils
+import org.json.{JSONArray, JSONObject}
 
 /**
  * @author kenl
  */
-class DefaultConfiguration(private var _node:JMap[_,_], p:Configuration=null) extends AbstractConfiguration(p) {
+class DefaultConfiguration(private var _node:JSONObject, p:Configuration=null) extends AbstractConfiguration(p) {
 
-  if (_node==null) { _node= new JLMap()  }
+  if (_node==null) { _node= JSONUtils.newJSON()  }
 
   def this(cfgUrl:URL) {
     this(null,null)
@@ -51,10 +49,11 @@ class DefaultConfiguration(private var _node:JMap[_,_], p:Configuration=null) ex
     this(null,null)
   }
 
-  def contains(n:String) = _node.containsKey(n)
-  def size() = _node.size()
+  def contains(n:String) = _node.has(n)
+  def size() = _node.keySet().size()
 
-  def asJHM() = { _node }
+  def asJavaMap() = JSONUtils.asJavaMap(_node )
+  def asMap() = JSONUtils.asMap(_node )
 
   def initialize() { }
 
@@ -64,47 +63,33 @@ class DefaultConfiguration(private var _node:JMap[_,_], p:Configuration=null) ex
   }
 
   def getLong(n:String, dft:Long) = {
-    if (_node.containsKey(n)) {
-      _node.get(n) match {
-        case s:String => asLong(s,dft)
-        case g:Long => g
-        case n:Int => n.toLong
-        case _ => dft
-      }
+    if (_node.has(n)) {
+      _node.optLong(n,dft)
     } else {
       dft
     }
   }
 
   def getDouble(n:String, dft:Double) = {
-    if (_node.containsKey(n)) {
-      _node.get(n) match {
-        case s:String => asDouble(s,dft)
-        case d:Double => d
-        case f:Float => f.toDouble
-        case _ => dft
-      }
+    if (_node.has(n)) {
+      _node.optDouble(n,dft)
     } else {
       dft
     }
   }
 
   def getBool(n:String,dft:Boolean) = {
-    if ( _node.containsKey(n)) {
-      _node.get(n) match {
-        case s:String => asBool(s,dft)
-        case b:Boolean => b
-        case _ => dft
-      }
+    if ( _node.has(n)) {
+      _node.optBoolean(n,dft)
     } else {
       dft
     }
   }
 
   def getDate(n:String) :Option[JDate] = {
-    if ( _node.containsKey(n)) {
-      _node.get(n) match {
-        case s:String => parseDate(s)
+    if ( _node.has(n)) {
+      _node.optString(n,"") match {
+        case s if s.length > 0 => parseDate(s)
         case _ => None
       }
     } else {
@@ -113,8 +98,8 @@ class DefaultConfiguration(private var _node:JMap[_,_], p:Configuration=null) ex
   }
 
   def getString(n:String, dft:String) =  {
-    if ( _node.containsKey(n)) {
-      nsb( _node.get(n))
+    if ( _node.has(n)) {
+      _node.optString(n,dft)
     } else {
       dft
     }
@@ -126,9 +111,9 @@ class DefaultConfiguration(private var _node:JMap[_,_], p:Configuration=null) ex
   }
 
   def getChild(n:String) = {
-    if (_node.containsKey(n)) {
+    if (_node.has(n)) {
       _node.get(n) match {
-        case m:JMap[_,_] =>
+        case m:JSONObject =>
           Some( new DefaultConfiguration(m,this))
         case _ =>
           None
@@ -139,33 +124,35 @@ class DefaultConfiguration(private var _node:JMap[_,_], p:Configuration=null) ex
   }
 
   def getSequence(n:String) = {
-    val empty= List[Any]()
-    val rc= if (_node.containsKey(n)) {
+    val empty= List()
+    val rc= if (_node.has(n)) {
       _node.get(n) match {
-        case s:JList[_] => jiggleList(s)
+        case s:JSONArray => jiggleList(s)
         case _ => empty
       }
     } else {
       empty
     }
+
     rc.toSeq
   }
 
-  private def jiggleList(lst:JList[_]) : List[_] = {
+  private def jiggleList(lst:JSONArray) : List[_] = {
     val rc=mutable.ArrayBuffer[Any]()
-    lst.foreach { _ match {
-      case x:JMap[_,_] => rc += new DefaultConfiguration(x,this)
-      case x:JList[_] => rc += jiggleList(x)
-      case z => rc += z
-    }}
+    for ( i <- 0 until lst.length ) {
+      lst.get(i) match {
+        case x:JSONObject => rc += new DefaultConfiguration(x,this)
+        case x:JSONArray => rc += jiggleList(x)
+        case z => rc += z
+      }
+    }
     rc.toList
   }
 
   private def iniz(cfgUrl:URL) {
-    _node= new ObjectMapper().readValue(
-      new JsonFactory().createParser( cfgUrl ),
-      classOf[JMap[String,_]]
-    )
+    using( cfgUrl.openStream ) { (inp) =>
+      _node = JSONUtils.read(inp)
+    }
   }
 
 }

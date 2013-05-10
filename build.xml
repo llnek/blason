@@ -27,7 +27,20 @@
        compile source code
        -->
 
+  <target name="compile_java">
+
+    <javac sourcepath="" srcdir="${src.dir}/java" destdir="${build.dir}"
+      includeantruntime="false" excludes=""
+      debug="${build.debug}" debuglevel="lines,vars,source" classpathref="compile.path.id">
+      <compilerarg line="-Xlint:deprecation -Xlint:unchecked"/>
+      <include name="**/*.java"/>
+    </javac>
+
+  </target>
+
   <target name="compile_and_jar">
+
+    <antcall target="compile_java" />
 
     <scalac srcdir="${src.dir}/scala" destdir="${build.dir}" classpathref="compile.path.id" fork="true" jvmargs="-Xmx5120M -Xms1024M">
       <include name="com/zotoh/blason/loaders/**/*.scala"/>
@@ -40,12 +53,7 @@
     <delete dir="${build.dir}"/>
     <mkdir dir="${build.dir}"/>
 
-    <javac sourcepath="" srcdir="${src.dir}/java" destdir="${build.dir}"
-      includeantruntime="false" excludes=""
-      debug="${build.debug}" debuglevel="lines,vars,source" classpathref="compile.path.id">
-      <compilerarg line="-Xlint:deprecation -Xlint:unchecked"/>
-      <include name="**/*.java"/>
-    </javac>
+    <antcall target="compile_java" />
 
     <scalac srcdir="${src.dir}/scala" destdir="${build.dir}" classpathref="compile.path.id" fork="true" jvmargs="-Xmx5120M -Xms1024M">
       <include name="**/*.scala"/>

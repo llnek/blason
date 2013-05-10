@@ -22,6 +22,8 @@
 package com.zotoh.blason
 package impl
 
+import scala.collection.JavaConversions._
+
 import java.util.{Date=>JDate,Properties=>JPS,Map=>JMap}
 import com.zotoh.blason.core.Configuration
 import com.zotoh.frwk.util.StrUtils._
@@ -32,9 +34,17 @@ import com.zotoh.frwk.util.CoreUtils._
 /**
  * @author kenl
  */
-class PropsConfiguration(private val _props:JMap[_,_]) extends Configuration {
+class PropsConfiguration(private val _props:JPS) extends Configuration {
 
-  def asJHM = { _props }
+  def asMap = { _props.toMap }
+  def asJavaMap = {
+    val rc= new java.util.HashMap[String,Any]()
+    _props.keys().foreach { (key)  =>
+      val k=nsb(key)
+      rc.put(k, _props.get(key))
+    }
+    rc
+  }
 
   def getString(name:String,dft:String) = {
     if (_props.containsKey(name)) {
@@ -48,9 +58,14 @@ class PropsConfiguration(private val _props:JMap[_,_]) extends Configuration {
     if (_props.containsKey(name)) {
       _props.get(name) match {
         case s:String => asDouble(s,dft)
-        case d:Double => d
-        case f:Float => f.toDouble
-        case _ => dft
+        case z =>
+          if (z.isInstanceOf[Double]) {
+            z.asInstanceOf[Double]
+          } else if (z.isInstanceOf[Float]) {
+            z.asInstanceOf[Float].toDouble
+          } else {
+            dft
+          }
       }
     } else {
       dft
@@ -61,9 +76,14 @@ class PropsConfiguration(private val _props:JMap[_,_]) extends Configuration {
     if (_props.containsKey(name)) {
       _props.get(name) match {
         case s:String => asLong(s,dft)
-        case g:Long => g
-        case n:Int => n.toLong
-        case _ => dft
+        case z =>
+          if (z.isInstanceOf[Long]) {
+            z.asInstanceOf[Long]
+          } else if (z.isInstanceOf[Int]) {
+            z.asInstanceOf[Int].toLong
+          } else {
+            dft
+          }
       }
     } else {
       dft
@@ -79,8 +99,12 @@ class PropsConfiguration(private val _props:JMap[_,_]) extends Configuration {
     if (_props.containsKey(name)) {
       _props.get(name) match {
         case s:String => asBool(s,dft)
-        case b:Boolean => b
-        case _ => dft
+        case z =>
+          if (z.isInstanceOf[Boolean]) {
+            z.asInstanceOf[Boolean]
+          } else {
+            dft
+          }
       }
     } else {
       dft

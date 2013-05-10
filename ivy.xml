@@ -37,10 +37,12 @@
     <!-- xml, dom -->
     <dependency org="org.jdom" name="jdom2" rev="2.0.4" conf="libjar->default"/>
 
-    <!-- JSON -->
+    <!-- JSON
     <dependency org="com.fasterxml.jackson.core" name="jackson-core" rev="2.1.1" conf="libjar->default"/>
     <dependency org="com.fasterxml.jackson.core" name="jackson-databind" rev="2.1.1" conf="libjar->default"/>
     <dependency org="com.fasterxml.jackson.core" name="jackson-annotations" rev="2.1.1" conf="libjar->default"/>
+    -->
+
 
     <!-- apache commons -->
     <dependency org="org.apache.commons" name="commons-lang3" rev="3.1" conf="libjar->default"/>

@@ -31,7 +31,7 @@ import java.util.{Date=>JDate, Map=>JMap}
 trait Configuration {
 
   def getChild(name:String): Option[Configuration]
-  def getSequence(name:String): Seq[Any]
+  def getSequence(name:String): Seq[_]
 
   def contains(name:String): Boolean
   def size(): Int
@@ -44,7 +44,8 @@ trait Configuration {
 
   def getKeys(): Seq[String]
 
-  def asJHM: JMap[_,_]
+  def asJavaMap: JMap[String,_]
+  def asMap: Map[String, _]
 
 }
 

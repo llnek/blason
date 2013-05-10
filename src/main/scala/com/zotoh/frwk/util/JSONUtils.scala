@@ -21,11 +21,16 @@
 
 package com.zotoh.frwk.util
 
+import scala.collection.JavaConversions._
+import scala.collection.mutable
+
+
 import java.io.{File,InputStream,IOException}
 import java.util.{Properties=>JPS}
-import org.json.{JSONObject=>JSNO,JSONArray=>JSNA,JSONTokener=>JSNTkr}
+import org.json.{JSONObject => JSNO, JSONArray => JSNA, JSONTokener => JSNTkr}
 import com.zotoh.frwk.io.IOUtils._
 import com.zotoh.frwk.util.CoreUtils._
+import com.zotoh.frwk.util.StrUtils._
 
 /**
  * Utility functions related to JSON objects/strings.  The JSNO source code is from json.org
@@ -187,13 +192,82 @@ object JSONUtils {
   /**
    * @return
    */
-  def newJSON() = new JSNO
+  def newJSON(): JSNO = new JSNO
 
-  def newJSON(m:java.util.Map[_,_]) = new JSNO(m)
+  def newJSON(m:JSNO): JSNO = {
+    val rc= newJSON()
+    if (m != null) m.keySet().foreach { (key) =>
+      val k= nsb(key)
+      m.get(k) match {
+        case x:JSNO => rc.put(k,x)
+        case x:JSNA => rc.put(k,x)
+        case z => rc.put(k,z)
+      }
+    }
+    rc
+  }
 
-  def newJSA(c:java.util.Collection[_]) = new JSNA(c)
+  def newJSON(m:java.util.Map[_,_]): JSNO = new JSNO(m)
 
-  def newJSA() = new JSNA
+  def newJSA(c:java.util.Collection[_]): JSNA = new JSNA(c)
+
+  def newJSA(): JSNA = new JSNA
+
+  def merge(base:JSNO, other:JSNO): JSNO = {
+    val rc= newJSON(base)
+    if (other != null) other.keySet().foreach { (key) =>
+      val k=nsb(key)
+      rc.put(k, other.get(k) )
+    }
+    rc
+  }
+
+  def asJavaList(ja:JSNA): java.util.List[_] = {
+    val rc= new java.util.ArrayList[Any]()
+    for (i <- 0 to ja.length) {
+      rc.add( ja.get(i) )
+    }
+    rc
+  }
+
+  def asList(ja:JSNA): List[_] = {
+    val rc= mutable.ArrayBuffer[Any]()
+    for (i <- 0 to ja.length) {
+      rc += ja.get(i)
+    }
+    rc.toList
+  }
+
+  def asJavaMap(root:JSNO): java.util.Map[String,_] = {
+    val rc= new java.util.HashMap[String,Any]()
+
+    if (root != null) root.keys().foreach { (key) =>
+      val k=nsb(key)
+      root.get(k) match {
+        case x:JSNO => rc.put(k,  asJavaMap(x) )
+        case x:JSNA => rc.put(k, asJavaList(x))
+        case z => rc.put(k,z)
+      }
+    }
+
+    rc
+  }
+
+
+  def asMap(root:JSNO): Map[String,_] = {
+    val rc= mutable.HashMap[String,Any]()
+
+    if (root != null) root.keys().foreach { (key) =>
+      val k=nsb(key)
+      root.get(k) match {
+        case x:JSNO => rc += k -> asMap(x)
+        case x:JSNA => rc += k -> asList(x)
+        case z => rc += k -> z
+      }
+    }
+
+    rc.toMap
+  }
 
 }
 

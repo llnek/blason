@@ -33,7 +33,7 @@ import com.zotoh.blason.impl.PropsConfiguration
 import com.zotoh.blason.core.Startable
 import com.zotoh.blason.core.Initializable
 import com.zotoh.blason.core.Disposable
-import com.zotoh.frwk.util.CoreImplicits
+import com.zotoh.frwk.util.{JSONUtils, CoreImplicits, Coroutine, AsyncProc}
 import com.zotoh.frwk.util.CoreUtils._
 import com.zotoh.frwk.util.MetaUtils._
 import com.zotoh.frwk.util.StrUtils._
@@ -41,9 +41,7 @@ import com.zotoh.blason.core.Contextualizable
 import com.zotoh.blason.core.Context
 import com.zotoh.blason.core.Configurable
 import com.zotoh.blason.core.Configuration
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.zotoh.blason.core.Constants
-import com.fasterxml.jackson.core.JsonFactory
 import com.zotoh.blason.impl.DefaultConfiguration
 import java.io.FileInputStream
 import com.zotoh.blason.core.Composable
@@ -65,8 +63,6 @@ import java.lang.reflect.Method
 import com.zotoh.jmx.support.JMXResource
 import com.zotoh.jmx.support.JMXMethod
 import com.zotoh.jmx.support.JMXProperty
-import com.zotoh.frwk.util.Coroutine
-import com.zotoh.frwk.util.AsyncProc
 import org.apache.commons.lang3.{StringUtils=>STU}
 import com.zotoh.blason.mvc.RouteInfo
 import com.zotoh.blason.mvc.WebPage
@@ -433,8 +429,7 @@ class Container( private val _meta:PODMeta ) extends Initializable with Configur
 
   private def parseConf(url:URL, par:Configuration = null ) = {
     val j = using( url.openStream ) { (inp) =>
-      new ObjectMapper().readValue(
-          new JsonFactory().createParser( inp),classOf[JMap[_,_]])
+      JSONUtils.read(inp)
     }
     new DefaultConfiguration(j, par)
   }

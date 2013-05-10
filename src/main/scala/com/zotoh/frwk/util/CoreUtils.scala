@@ -59,8 +59,6 @@ import java.net.InetAddress
 import java.net.URLEncoder
 import java.net.URLDecoder
 import java.util.Arrays
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.core.JsonFactory
 import java.util.Calendar
 
 
@@ -809,11 +807,8 @@ object CoreUtils extends Constants  with CoreImplicits {
     require( v!=null && v.length > 0,  "" + param + " must be non empty")
   }
 
-  def parseJSON(s:String) = {
-    val p = new JsonFactory().createParser( s )
-    new ObjectMapper().readValue(p, classOf[JMap[String,_]])
-  }
-  
+  def parseJSON(s:String) = JSONUtils.read(s)
+
   private def cacheEnvVars() {
     _isUNIX = ! sysQuirk("os.name").hasic("windows")
   }
