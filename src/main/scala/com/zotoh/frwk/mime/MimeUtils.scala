@@ -34,6 +34,7 @@ import java.net.URL
 import java.util.regex.Pattern
 import java.util.{Properties=>JPS}
 import java.io.File
+import javax.mail.Message
 
 /**
  * This is a utility class that provides various MIME related functionality.
@@ -192,3 +193,11 @@ object MimeUtils extends Constants with CoreImplicits {
 
 sealed class MimeUtils {}
 
+trait Email {
+
+  def addRecipient(fld:Message.RecipientType, addrs:String ): Unit
+  def attach(fp:File ): Unit
+  def send(body:String , contentType:String, subType:String) : Unit
+  def send(body:String ) : Unit
+
+}

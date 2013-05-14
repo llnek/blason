@@ -139,6 +139,35 @@ object NetUtils extends CoreImplicits {
     if (error || octets < 4) null else dst
   }
 
+
+  def ip4Bytes(ip4:Int) = {
+    val out = new Array[Byte](4)
+    val sz=4
+    for ( i <- 0 until sz ) {
+      out(i) = (ip4 >>> (sz * 8 - ((i + 1) * 8))).toByte
+    }
+    out
+  }
+
+  def ip4Int(ip4:Array[Byte]) = {
+    var j = 0x00
+    ip4.foreach { (i) =>
+      j = (j << 8) + unsign(i)
+    }
+    j
+  }
+
+  def ip4AsBytes(ip4:String) = InetAddress.getByName(ip4).getAddress()
+  def ip4AsInt(ip4:String ) = ip4Int( ip4AsBytes(ip4))
+
+  def ip4String(ip4:Int): String = {
+    val a=ip4Bytes(ip4)
+    "" + unsign(a(0)) + "." + unsign(a(1)) + "." + unsign(a(2)) + "." + unsign(a(3))
+  }
+
+  def ip4String(ip4:Array[Byte] ): String = ip4String(ip4Int(ip4))
+
+
   /**
    * @param url
    * @return
@@ -242,5 +271,6 @@ object NetUtils extends CoreImplicits {
 
   }
 
+  private def unsign(b:Byte): Int = b & 0xFF
 }
 
