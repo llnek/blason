@@ -15,6 +15,7 @@
   <dependencies defaultconf="libjar">
 
     <!-- clojure  -->
+
     <dependency org="org.clojure" name="clojure" rev="1.5.1" conf="libjar->default"/>
 
 
