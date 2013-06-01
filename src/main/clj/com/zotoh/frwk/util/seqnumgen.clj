@@ -22,17 +22,18 @@
   (:import (java.util.concurrent.atomic AtomicLong AtomicInteger) )
   )
 
-(def ^{ :private true } _numInt (AtomicInteger. 1))
-(def ^{ :private true } _numLong (AtomicLong. 1))
+(def ^:private _numInt (AtomicInteger. 1))
+(def ^:private  _numLong (AtomicLong. 1))
 
 (defn ^{
     :doc "Return a sequence number (integer)."
   }
-  next-int [] (.getAndIncrement _numInt))
+  nextInt [] (.getAndIncrement _numInt))
 
 (defn ^{
     :doc "Return a sequence number (long)."
   }
-  next [] (.getAndIncrement _numLong))
+  nextLong [] (.getAndIncrement _numLong))
 
-(def ^{ :private true } seqnumgen nil)
+(def ^:private  seqnumgen-eof nil)
+

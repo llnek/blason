@@ -19,13 +19,9 @@
 ;;
 
 (ns com.zotoh.frwk.util.byteutils 
-  (:import (java.net.InetAddress) )
-  (:import (java.util.StringBuilder) )
-  (:import (java.lang.Math) )
-  (:require [ com.zotoh.frwk.util.coreutils :as CU ] )
-  (:require [ com.zotoh.frwk.util.strutils :as STU ] )
-  (:require [ com.zotoh.frwk.util.byteutils :as BU ] )
-  (:require [ com.zotoh.frwk.util.seqnumgen :as SQ ] )
+  (:import (java.nio ByteBuffer CharBuffer) )
+  (:import (java.nio.charset.Charset) )
+  (:import (java.io ByteArrayOutputStream ByteArrayInputStream DataOutputStream DataInputStream) )
   )
 
 ;;
@@ -35,65 +31,52 @@
 ;;
 ;;
 
-object ByteUtils {
-
-  /**
-   * @param ca
-   * @return
-   */
-  def convertCharsToBytes(ca:Array[Char], enc:Charset) = {
-    enc.encode(CharBuffer.wrap(ca)).array()
+(defn ^{
+    :doc "Convert char[] to byte[]."
   }
+  toByteArray [ chArray ^Charset encoding ]
+    (.array (.encode encoding (CharBuffer/wrap chArray)) ) )
 
-  /**
-   * @param ba
-   * @return
-   */
-  def convertBytesToChars(ba:Array[Byte], enc:Charset) = {
-    enc.decode( ByteBuffer.wrap(ba)).array()
+(defn ^{
+    :doc "Convert byte[] to char[]."
   }
+  toCharArray [ byteArray ^Charset encoding ]
+    (.array (.decode encoding (ByteBuffer/wrap byteArray)) ) )
 
-  /**
-   * @param bits
-   * @return
-   */
-  def readAsLong(bits:Array[Byte]) = {
-    new DataInputStream( new ByteArrayIS(bits)).readLong
+(defn ^{
+    :doc "Return a long by scanning the byte[]."
   }
+  readLong [ byteArray ]
+    (.readLong (DataInputStream. (ByteArrayInputStream. byteArray)) ))
 
-  /**
-   * @param bits
-   * @return
-   */
-  def readAsInt(bits:Array[Byte]) = {
-    new DataInputStream( new ByteArrayIS(bits)).readInt
+(defn ^{
+    :doc "Return an int by scanning the byte[]."
   }
+  readInt [ byteArray ]
+    (.readInt (DataInputStream. (ByteArrayInputStream. byteArray)) ))
 
-  /**
-   * @param n
-   * @return
-   */
-  def readAsBytes(n:Long) = {
-    using(new ByteArrayOS()) { (baos) =>
-      val ds= new DataOutputStream( baos)
-      ds.writeLong(n)
-      ds.flush()
-      baos.toByteArray
-    }
+(defmulti readBytes class)
+
+(defmethod ^{
+    :doc "Convert the long into byte[]."
   }
+  readBytes Long [ num ]
+    (with-open [ baos (ByteArrayOutputStream. 4096) ]
+      (let [ ds (DataOutputStream. baos ) ] 
+        (.writeLong ds num)
+        (.flush ds )
+        (.toByteArray baos ) )))
 
-  /**
-   * @param n
-   * @return
-   */
-  def readAsBytes(n:Int) = {
-    using( new ByteArrayOS()) { (baos) =>
-      val ds= new DataOutputStream( baos)
-      ds.writeInt(n)
-      ds.flush()
-      baos.toByteArray
-    }
+(defmethod ^{
+    :doc "Convert the int into byte[]."
   }
+  readBytes Integer [ num ]
+    (with-open [ baos (ByteArrayOutputStream. 4096) ]
+      (let [ ds (DataOutputStream. baos ) ] 
+        (.writeInt ds num)
+        (.flush ds )
+        (.toByteArray baos ) )))
 
-}
+
+(def ^:private byteutils-eof nil)
 

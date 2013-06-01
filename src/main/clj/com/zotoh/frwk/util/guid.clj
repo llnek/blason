@@ -28,31 +28,33 @@
   (:require [ com.zotoh.frwk.util.seqnumgen :as SQ ] )
   )
 
-(defn- maybe-set-ip []
+(defn- maybeSetIP []
   (try
     (let [ net (InetAddress/getLocalHost) 
            b (.getAddress net) ]
       (if (.isLoopbackAddress net) 
         (.nextLong (CU/new-random))
-        (if (= 4 (.length b)) (BU/readas-int b) (BU/readas-long b) )
+        (if (= 4 (.length b)) (BU/read-int b) (BU/read-long b) )
         ))
     (catch Throwable e (.printStackTrace e))))
 
-(def ^:private _IP (Math/abs (maybe-set-ip)) )
+(def ^:private _IP (Math/abs (maybeSetIP)) )
 
 
 (defn ^{ :doc "Return a new guid based on time and ip-address." }
-  new-wwid [] 
+  newWWID [] 
     (let [ seed (.nextInt (CU/new-random) (Integer/MAX_VALUE)) 
-           ts (split-hilo-time) ]
+           ts (splitHiLoTime) ]
 
-      (str (nth ts 0) (fmt-long _IP) (fmt-int seed) (fmt-int (SQ/next-int)) (nth ts 1)) 
+      (str (nth ts 0) (fmtXXX _IP) (fmtXXX seed) (fmtXXX (SQ/nextInt)) (nth ts 1)) 
     ))
 
-(defn- fmt-long [ num ]
+(defmulti fmtXXX  class )
+
+(defn- fmtXXX Long [ num ]
     (fmt "0000000000000000"  (.toHexString num)) )
 
-(defn- fmt-int [ num ]
+(defn- fmtXXX Integer [ num ]
     (fmt "00000000"  (.toHexString num)) )
 
 (defn- fmt [ pad mask ]
@@ -62,8 +64,8 @@
     (if (>= mlen plen) (.substring mask 0 plen)
       (.toString (.replace (StringBuilder. pad) (- plen mlen) plen mask ) ))))
 
-(defn- split-hilo-time []
-  (let [ s (fmt-long (System/currentTimeMillis))
+(defn- splitHiLoTime []
+  (let [ s (fmtXXX (System/currentTimeMillis))
          n (.length s) ]
     [ (STU/left s (/ n 2)) (STU/right s (max 0 (- n (/ n 2 )) )) ] ))
 

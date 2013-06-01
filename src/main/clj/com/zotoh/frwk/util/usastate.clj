@@ -27,7 +27,7 @@
 ;;
 ;;
 
-(def ^{ :private true } _CCODES {
+(def ^:private _CCODES {
     "AL"  "Alabama"
     "AK"  "Alaska"
     "AZ"  "Arizona"
@@ -80,26 +80,26 @@
     "WY"  "Wyoming"
 })
 
-(def ^{ :private true } _CCODESEQ (seq _CCODES))
+(def ^:private _CCODESEQ (seq _CCODES))
 
 
 (defn ^{
     :doc "List all the abbreviated states."
   }
-  list-state-codes [] (keys _CCODES))
+  listStateCodes [] (keys _CCODES))
 
 (defn ^{
     :doc "Return the full state name."
   }
-  find-state [ ^String code ] (_CCODES (.toUpperCase code)))
+  findState [ code ] (_CCODES (.toUpperCase code)))
 
 (defn ^{
     :doc "Return the abbreviated state code."
   }
-  find-code [ ^String state ]
-  (let [ rs (filter #(= (nth % 1) state) _CCODESEQ) ] 
-    (if (nil? rs) nil (nth (first rs) 0))))
+  findCode [ state ]
+    (let [ rs (filter #(= (nth % 1) state) _CCODESEQ) ] 
+      (if (nil? rs) nil (nth (first rs) 0))))
 
 
-(def ^{ :private true } usastate-eof nil)
+(def ^:private usastate-eof nil)
 
