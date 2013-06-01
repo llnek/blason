@@ -25,8 +25,7 @@
 ;; @author kenl
 ;;
 
-(def _CCODES
-  {
+(def ^{:private  true} _CCODES {
     "AF"  "Afghanistan"
     "AL"  "Albania"
     "DZ"  "Algeria"
@@ -259,12 +258,33 @@
     "YU"  "Yugoslavia"
     "ZM"  "Zambia"
     "ZW"  "Zimbabwe"
+})
+
+(def ^{ :private true } _CCODESEQ (seq _CCODES))
+
+
+(defn ^{
+    :doc "Return the full country name."
   }
-)
+  find-country [ ^String code ] (_CCODES (.toUpperCase code)))
 
-(defn find-country [ ^String code ] (_CCODES (.toUpperCase code)))
-(defn usa? [ ^String code] (= "US" (.toUpperCase code)))
+(defn ^{
+    :doc "List all the country codes."
+  }
+  list-country-codes [] (keys _CCODES))
 
-(def eof nil)
+(defn ^{
+    :doc "Returns true if the code is US."
+  }
+  usa? [ ^String code] (= "US" (.toUpperCase code)))
 
+(defn ^{
+    :doc "Return the country code."
+  }
+  find-code [ ^String country ]
+  (let [ rs (filter #(= (nth % 1) country) _CCODESEQ) ] 
+    (if (nil? rs) nil (nth (first rs) 0))))
+
+
+(def ^{ :private true } countrycode-eof nil)
 
