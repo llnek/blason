@@ -22,8 +22,9 @@
   ;;(:use [ clojure.tools.logging :as LOG ])
   (:import (java.security SecureRandom))
   (:import (java.nio.charset Charset))
-  (:import (java.io File ByteArrayInputStream ByteArrayOutputStream))
-  (:import (java.util Properties Date GregorianCalendar ))
+  (:import (java.io File FileInputStream ByteArrayInputStream ByteArrayOutputStream))
+  (:import (java.util Properties Date GregorianCalendar TimeZone))
+  (:import (java.util.zip DataFormatException Deflater Inflater))
   (:import (java.sql Timestamp))
   (:import (org.apache.commons.lang3.text StrSubstitutor))
   (:import (org.apache.commons.lang3 StringUtils))
@@ -33,6 +34,12 @@
 
 (def ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"} )
 (defn- nsb [s]  (if (nil? s) (str "") s))
+
+(defn getCZldr
+  ""
+  ([] (getCZldr nil) )
+  ([cl]
+    (if (nil? cl) (.getContextClassLoader (Thread/currentThread)) cl )))
 
 (defn new-random
   "Return a new random object."
@@ -181,7 +188,7 @@
   
 (defmulti asQuirks class)
 (defmethod ^{ :doc "" } 
-  asQuirks byte[]
+  asQuirks bytes
   [bits]
   (asQuirks (ByteArrayInputStream. bits)))
 
@@ -192,11 +199,135 @@
     (.load ps inp)
     ps))
 
+(defmethod ^{ :doc "" } 
+  asQuirks File
+  [fp]
+  (with-open [ inp (FileInputStream. fp) ]
+    (asQuirks inp)))
 
+(defn readBytes
+  "Read all bytes from the stream."
+  [ins]
+  (if (nil? ins) nil
+    (with-open [ baos (ByteArrayOutputStream.) ]
+      (let [ ba (byte-array 4096) ]              
+        (loop [ n (.read ins ba) ]  
+          (if (<= n 0)
+            (.toByteArray baos)
+            (do (.write baos ba 0 n) (recur (.read ins ba) ))))))))
 
+(defn mkString
+  ""
+  ([bits] (mkString bits "UTF-8"))
+  ([bits encoding]
+    (if (nil? bits) (String. bits encoding))))
 
+(defn getBytes
+  ""
+  ([s] (getBytes s "UTF-8"))
+  ([s encoding]
+    (if (nil? s) nil (.getBytes s encoding)
+    )))
+  
+(defn asBytes
+  ""
+  [props]
+  (if (nil? props) 
+    nil 
+    (with-open [ baos (ByteArrayOutputStream.) ]
+        (.store props baos nil)
+        (.toByteArray baos))))
 
+(defn rc2Stream
+  "Load the resource as stream."
+  [rcPath czLoader]
+  (if (nil? rcPath) nil (.getResourceAsStream (getCZldr czLoader) rcPath)))
 
+(defn rc2Url
+  "Load the resource as URL."
+  [rcPath czLoader]
+  (if (nil? rcPath) nil (.getResource (getCZldr czLoader) rcPath)))
 
+(defn rc2Str
+  "Load the resource as string."
+  [rcPath encoding czLoader]
+  (with-open [ inp (rc2Stream rcPath czLoader) ]
+    (mkString (readBytes inp) encoding )))
+
+(defn rc2Bytes
+  "Load the resource as byte[]."
+  [rcPath czLoader]
+  (with-open [ inp (rc2Stream rcPath czLoader) ]
+    (readBytes inp)))
+
+(defn deflate
+  "Compress the given byte[]."
+  [bits]
+  (if (nil? bits) nil
+    (let [ buf (byte-array 1024)
+           cpz (Deflater.) ]         
+      (.setLevel cpz (Deflater/BEST_COMPRESSION))
+      (.setInput cpz bits)
+      (.finish cpz)
+      (with-open [ bos (ByteArrayOutputStream. (alength bits)) ]
+        (loop []
+          (if (.finished cpz)
+            (.toByteArray bos)
+            (do (.write bos buf 0 (.deflate cpz buf)) (recur))
+          ))))))
+
+(defn inflate
+  "Decompress the given byte[]."
+  [bits]
+  (if (nil? bits) nil
+    (let [ buf (byte-array 1024)
+           dec (Inflater.) ]         
+      (.setInput dec bits)
+      (with-open [ bos (ByteArrayOutputStream. (alength bits)) ]
+        (loop []
+          (if (.finished dec)
+            (.toByteArray bos)
+            (do (.write bos buf 0 (.inflate dec buf)) (recur))
+          ))))))  
+
+(def ^:private _PUNCS #{ \_ \- \. \( \) \space } )
+(defn normalize
+  "Normalize a filepath, hex-code all non-alpha characters."
+  [fname]
+  (reduce 
+    (fn [buf ch] 
+      (do
+        (if (or (java.lang.Character/isLetterOrDigit ch)
+              (contains? _PUNCS ch))
+          (.append buf ch)
+          (.append buf (str "_0x" (Integer/toString (int ch) 16)) ))
+        buf))      
+    (StringBuilder.) 
+    (seq fname)))
+
+(defn nowMillis
+  "Return the current time in milliseconds based on the timezone."
+  ([] (nowMillis ""))
+  ([tz]
+    (if (= (.length (nsb tz)) 0)
+      (java.lang.System/currentTimeMillis)
+      (.getTimeInMillis (GregorianCalendar. (TimeZone/getTimeZone tz))))))
+  
+(defn asFilePathOnly
+  "Get the file path from a URL string."
+  [fileUrlPath]
+  (if (nil? fileUrlPath) 
+    ""
+    (.getPath (java.net.URL. fileUrlPath))) )
+
+(defn asFileUrl
+  ""
+  [path]
+  (if (nil? path) 
+    ""
+    (str (if (isWindows) "file:/"  "file:") path)))
+  
+  
+  
 (def ^:private coreutils-eof nil)
 
