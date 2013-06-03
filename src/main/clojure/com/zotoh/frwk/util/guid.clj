@@ -38,6 +38,9 @@
 (declare fmtXXX)
 (declare fmt)
 
+(def ^:private  _CHARS (.toCharArray "0123456789AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz"))
+(def ^:private  _UUIDLEN 36)
+
 (defn- maybeSetIP []
   (try
     (let [ neta (InetAddress/getLocalHost) 
@@ -49,6 +52,22 @@
     (catch Throwable e (.printStackTrace e))))
 
 (def ^:private _IP (Math/abs (maybeSetIP)) )
+
+
+(defn newUUID
+  "rfc4122, version 4 form."
+  []
+  ;; At i==19 set the high bits of clock sequence as per rfc4122, sec. 4.1.5
+  (let [ rc (char-array _UUIDLEN)
+         rnd (CU/newRandom) ]
+    (dotimes [ n (alength rc) ]
+      (aset-char rc n (case n
+        (8 13 18 23) \-
+        (14) \4
+        (let [ r (bit-or 0 (.intValue (* (.nextDouble rnd) 16)) )
+               pos (if (= n 19) (bit-or (bit-and r 0x3) 0x8) (bit-and r 0xf) ) ]
+          (aget _CHARS pos))) ))
+    (String. rc)))
 
 (defn newWWID
   "Return a new guid based on time and ip-address."
@@ -75,6 +94,8 @@
   (let [ s (fmtXXX (System/currentTimeMillis))
          n (.length s) ]
     [ (STU/left s (/ n 2)) (STU/right s (max 0 (- n (/ n 2 )) )) ] ))    
+
+
 
 
 (def ^:private guid-eof  nil)
