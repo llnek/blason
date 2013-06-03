@@ -20,7 +20,7 @@
 
 (ns com.zotoh.frwk.util.byteutils 
   (:import (java.nio ByteBuffer CharBuffer) )
-  (:import (java.nio.charset.Charset) )
+  (:import (java.nio.charset Charset) )
   (:import (java.io ByteArrayOutputStream ByteArrayInputStream DataOutputStream DataInputStream) )
   )
 
@@ -31,51 +31,44 @@
 ;;
 ;;
 
-(defn ^{
-    :doc "Convert char[] to byte[]."
-  }
-  toByteArray [ chArray ^Charset encoding ]
-    (.array (.encode encoding (CharBuffer/wrap chArray)) ) )
+(defn toByteArray
+  "Convert char[] to byte[]."
+  [ chArray ^Charset encoding ]
+  (.array (.encode encoding (CharBuffer/wrap chArray)) ) )
 
-(defn ^{
-    :doc "Convert byte[] to char[]."
-  }
-  toCharArray [ byteArray ^Charset encoding ]
-    (.array (.decode encoding (ByteBuffer/wrap byteArray)) ) )
+(defn toCharArray
+  "Convert byte[] to char[]."
+  [ byteArray ^Charset encoding ]
+  (.array (.decode encoding (ByteBuffer/wrap byteArray)) ) )
 
-(defn ^{
-    :doc "Return a long by scanning the byte[]."
-  }
-  readLong [ byteArray ]
-    (.readLong (DataInputStream. (ByteArrayInputStream. byteArray)) ))
+(defn readLong
+  "Return a long by scanning the byte[]."
+  [ byteArray ]
+  (.readLong (DataInputStream. (ByteArrayInputStream. byteArray)) ))
 
-(defn ^{
-    :doc "Return an int by scanning the byte[]."
-  }
-  readInt [ byteArray ]
-    (.readInt (DataInputStream. (ByteArrayInputStream. byteArray)) ))
+(defn readInt
+  "Return an int by scanning the byte[]."
+  [ byteArray ]
+  (.readInt (DataInputStream. (ByteArrayInputStream. byteArray)) ))
 
-(defmulti readBytes class)
-
-(defmethod ^{
-    :doc "Convert the long into byte[]."
-  }
-  readBytes Long [ num ]
+(defmulti writeBytes class)
+(defmethod ^{ :doc "Write this long value out as byte[]." } writeBytes Long
+  [ num ]
     (with-open [ baos (ByteArrayOutputStream. 4096) ]
       (let [ ds (DataOutputStream. baos ) ] 
         (.writeLong ds num)
-        (.flush ds )
+        (.flush ds ) 
         (.toByteArray baos ) )))
 
-(defmethod ^{
-    :doc "Convert the int into byte[]."
-  }
-  readBytes Integer [ num ]
+(defmethod ^{ :doc "Write this int value out as byte[]." } writeBytes  Integer
+  [ num ]
     (with-open [ baos (ByteArrayOutputStream. 4096) ]
       (let [ ds (DataOutputStream. baos ) ] 
         (.writeInt ds num)
         (.flush ds )
         (.toByteArray baos ) )))
+
+
 
 
 (def ^:private byteutils-eof nil)

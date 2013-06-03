@@ -19,55 +19,63 @@
 ;;
 
 (ns com.zotoh.frwk.util.guid 
-  (:import (java.net.InetAddress) )
-  (:import (java.util.StringBuilder) )
-  (:import (java.lang.Math) )
+  (:import (java.net InetAddress) )
+  (:import (java.lang StringBuilder) )
+  (:import (java.lang Math) )
   (:require [ com.zotoh.frwk.util.coreutils :as CU ] )
   (:require [ com.zotoh.frwk.util.strutils :as STU ] )
   (:require [ com.zotoh.frwk.util.byteutils :as BU ] )
   (:require [ com.zotoh.frwk.util.seqnumgen :as SQ ] )
   )
 
+;;
+;; One way to generate an unique id.
+;;
+;; @author kenl
+;;
+;;
+(declare splitHiLoTime)
+(declare fmtXXX)
+(declare fmt)
+
 (defn- maybeSetIP []
   (try
-    (let [ net (InetAddress/getLocalHost) 
-           b (.getAddress net) ]
-      (if (.isLoopbackAddress net) 
-        (.nextLong (CU/new-random))
-        (if (= 4 (.length b)) (BU/read-int b) (BU/read-long b) )
+    (let [ neta (InetAddress/getLocalHost) 
+           b (.getAddress neta) ]
+      (if (.isLoopbackAddress neta ) 
+        (.nextLong (CU/newRandom))
+        (if (= 4 (alength b)) (long (BU/readInt b)) (BU/readLong b) )
         ))
     (catch Throwable e (.printStackTrace e))))
 
 (def ^:private _IP (Math/abs (maybeSetIP)) )
 
+(defn newWWID
+  "Return a new guid based on time and ip-address."
+  [] 
+  (let [ seed (.nextInt (CU/newRandom) (Integer/MAX_VALUE)) 
+         ts (splitHiLoTime) ]
+      (str (nth ts 0) (fmtXXX _IP) (fmtXXX seed) (fmtXXX (SQ/nextInt)) (nth ts 1)) ))
 
-(defn ^{ :doc "Return a new guid based on time and ip-address." }
-  newWWID [] 
-    (let [ seed (.nextInt (CU/new-random) (Integer/MAX_VALUE)) 
-           ts (splitHiLoTime) ]
+(defmulti ^:private fmtXXX  class )
 
-      (str (nth ts 0) (fmtXXX _IP) (fmtXXX seed) (fmtXXX (SQ/nextInt)) (nth ts 1)) 
-    ))
+(defmethod ^:private fmtXXX Long [ num ]
+    (fmt "0000000000000000"  (Long/toHexString num)) )
 
-(defmulti fmtXXX  class )
-
-(defn- fmtXXX Long [ num ]
-    (fmt "0000000000000000"  (.toHexString num)) )
-
-(defn- fmtXXX Integer [ num ]
-    (fmt "00000000"  (.toHexString num)) )
+(defmethod ^:private  fmtXXX Integer [ num ]
+    (fmt "00000000"  (Integer/toHexString num)) )
 
 (defn- fmt [ pad mask ]
   (let [ mlen (.length mask)
          plen (.length pad) ]
-
     (if (>= mlen plen) (.substring mask 0 plen)
       (.toString (.replace (StringBuilder. pad) (- plen mlen) plen mask ) ))))
 
 (defn- splitHiLoTime []
   (let [ s (fmtXXX (System/currentTimeMillis))
          n (.length s) ]
-    [ (STU/left s (/ n 2)) (STU/right s (max 0 (- n (/ n 2 )) )) ] ))
+    [ (STU/left s (/ n 2)) (STU/right s (max 0 (- n (/ n 2 )) )) ] ))    
+
 
 (def ^:private guid-eof  nil)
 

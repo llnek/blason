@@ -20,28 +20,72 @@
 
 (ns com.zotoh.frwk.util.coreutils 
   ;;(:use [ clojure.tools.logging :as LOG ])
+  (:require [clojure.string])
   (:import (java.security SecureRandom))
   (:import (java.nio.charset Charset))
   (:import (java.io File FileInputStream ByteArrayInputStream ByteArrayOutputStream))
   (:import (java.util Properties Date GregorianCalendar TimeZone))
   (:import (java.util.zip DataFormatException Deflater Inflater))
   (:import (java.sql Timestamp))
+  (:import (java.rmi.server UID))
   (:import (org.apache.commons.lang3.text StrSubstitutor))
   (:import (org.apache.commons.lang3 StringUtils))
   (:import (org.apache.commons.io FilenameUtils))
   (:import (org.apache.commons.lang3 SerializationUtils))
 )
 
+;;
+;; General Utililties.
+;;
+;; @author kenl
+;;
+;;
+
 (def ^:private _BOOLS #{ "true" "yes"  "on"  "ok"  "active"  "1"} )
 (defn- nsb [s]  (if (nil? s) (str "") s))
 
-(defn getCZldr
+(deftype NICHTS [])
+(def ^:dynamic *NICHTS* (->NICHTS ))
+
+
+(defn nilToNichts
+  "Returns null object to the internal NICHTS singleton object."
+  [obj]
+  (if (nil? obj) *NICHTS* obj))
+
+(defn isNichts?
   ""
+  [obj]
+  (identical? obj *NICHTS*))
+
+(defn matchChar
+  ""
+  [ch cs]
+  (if (nil? cs) false (contains? cs ch)))
+
+(defn sysVar
+  "Get value for this system property."
+  [v]
+  (if (StringUtils/isEmpty v) nil (System/getProperty v)))
+
+(defn envVar
+  "Get value for this env var."
+  [v]
+  (if (StringUtils/isEmpty v) nil (System/getenv v)))
+
+
+(defn uid
+  "Generate a unique id."
+  []
+  (.replaceAll (.toString (UID.)) "[:\\-]+" ""))
+
+(defn getCZldr
+  "Get the current java class loader."
   ([] (getCZldr nil) )
   ([cl]
     (if (nil? cl) (.getContextClassLoader (Thread/currentThread)) cl )))
 
-(defn new-random
+(defn newRandom
   "Return a new random object."
   []
   (SecureRandom. (SecureRandom/getSeed 20)) )
@@ -314,20 +358,147 @@
       (.getTimeInMillis (GregorianCalendar. (TimeZone/getTimeZone tz))))))
   
 (defn asFilePathOnly
-  "Get the file path from a URL string."
+  "Return the file path in file:/ format."
   [fileUrlPath]
   (if (nil? fileUrlPath) 
     ""
     (.getPath (java.net.URL. fileUrlPath))) )
 
 (defn asFileUrl
-  ""
+  "Return the file path in file:/ format."
   [path]
   (if (nil? path) 
     ""
-    (str (if (isWindows) "file:/"  "file:") path)))
-  
-  
-  
+    (.toURL (.toURI (File. path)))))
+
+(defn- fetchTmpDir
+  [extra]
+  (let [ fp (File. (str (sysQuirk "java.io.tmpdir") extra) ) ]
+    (.mkdirs fp)
+    fp))
+
+(defn genTmpDir
+  "Generate and return a new temp File dir."
+  []
+  (fetchTmpDir (str "/" (uid))))
+
+(defn tmpDir
+  "Return the current temp File dir."
+  []
+  (fetchTmpDir ""))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; test and assert funcs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn tstClassISA
+  "Tests if class is subclass of parent."
+  [param childz parz]
+  (assert (and (not (nil? childz)) (.isAssignableFrom parz childz))
+        (str "" param " not-isa " (.getName parz)) ))
+
+(defn tstObjISA
+  "Tests if object's class is subclass of parent."
+  [param obj parz]
+  (assert (and (not (nil? obj)) (.isAssignableFrom parz (.getClass obj)))
+        (str "" param " not-isa " (.getName parz)) ))
+
+(defn tstCond
+  "Assert a condition."
+  [c msg]
+  (assert (= c true) (str msg)))
+
+(defn tstObjArg
+  "Assert object is not null."
+  [param obj]
+  (assert (not (nil? obj)) (str "" param " is null.")))
+
+(defn tstEStrArg
+  "Assert string is not empty."
+  [param v]
+  (assert (not (StringUtils/isEmpty v)) (str "" param " is empty.")))
+
+(defn tstNonNegNum
+  "Assert number is not negative."
+  [param v]
+  (assert (>= v 0) (str "" param " must be >= 0.")))
+
+
+(defn tstPosNum
+  "Assert number is > 0"
+  [param v]
+  (assert (> v 0) (str "" param " must be > 0.")))
+
+(defn tstNESeq
+  "Assert sequence is not empty."
+  [param v]
+  (assert (not (nil? (not-empty v))) (str  param  " must be non empty.") ))
+
+(defn errBadArg
+  "Force throw an exception."
+  [msg]
+  (throw (IllegalArgumentException. msg)))
+
+(defn findRootCause
+  "Dig into error and find the root exception."
+  [root]
+  (loop [r root
+         t (if (nil? root) nil (.getCause root)) ]
+    (if (nil? t)
+      r
+      (recur t (.getCause t)) )))
+
+(defn findRootCauseMsgWithClassInfo
+  "Dig into error and find the root exception message."
+  [root]
+  (let [ e (findRootCause root) ]
+    (if (nil? e) "" (str (.getName (.getClass e)) ": " (.getMessage e)))))
+
+(defn findRootCauseMsg
+  "Dig into error and find the root exception message."
+  [root]
+  (let [ e (findRootCause root) ]
+    (if (nil? e) "" (.getMessage e))))
+
+(defn genNumsBetween
+  "Return a list of random int numbers."
+  [start end howMany]
+  (if (or (>= start end) (< (- end start) howMany) )
+    []
+    (let [ _end (if (< end Integer/MAX_VALUE) (+ end 1) end )
+           r (newRandom) ]
+      (loop [ rc [] cnt howMany ]
+        (if (<= cnt 0)
+          rc
+          (let [ n (.nextInt r _end) ]
+            (if (and (>= n start) (not (contains? rc n)))
+              (recur (conj rc n) (dec cnt))
+              (recur rc cnt) )))))))
+
+(defn sortAndJoin
+  "Sort a list of strings and then concatenate them."
+  ([ss] (sortAndJoin "" ss))
+  ([sep ss]
+    (if (nil? ss)
+      ""
+      (clojure.string/join sep (sort ss)))))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (def ^:private coreutils-eof nil)
 

@@ -263,27 +263,26 @@
 (def ^:private _CCODESEQ (seq _CCODES))
 
 
-(defn ^{
-    :doc "Return the full country name."
-  }
-  findCountry [ code ] (_CCODES (.toUpperCase code)))
+(defn findCountry
+  "Return the full country name."
+  [ code ]
+  (_CCODES (.toUpperCase code)))
 
-(defn ^{
-    :doc "List all the country codes."
-  }
-  listCountryCodes [] (keys _CCODES))
+(defn listCountryCodes
+  "List all the country codes."
+  [] 
+  (keys _CCODES))
 
-(defn ^{
-    :doc "Returns true if the code is US."
-  }
-  usa? [ code] (= "US" (.toUpperCase code)))
+(defn usa?
+  "Returns true if the code is US."
+  [ code]
+  (= "US" (.toUpperCase code)))
 
-(defn ^{
-    :doc "Return the country code."
-  }
-  findCode [ country ]
-    (let [ rs (filter #(= (nth % 1) country) _CCODESEQ) ] 
-      (if (nil? rs) nil (nth (first rs) 0))))
+(defn findCode
+  "Return the country code."
+  [ country ]
+  (let [ rs (filter #(= (nth % 1) country) _CCODESEQ) ] 
+    (if (nil? rs) nil (nth (first rs) 0))))
 
 
 (def ^:private countrycode-eof nil)

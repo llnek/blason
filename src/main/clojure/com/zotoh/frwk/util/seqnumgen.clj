@@ -22,18 +22,30 @@
   (:import (java.util.concurrent.atomic AtomicLong AtomicInteger) )
   )
 
+;;
+;; Generate some sequence numbers.
+;;
+;; @author kenl
+;;
+;;
+
+
 (def ^:private _numInt (AtomicInteger. 1))
 (def ^:private  _numLong (AtomicLong. 1))
 
-(defn ^{
-    :doc "Return a sequence number (integer)."
-  }
-  nextInt [] (.getAndIncrement _numInt))
+(defn nextInt
+  "Return a sequence number (integer)."
+  [] 
+  (.getAndIncrement _numInt))
 
-(defn ^{
-    :doc "Return a sequence number (long)."
-  }
-  nextLong [] (.getAndIncrement _numLong))
+(defn nextLong
+  "Return a sequence number (long)."
+  [] 
+  (.getAndIncrement _numLong))
+
+
+
+
 
 (def ^:private  seqnumgen-eof nil)
 
