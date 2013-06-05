@@ -35,11 +35,6 @@
 ;;
 ;;
 
-(defn- jiggleZipEntryName [ en ]
-  (let []
-    (println en)
-    (.replaceAll (.getName en) "^[\\/]+","")))
-
 (defn isFileWR?
   "Returns true if file is readable & writable."
   [fp]
@@ -93,20 +88,35 @@
     path
     (.getParent (File. path))))
 
+
+
+
+(defn- jiggleZipEntryName [ en ]
+  (let []
+    (.replaceAll (.getName en) "^[\\/]+","")))
+
+(defn- doOneEntry [src des en]
+  (let [ f (File. des (jiggleZipEntryName en) ) ]
+    (if (.isDirectory en)
+      (.mkdirs f)
+      (do
+        (.mkdirs (.getParentFile f))
+        (with-open [ inp (.getInputStream src en) ]
+          (with-open [ os (FileOutputStream. f) ]
+            (IOUtils/copy inp os)))))))
+
 (defn explodeZipFile
   "Unzip contents of zip file to a target folder."  
   [ ^File src ^File des ]
-  (let [ ents (.entries (ZipFile. src)) 
-         dummy (.mkdirs des) ]
-    (doseq [ en (list ents) ]
-      (let [ f (File. des (jiggleZipEntryName en) ) ]
-        (if (.isDirectory en)
-          (.mkdirs f)
-          (do
-            (.mkdirs (.getParentFile f))
-            (with-open [ inp (.getInputStream src en) ]
-              (with-open [ os (FileOutputStream. f) ]
-                (IOUtils/copy inp os)))))))))
+  (let [ fpz (ZipFile. src)  ents (.entries fpz) dummy (.mkdirs des) ]
+    (loop [ hasMore (.hasMoreElements ents) ]
+      (if (false? hasMore)
+        nil
+        (do
+          (doOneEntry fpz des (.nextElement ents))
+          (recur (.hasMoreElements ents)))))))
+
+
 
 
 
