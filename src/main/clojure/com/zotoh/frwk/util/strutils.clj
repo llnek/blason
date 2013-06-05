@@ -35,7 +35,11 @@
   [obj]
   (if (nil? obj) "(null)" (.toString obj)))
 
-
+(defn contains?
+  "Returns true if this character is inside this string."
+  [astr ch]
+  (do
+    (>= (.indexOf astr (int ch)) 0)))
 
 (defn same
   "Returns true if these 2 strings are the same."
