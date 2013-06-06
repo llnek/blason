@@ -6,6 +6,8 @@
   (:import (java.io File FileInputStream FileOutputStream CharArrayWriter OutputStreamWriter))
   (:import (java.io InputStream InputStreamReader OutputStream Reader Writer))
   (:import (java.util.zip GZIPInputStream GZIPOutputStream))
+  (:import (com.zotoh.frwk.io XStream))
+  (:import (com.zotoh.frwk.io.IOUtils :as IO))
   (:import (org.apache.commons.lang3 StringUtils))
   (:import (org.apache.commons.codec.binary Base64))
   (:import (org.apache.commons.io IOUtils))
@@ -20,10 +22,6 @@
 ;;
 
 (def ^:private HEX_CHS ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ])
-(def ^:dynamic READ_STREAM_LIMIT (* 1024 1024 8)) ;; if > 8M switch to file
-
-;;(defn streamLimit_=(n:Int) { READ_STREAM_LIMIT=n }
-;;(defn streamLimit= READ_STREAM_LIMIT
 
 (defn bytesToHexString
   ""
@@ -56,294 +54,100 @@
     (readBytes inp)))
 
 (defmethod ^{ :doc "Read bytes from inputstream." } readBytes [inp] InputStream
-  )
+  (with-open [ baos (ByteArrayOutputStream. (int 4096)) ]
+    (let [ buf (byte-array 4096) ]
+      (loop [ n (.read inp) ]
+        (if (< n 0)
+          (.toByteArray baos)
+          (do 
+            (if-not (= n 0) (.write baos cb 0 n))
+            (recur (.read inp))))))))
 
 (defn gzip
   "Gzip a string to bytes."
   ( [astr] (gzip "UTF-8"))
   ( [astr encoding]
-    (if (or (nil? s)(nil? encoding)) nil (gzipBytes (.getBytes astr encoding)))))
+    (if (or (nil? s)(nil? encoding)) nil (IO/gzip (.getBytes astr encoding)))))
 
-  /**
-   * Calls InputStream.reset().
-   *
-   * @param inp
-   */
-  def safeReset(inp:InputStream) {
-    block { () => if (inp != null) inp.reset() }
-  }
+(defn safeReset
+  "Call reset on this input stream."
+  [inp]
+  (try
+    (if-not (nil? inp)  (.reset inp))
+    (catch Throwable t nil)) )
 
-  /**
-   * @param bits
-   * @return
-   */
-  def gzip(bits:Array[Byte]): Array[Byte] = {
-    if (bits==null) null else using(new ByteArrayOS(4096)) { (baos) =>
-      if (bits!=null) using(new GZIPOutputStream(baos)) { (g) =>
-          g.write(bits, 0, bits.length)
-      }
-      baos.toByteArray
-    }
-  }
+(defn asStream
+  ""
+  [bits]
+  (if (nil? bits) nil (ByteArrayInputStream. bits)))
 
-  /**
-   * @param bits
-   * @return
-   */
-  def gunzip(bits:Array[Byte]) = {
-    if (bits==null) null else bytes(new GZIPInputStream( asStream(bits)))
-  }
+(defmulti openFile class)
 
-  /**
-   * @param bits
-   * @return
-   */
-  def asStream(bits:Array[Byte]): InputStream = {
-    if (bits==null) null else new ByteArrayIS(bits)
-  }
+(defmethod ^{ :doc "Open this file." } openFile [ f] File
+  (if (nil? f) nil (XStream. f)))
 
-  /**
-   * @param ins
-   * @return
-   */
-  def gunzip(ins:InputStream): InputStream = {
-    if (ins==null) null else new GZIPInputStream(ins)
-  }
+(defmethod ^{ :doc "Open this file path." } openFile [ fp] String
+  (if (nil? f) nil (XStream. (File. fp))))
 
-  /**
-   * @param ins
-   * @return
-   */
-  def bytes(ins:InputStream): Array[Byte] = {
-    using( new ByteArrayOS(4096)) { (baos) =>
-      val cb= new Array[Byte](4096)
-      var n=0
-      do {
-        n = ins.read(cb)
-        if (n>0) { baos.write(cb, 0, n) }
-      } while (n>0)
-      baos.toByteArray
-    }
-  }
+(defn fromGZipedB64
+  "Unzip content which is base64 encoded + gziped."
+  [gzb64]
+  (if (nil? gzb64) nil (IO/gunzip (Base64/decodeBase64 gzb64))))
 
-  /**
-   * @param fp
-   * @return
-   */
-  def open(fp:File): InputStream = {
-    if ( fp==null ) null else new XStream(fp)
-  }
+(defn toGZipedB64
+  ""
+  [bits]
+  (if (nil? bits) nil (Base64/encodeBase64String (IO/gzip bits))))
 
-  /**
-   * @param gzb64
-   * @return
-   */
-  def fromGZipedB64(gzb64:String) = {
-    if (gzb64==null) null else gunzip(Base64.decodeBase64(gzb64))
-  }
+(defn available
+  "Get the available bytes in this stream."
+  [inp]
+  (if (nil? inp) 0 (.available inp)))
 
-  /**
-   * @param bits
-   * @return
-   */
-  def toGZipedB64(bits:Array[Byte]) = {
-    if (bits == null) null else Base64.encodeBase64String( gzip(bits))
-  }
+(defn writeFile
+  ""
+  ( [outFile astr] (writeFile outFile astr "UTF-8"))
+  ( [outFile astr encoding]
+    (if-not (nil? astr) (writeFileBytes out (.getBytes astr encoding)))))
 
-  /**
-   * @param inp
-   * @return
-   */
-  def available(inp:InputStream) = {
-    if (inp==null) 0 else inp.available()
-  }
+(def writeFileBytes
+  ""
+  [outFile bits]
+  (if-not (nil? bits)
+    (with-open [ os (FileOutputStream. outFile) ]
+      (.write os bits))))
 
-  /**
-   * @param inp
-   * @param useFile if true always use file-backed data.
-   * @return
-   */
-  def readBytes(inp:InputStream, useFile:Boolean=false): XData = {
-    var lmt= if (useFile) 1 else READ_STREAM_LIMIT
-    val baos= new ByteArrayOS(10000)
-    val bits= new Array[Byte](4096)
-    var os:OutputStream= baos
-    val rc= new XData()
-    var cnt=0
-    var loop=true
+(defn copyStreamToFile
+  ""
+  [inp]
+  (let [ t (IO/newTempFile true) ]
+    (with-open [ os (nth t 1) ]
+      (IOUtils/copy inp os))
+    (nth t 0)))
 
-    try {
+(defn copyCountedBytes
+  ""
+  [src out bytesToCopy]
+  (IOUtils/copyLarge src out 0 bytesToCopy))
 
-      while (loop) {
-        loop= inp.read(bits) match {
-          case c if c > 0 =>
-            os.write(bits, 0, c)
-            cnt += c
-            if ( lmt > 0 && cnt > lmt) {
-              os=swap(baos, rc)
-              lmt= -1
-            }
-            true
-          case _ => false
-        }
-      }
+(defn resetInputSource
+  ""
+  [inpsrc]
+  (if-not (nil? inpsrc)
+    (let [ rdr (.getCharacterStream inpsrc)
+           ism (.getByteStream inpsrc) ]
+      (try
+        (if-not (nil? ism) (.reset ism))
+        (catch Throwable t nil))
+      (try
+        (if-not (nil? rdr) (.reset rdr))
+        (catch Throwable t nil)) )))
 
-      if (!rc.isDiskFile() && cnt > 0) {
-        rc.resetMsgContent(baos)
-      }
+(def mkFSData
+  ""
+  []
+  (.setDeleteFile (XData. (IO/mkTempFile)) true))
 
-    } finally {
-      close(os)
-    }
-
-    rc
-  }
-
-  /**
-   * @param rdr
-   * @param useFile if true always use file-backed data.
-   * @return
-   */
-  def readChars(rdr:Reader, useFile:Boolean=false) = {
-    var lmt = if (useFile) 1  else READ_STREAM_LIMIT
-    val wtr= new CharArrayWriter(10000)
-    val bits= new Array[Char](4096)
-    var w:Writer=wtr
-    val rc= new XData()
-    var cnt=0
-    var loop=true
-
-    try {
-      while(loop) {
-        loop = rdr.read(bits) match {
-          case c if c > 0 =>
-            w.write(bits, 0, c)
-            cnt += c
-            if ( lmt > 0 && cnt > lmt) {
-              w=swap(wtr, rc)
-              lmt= -1
-            }
-            true
-          case _ => false
-        }
-      }
-
-      if (!rc.isDiskFile() && cnt > 0) {
-        rc.resetMsgContent(wtr.toString)
-      }
-
-    } finally {
-      close(w)
-    }
-
-    rc
-  }
-
-  /**
-   * @param out
-   * @param s
-   * @param enc
-   */
-  def writeFile(out:File, s:String, enc:String="utf-8") {
-    if (s != null) { writeFile( out, s.getBytes( enc)) }
-  }
-
-  /**
-   * @param out
-   * @param bits
-   */
-  def writeFile(out:File, bits:Array[Byte]) {
-    if (bits != null) {
-      using(new FileOutputStream(out)) { (os) =>
-        os.write(bits)
-      }
-    }
-  }
-
-  /**
-   * @param src
-   * @return
-   */
-  def copy(src:InputStream): File = {
-    var t=newTempFile(true)
-    using(t._2) { (os) =>
-      IOU.copy(src, os)
-    }
-    t._1
-  }
-
-  /**
-   * @param src
-   * @param out
-   * @param bytesToCopy
-   */
-  def copy(src:InputStream, out:OutputStream, bytesToCopy:Long) {
-    IOU.copyLarge(src,out,0,bytesToCopy)
-  }
-
-  /**
-   * @param iso
-   */
-  def resetInputSource(iso:InputSource) {
-    if (iso != null) {
-      val rdr= iso.getCharacterStream()
-      val ism = iso.getByteStream()
-      block { () => if (ism != null) ism.reset() }
-      block { () => if (rdr != null) rdr.reset() }
-    }
-  }
-
-  /**
-   * @param pfx
-   * @param sux
-   * @return
-   */
-  def mkTempFile(pfx:String="", sux:String=""): File = {
-    File.createTempFile(
-      if ( STU.isEmpty(pfx)) "temp-" else pfx,
-      if ( STU.isEmpty(sux)) ".dat" else sux,
-      workDir)
-  }
-
-  /**
-   * @return
-   */
-  def mkFSData() = new XData( mkTempFile()).setDeleteFile(true)
-
-  /**
-   * @param open
-   * @return
-   */
-  def newTempFile(open:Boolean=false): (File,OutputStream) = {
-    val f= mkTempFile()
-    (f, if (open) new FileOutputStream(f) else null)
-  }
-
-  /**
-   * @param r
-   */
-  def close(r:Reader) {
-    IOU.closeQuietly(r)
-  }
-
-  /**
-   * @param o
-   */
-  def close(o:OutputStream) {
-    IOU.closeQuietly(o)
-  }
-
-  /**
-   * @param w
-   */
-  def close(w:Writer) {
-    IOU.closeQuietly(w)
-  }
-
-  /**
-   * @param i
-   */
-  def close(i:InputStream) {
     IOU.closeQuietly(i)
   }
 
