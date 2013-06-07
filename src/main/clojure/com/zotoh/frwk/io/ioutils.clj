@@ -23,6 +23,19 @@
 
 (def ^:private HEX_CHS ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' ])
 
+(defn mkTempFile
+  ""
+  ([] (mkTempFile "" ""))
+  ([pfx sux]
+    (File/createTempFile (if (StringUtils/isEmpty pfx) "temp-" pfx) (if (StringUtils/isEmpty sux) ".dat" sux) *work-dir*)))
+
+(defn newTempFile
+  ""
+  ([] (newTempFile false))
+  ([open]
+    (let [ f (mkTempFile) ]
+      (if open [ f (FileOutputStream. f) ] [ f nil ]))))
+
 (defn bytesToHexString
   ""
   [bits]
@@ -143,13 +156,76 @@
         (if-not (nil? rdr) (.reset rdr))
         (catch Throwable t nil)) )))
 
+(defn readBytes
+  ""
+  ( [inp] (read-bytes inp *stream-limit*))
+  ( [inp useFile] read-bytes(inp (if useFile 1 *stream-limit*))))
+
+(defn- swap-bytes [inp baos]
+  (let [ bits (.toByteArray baos) t (newTempFile true) ]
+    (.write (nth t 1) bits)
+    (.flush (nth t 1))
+    (.close baos)
+    t))
+
+(defn- swap-read-bytes [inp baos]
+  (let [ t (swap-bytes inp baos)
+         bits (byte-array 4096)
+         os (nth t 1) ]
+    (try
+      (loop [c (.read inp bits) ]
+        (if (< c 0)
+          (XData. (nth t 0))
+          (if (= c 0)
+            (recur (.read inp bits))
+            (do (.write os bits 0 c)
+                (recur (.read inp bits))))))
+      (finally
+        (.close os))))
+
+(defn- read-bytes [inp lmt]
+  (let [ baos (ByteArrayOutputStream. (int 10000)) 
+         bits (byte-array 4096) ]
+    (loop [ c (.read inp bits) cnt 0 ]
+      (if (< c 0)
+        (XData. baos)
+        (if (= c 0) (recur (.read inp bits) cnt)
+          (do ;; some data
+            (.write baos bits 0 c)
+            (if (> (+ c cnt) lmt)
+              (swap-read-bytes inp baos)
+              (recur (.read inp bits) (+ c cnt)) )))))))
+
+(defn- swap-read-chars [ inp wtr ]
+  (let [ bits (.toCharArray wtr) t (newTempFile true) ]
+    (.write (nth t 1) bits)
+    (.flush (nth t 1))
+    (.close wtr)
+    t))
+
+(defn- read-chars [inp lmt]
+  (let [ wtr (CharArrayWriter. (int 10000))
+         bits (char-array 4096) ]
+    (loop [ c (.read inp bits) cnt 0 ]
+      (if (< c 0)
+        (XData. wtr)
+        (if (= c 0)
+          (recur (.read inp bits) cnt)
+          (do
+            (.write wtr bits 0 c)
+            (if (> (+ c cnt) lmt)
+              (swap-read-chars inp wtr)
+              (recur (.read inp bits) (+ c cnt)))))))))
+
+(defn readChars 
+  ""
+  ([rdr] (read-chars *stream-limit*))
+  ([rdr useFile] (read-chars (if useFile 1 *stream-limit*))))
+
 (def mkFSData
   ""
   []
-  (.setDeleteFile (XData. (IO/mkTempFile)) true))
-
-    IOU.closeQuietly(i)
-  }
+  (.setDeleteFile (XData. (mkTempFile)) true))
 
   /**
    * @param b Array[Byte] to be converted.
