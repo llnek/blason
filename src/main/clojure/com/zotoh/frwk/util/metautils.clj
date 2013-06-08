@@ -40,6 +40,16 @@
   [basz obj]
   (if (or (nil? basz) (nil? obj)) false (isChildCZ basz (.getClass obj))))
 
+(defn bytesClass
+  "Return the java class for byte[]."
+  []
+  (Class/forName "[B"))
+
+(defn charsClass
+  "Return the java class for char[]."
+  []
+  (Class/forName "[C"))
+
 (defn isBoolean
   ""
   [cz]

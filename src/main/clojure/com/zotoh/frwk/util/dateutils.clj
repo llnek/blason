@@ -28,6 +28,13 @@
   (:require [ com.zotoh.frwk.util.strutils :as SU ])
   )
 
+(defn leap-year?
+  "Return true if this is a leap year."
+  [year]
+  (cond (zero? (mod year 400)) true
+    (zero? (mod year 100)) false
+    :else (zero? (mod year 4))))
+
 (defn hasTZPart?
   "Returns true if this datetime string contains some timezone info."
   [dateStr]
