@@ -19,33 +19,45 @@
  *
  ??*/
 
-package com.zotoh.frwk.util;
-
-import java.util.Comparator;
-import java.util.TreeMap;
+package com.zotoh.xref.util;
 
 /**
- * A map that has case-ignored string keys. 
- *
+ * 
  * @author kenl
  *
- * @param <T>
  */
-public class NCMap<T> extends TreeMap<String, T> implements java.io.Serializable {
+public class Reaper extends Coroutine {
 
-  private static final long serialVersionUID = -3637175588593032279L;
+  private volatile boolean _active=true;
+  private Crop _crop;
+  private int _delayMillis;
 
-  public NCMap()    {
-      super(new NoCase<String>());
+  public Reaper(Crop c, int delayMillis) {
+    _crop=c;
+    _delayMillis= delayMillis;
   }
 
-  private static class NoCase<T> implements Comparator<T>     {
-      public int compare(T o1, T o2)        {
-          String s1 = o1 == null ? "" : o1.toString();
-          String s2 = o2 == null ? "" : o2.toString();
-          return s1.toUpperCase().compareTo(s2.toUpperCase());
+  public Reaper(Crop c) {
+    this(c, 0);
+  }
+
+  public void stop() {
+    _active = false;
+  }
+
+  public void run() {
+
+    while (_active) {
+      try { 
+        Thread.sleep(_delayMillis);
+        _crop.reap();
+      } catch (Throwable t)
+      {}
+      if (_delayMillis == 0) {
+        stop();
       }
+    }
+
   }
 
 }
-

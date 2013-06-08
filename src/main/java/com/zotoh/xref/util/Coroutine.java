@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -19,26 +19,19 @@
  *
  ??*/
 
-package com.zotoh.frwk.util;
+package com.zotoh.xref.util;
 
 /**
  * @author kenl
  */
-public class Failure extends Exception {
+public abstract class Coroutine implements Runnable {
 
-  private static final long serialVersionUID = 7845344957510656105L;
-
-  public Failure(String m) {
-    super(m,null);
-  }
-
-  public Failure(Throwable e) {
-    super("",e);
-  }
-
-  public Failure(RootFailure r) {
-    this(r.root() );
+  public void start() {
+    Thread t= new Thread(this);
+    t.setDaemon(true);
+    t.start();
   }
 
 }
+
 

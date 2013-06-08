@@ -19,19 +19,41 @@
  *
  ??*/
 
-package com.zotoh.frwk.util;
+package com.zotoh.xref.util;
 
 /**
  * @author kenl
  */
-public abstract class Coroutine implements Runnable {
+public class AsyncProc implements Runnable {
 
-  public void start() {
-    Thread t= new Thread(this);
-    t.setDaemon(true);
-    t.start();
+  private boolean _daemon=false;
+  private Runnable _FC = null;
+  private ClassLoader _cl= null;
+
+  public AsyncProc withClassLoader(ClassLoader cl) {
+    _cl=cl;
+    return this;
+  }
+
+  public AsyncProc setDaemon(boolean b) {
+    _daemon=b;
+    return this;
+  }
+
+  public Thread mkThread() {
+    Thread t=new Thread(this);
+    if (_cl != null) { t.setContextClassLoader(_cl); }
+    t.setDaemon(_daemon);
+    return t;
+  }
+
+  public void run() {
+    _FC.run();
+  }
+
+  public void fork( Runnable r) {
+    _FC=r;
+    mkThread().start();
   }
 
 }
-
-

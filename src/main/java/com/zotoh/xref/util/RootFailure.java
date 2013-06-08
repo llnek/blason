@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -19,45 +19,28 @@
  *
  ??*/
 
-package com.zotoh.frwk.util;
+package com.zotoh.xref.util;
 
 /**
- * 
  * @author kenl
- *
  */
-public class Reaper extends Coroutine {
+public class RootFailure {
+  
+  private Throwable _root;
 
-  private volatile boolean _active=true;
-  private Crop _crop;
-  private int _delayMillis;
-
-  public Reaper(Crop c, int delayMillis) {
-    _crop=c;
-    _delayMillis= delayMillis;
-  }
-
-  public Reaper(Crop c) {
-    this(c, 0);
-  }
-
-  public void stop() {
-    _active = false;
-  }
-
-  public void run() {
-
-    while (_active) {
-      try { 
-        Thread.sleep(_delayMillis);
-        _crop.reap();
-      } catch (Throwable t)
-      {}
-      if (_delayMillis == 0) {
-        stop();
-      }
+  public RootFailure(Throwable t) {
+    Throwable  tt= t;
+    while (tt.getCause() != null) {
+      tt = tt.getCause();
     }
+    _root=tt;
+  }
 
+  public Throwable root() {
+    return _root; 
   }
 
 }
+
+
+

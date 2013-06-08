@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -19,28 +19,31 @@
  *
  ??*/
 
-package com.zotoh.frwk.util;
+package com.zotoh.xref.util;
 
-/**
- * @author kenl
- */
-public class RootFailure {
-  
-  private Throwable _root;
+public enum ProcUtils {
 
-  public RootFailure(Throwable t) {
-    Throwable  tt= t;
-    while (tt.getCause() != null) {
-      tt = tt.getCause();
+  INSTANCE;
+
+  public static void blockAndWait( Object lockr, long waitMillis) {
+    synchronized(lockr) {
+        try { 
+          if (waitMillis > 0L) {
+            lockr.wait(waitMillis);
+          } else {
+            lockr.wait();
+          }
+        } catch (Throwable t) {}              
     }
-    _root=tt;
   }
 
-  public Throwable root() {
-    return _root; 
+  public static void unblock( Object lockr) {
+    synchronized(lockr) {
+        try {
+          lockr.notifyAll();
+        } catch (Throwable t) {}              
+    }
   }
 
 }
-
-
 

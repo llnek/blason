@@ -1,5 +1,5 @@
 /*??
- * COPYRIGHT (C) 2012 CHERIMOIA LLC. ALL RIGHTS RESERVED.
+ * COPYRIGHT (C) 2012-2013 CHERIMOIA LLC. ALL RIGHTS RESERVED.
  *
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR
  * MODIFY IT UNDER THE TERMS OF THE APACHE LICENSE,
@@ -19,41 +19,26 @@
  *
  ??*/
 
-package com.zotoh.frwk.util;
+package com.zotoh.xref.util;
 
 /**
  * @author kenl
  */
-public class AsyncProc implements Runnable {
+public class Failure extends Exception {
 
-  private boolean _daemon=false;
-  private Runnable _FC = null;
-  private ClassLoader _cl= null;
+  private static final long serialVersionUID = 7845344957510656105L;
 
-  public AsyncProc withClassLoader(ClassLoader cl) {
-    _cl=cl;
-    return this;
+  public Failure(String m) {
+    super(m,null);
   }
 
-  public AsyncProc setDaemon(boolean b) {
-    _daemon=b;
-    return this;
+  public Failure(Throwable e) {
+    super("",e);
   }
 
-  public Thread mkThread() {
-    Thread t=new Thread(this);
-    if (_cl != null) { t.setContextClassLoader(_cl); }
-    t.setDaemon(_daemon);
-    return t;
-  }
-
-  public void run() {
-    _FC.run();
-  }
-
-  public void fork( Runnable r) {
-    _FC=r;
-    mkThread().start();
+  public Failure(RootFailure r) {
+    this(r.root() );
   }
 
 }
+

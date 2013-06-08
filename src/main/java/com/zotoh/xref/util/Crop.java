@@ -19,31 +19,9 @@
  *
  ??*/
 
-package com.zotoh.frwk.util;
+package com.zotoh.xref.util;
 
-public enum ProcUtils {
-
-  INSTANCE;
-
-  public static void blockAndWait( Object lockr, long waitMillis) {
-    synchronized(lockr) {
-        try { 
-          if (waitMillis > 0L) {
-            lockr.wait(waitMillis);
-          } else {
-            lockr.wait();
-          }
-        } catch (Throwable t) {}              
-    }
-  }
-
-  public static void unblock( Object lockr) {
-    synchronized(lockr) {
-        try {
-          lockr.notifyAll();
-        } catch (Throwable t) {}              
-    }
-  }
-
+public interface Crop {
+  public void reap();
 }
 
